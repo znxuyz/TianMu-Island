@@ -14,13 +14,23 @@
 └───────┼──────────────────────────────────────────────────────┘
         │ 只依賴 TianMu.Core 契約
 ┌───────┴────────┬──────────────────┬───────────────────┐
-│ WelcomeModule  │ MusicModule (待)  │ PomodoroModule (待)│ …
+│ WelcomeModule  │ MusicModule ✅    │ PomodoroModule (待)│ …
 └────────────────┴──────────────────┴───────────────────┘
 ```
 
 - **宿主只管三件事**：視窗管理、渲染、物理動畫。
 - **法器只管一件事**：感知某種「萬象」（音樂、通知、時間…），轉成 `IslandActivity` 交給宿主。
 - **契約層 `TianMu.Core`** 不依賴 WPF，未來外部法器可以獨立成專案、編譯成 DLL 丟進 `modules\` 資料夾即可被載入。
+
+## 異象的顯示規則
+
+| 優先級 | 行為 |
+|---|---|
+| `Ambient` | 常駐在收合的膠囊中（例如播放中的音樂顯示封面 + 頻譜），每個法器保留最新一則 |
+| `Normal` 以上 | 自動展開，`Duration` 到了自動收回；同時只顯示一則，低優先級不能壓過高優先級 |
+
+- 異象可附帶 `CompactView` / `ExpandedView`（WPF 元件，必須透過 `host.InvokeAsync` 在 UI 執行緒建立），以及自訂尺寸。
+- 使用者點擊展開時，顯示最新常駐異象的展開畫面；滑鼠離開 3 秒後自動收回。
 
 ## 視窗符咒
 
@@ -84,7 +94,7 @@ public sealed class MyModule : IIslandModule
 
 ## 後續修煉路線
 
-1. **金丹 · 萬象樂律**：`Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager` 取曲目與封面；NAudio `WasapiLoopbackCapture` + FFT 取頻譜。
+1. ~~**金丹 · 萬象樂律**~~ ✅：SMTC 取曲目與封面、`TrackTitleCleaner` 清洗 YouTube 標題、LRCLIB 同步歌詞、NAudio `WasapiLoopbackCapture` + 自製 FFT 頻譜。
 2. **金丹 · 傳音入密**：`Windows.UI.Notifications.Management.UserNotificationListener`。
 3. **金丹 · 靈識感應**：`WM_DEVICECHANGE`、Core Audio 音量回呼、WMI 亮度事件。
 4. **元嬰 · 專注陣法**：番茄鐘法器 + 可自訂展開面板（`IslandActivity` 擴充為可攜帶自訂 UI）。
