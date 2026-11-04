@@ -2,5 +2,9 @@
   <Folder Name="/src/">
     <Project Path="src/TianMu.Core/TianMu.Core.csproj" />
     <Project Path="src/TianMu.Island/TianMu.Island.csproj" />
+    <Project Path="src/TianMu.Modules.Music/TianMu.Modules.Music.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TianMu.Tests/TianMu.Tests.csproj" />
   </Folder>
 </Solution>

@@ -14,15 +14,22 @@ namespace TianMu.Island;
 /// 天幕本體：一個無邊框、透明、置頂、不搶焦點的視窗，
 /// 中間的膠囊由三組彈簧驅動（寬、高、內容顯現度），呈現果凍般的物理變形。
 /// 同時它也是 <see cref="IIslandHost"/>，接收各法器送來的異象。
+///
+/// 顯示規則：
+///   1. 有「展開型異象」（Normal 以上）→ 展開顯示它，時間到自動收回。
+///   2. 使用者點擊展開 → 顯示最新的常駐異象（例如音樂面板），沒有就顯示時辰。
+///   3. 收合時 → 顯示最新常駐異象的收合畫面（例如封面 + 頻譜），沒有就顯示預設的呼吸點 + 時鐘。
 /// </summary>
 public partial class IslandWindow : Window, IIslandHost
 {
     // ── 形態尺寸（DIP）──────────────────────────────────────
     private static readonly Size IdleSize = new(180, 34);
-    private static readonly Size HoverSize = new(204, 38);
     private static readonly Size ExpandedSize = new(400, 136);
+    private const double HoverGrowWidth = 24;
+    private const double HoverGrowHeight = 4;
     private const double PressScale = 0.94;
     private const double MaxCornerRadius = 34;
+    private static readonly TimeSpan AutoCollapseDelay = TimeSpan.FromSeconds(3);
 
     // ── 彈簧：寬與高用不同頻率，才會出現「先橫拉、再縱彈」的果凍感 ──
     private readonly Spring _width = new(IdleSize.Width, stiffness: 260, damping: 19);   // ζ ≈ 0.59
@@ -33,7 +40,8 @@ public partial class IslandWindow : Window, IIslandHost
     private bool _hovering;
     private bool _pressed;
     private bool _userExpanded;
-    private IslandActivity? _activity;
+    private IslandActivity? _transient;                       // 展開型異象（同時只有一則）
+    private readonly List<IslandActivity> _ambient = [];       // 常駐異象，最後一個是最新的
 
     private bool _animating;
     private TimeSpan _lastFrame;
@@ -41,7 +49,8 @@ public partial class IslandWindow : Window, IIslandHost
 
     private readonly DispatcherTimer _clockTimer;
     private readonly DispatcherTimer _topmostTimer;
-    private readonly DispatcherTimer _activityTimer;
+    private readonly DispatcherTimer _transientTimer;
+    private readonly DispatcherTimer _autoCollapseTimer;
 
     private static readonly string[] Stems = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
     private static readonly string[] Branches = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
@@ -57,19 +66,28 @@ public partial class IslandWindow : Window, IIslandHost
         _topmostTimer = new DispatcherTimer(TimeSpan.FromSeconds(3), DispatcherPriority.Background,
             (_, _) => { if (_hwnd != 0) NativeMethods.ReassertTopmost(_hwnd); }, Dispatcher);
 
-        _activityTimer = new DispatcherTimer(DispatcherPriority.Normal, Dispatcher);
-        _activityTimer.Tick += (_, _) =>
+        _transientTimer = new DispatcherTimer(DispatcherPriority.Normal, Dispatcher);
+        _transientTimer.Tick += (_, _) =>
         {
-            _activityTimer.Stop();
-            _activity = null;
-            UpdateTargets();
+            _transientTimer.Stop();
+            _transient = null;
+            Refresh();
+        };
+
+        _autoCollapseTimer = new DispatcherTimer(DispatcherPriority.Normal, Dispatcher) { Interval = AutoCollapseDelay };
+        _autoCollapseTimer.Tick += (_, _) =>
+        {
+            _autoCollapseTimer.Stop();
+            if (_hovering) return;
+            _userExpanded = false;
+            Refresh();
         };
 
         SourceInitialized += OnSourceInitialized;
         Loaded += (_, _) =>
         {
             PositionAtTopCenter();
-            UpdateClock();
+            Refresh();
             ApplyVisuals();
         };
     }
@@ -113,7 +131,8 @@ public partial class IslandWindow : Window, IIslandHost
     {
         _clockTimer.Stop();
         _topmostTimer.Stop();
-        _activityTimer.Stop();
+        _transientTimer.Stop();
+        _autoCollapseTimer.Stop();
         StopAnimation();
         base.OnClosed(e);
     }
@@ -123,6 +142,7 @@ public partial class IslandWindow : Window, IIslandHost
     private void Capsule_MouseEnter(object sender, MouseEventArgs e)
     {
         _hovering = true;
+        _autoCollapseTimer.Stop();
         UpdateTargets();
     }
 
@@ -130,6 +150,14 @@ public partial class IslandWindow : Window, IIslandHost
     {
         _hovering = false;
         _pressed = false;
+
+        // 使用者展開後滑鼠離開，過幾秒自動收回（像靈動島一樣）
+        if (_userExpanded)
+        {
+            _autoCollapseTimer.Stop();
+            _autoCollapseTimer.Start();
+        }
+
         UpdateTargets();
     }
 
@@ -151,21 +179,21 @@ public partial class IslandWindow : Window, IIslandHost
         {
             if (IsExpanded)
             {
-                // 收起：同時撤掉目前的異象
+                // 收起：同時撤掉目前的展開型異象
                 _userExpanded = false;
-                _activity = null;
-                _activityTimer.Stop();
+                _transient = null;
+                _transientTimer.Stop();
             }
             else
             {
                 _userExpanded = true;
             }
 
-            // 放開瞬間給高度一記向上的推力，增加「啵」一下的彈性
+            // 放開瞬間給高度一記推力，增加「啵」一下的彈性
             _height.Impulse(IsExpanded ? 240 : -160);
         }
 
-        UpdateTargets();
+        Refresh();
         e.Handled = true;
     }
 
@@ -177,21 +205,26 @@ public partial class IslandWindow : Window, IIslandHost
     {
         Dispatcher.InvokeAsync(() =>
         {
-            if (_activity is not null && activity.Priority < _activity.Priority)
-                return; // 低階異象不能壓過高階異象
-
-            _activity = activity;
-            TitleText.Text = activity.Title;
-            SubtitleText.Text = activity.Subtitle ?? string.Empty;
-
-            _activityTimer.Stop();
-            if (activity.Duration is { } duration)
+            if (activity.Priority == ActivityPriority.Ambient)
             {
-                _activityTimer.Interval = duration;
-                _activityTimer.Start();
+                _ambient.RemoveAll(a => a.ModuleId == activity.ModuleId);
+                _ambient.Add(activity);
+            }
+            else
+            {
+                if (_transient is not null && activity.Priority < _transient.Priority)
+                    return; // 低階異象不能壓過高階異象
+
+                _transient = activity;
+                _transientTimer.Stop();
+                if (activity.Duration is { } duration)
+                {
+                    _transientTimer.Interval = duration;
+                    _transientTimer.Start();
+                }
             }
 
-            UpdateTargets();
+            Refresh();
         });
     }
 
@@ -199,11 +232,50 @@ public partial class IslandWindow : Window, IIslandHost
     {
         Dispatcher.InvokeAsync(() =>
         {
-            if (_activity?.ModuleId != moduleId) return;
-            _activity = null;
-            _activityTimer.Stop();
-            UpdateTargets();
+            _ambient.RemoveAll(a => a.ModuleId == moduleId);
+            if (_transient?.ModuleId == moduleId)
+            {
+                _transient = null;
+                _transientTimer.Stop();
+            }
+            Refresh();
         });
+    }
+
+    public Task InvokeAsync(Action action) => Dispatcher.InvokeAsync(action).Task;
+
+    // ═══════════════════════ 內容切換 ═══════════════════════
+
+    private bool IsExpanded => _userExpanded || _transient is not null;
+
+    private IslandActivity? CurrentAmbient => _ambient.Count > 0 ? _ambient[^1] : null;
+
+    /// <summary>目前展開時要顯示的異象。</summary>
+    private IslandActivity? ExpandedActivity => _transient ?? CurrentAmbient;
+
+    /// <summary>依目前狀態決定兩個層各顯示什麼，然後更新彈簧目標。</summary>
+    private void Refresh()
+    {
+        // 收合層
+        var compactView = CurrentAmbient?.CompactView as UIElement;
+        SetHostContent(CompactHost, compactView);
+        DefaultCompact.Visibility = compactView is null ? Visibility.Visible : Visibility.Collapsed;
+
+        // 展開層
+        var expanded = ExpandedActivity;
+        var expandedView = expanded?.ExpandedView as UIElement;
+        SetHostContent(ExpandedHost, expandedView);
+        DefaultExpanded.Visibility = expandedView is null ? Visibility.Visible : Visibility.Collapsed;
+
+        UpdateClock();
+        UpdateTargets();
+    }
+
+    private static void SetHostContent(System.Windows.Controls.ContentControl host, UIElement? view)
+    {
+        if (ReferenceEquals(host.Content, view)) return;
+        host.Content = view;
+        host.Visibility = view is null ? Visibility.Collapsed : Visibility.Visible;
     }
 
     // ═══════════════════════ 時辰 ═══════════════════════
@@ -213,10 +285,17 @@ public partial class IslandWindow : Window, IIslandHost
         var now = DateTime.Now;
         ClockText.Text = now.ToString("HH:mm", CultureInfo.InvariantCulture);
 
-        if (_activity is null)
+        var shown = ExpandedActivity;
+        if (shown is null || shown.ExpandedView is not null)
         {
+            // 沒有異象（或異象自帶畫面）時，預設面板顯示時辰
             TitleText.Text = now.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
             SubtitleText.Text = $"{GanZhiYear(now)}年 · {Shichen(now)}時";
+        }
+        else
+        {
+            TitleText.Text = shown.Title;
+            SubtitleText.Text = shown.Subtitle ?? string.Empty;
         }
     }
 
@@ -238,18 +317,26 @@ public partial class IslandWindow : Window, IIslandHost
 
     // ═══════════════════════ 彈簧動畫核心 ═══════════════════════
 
-    private bool IsExpanded => _userExpanded || _activity is not null;
-
     private void UpdateTargets()
     {
-        Size target = IsExpanded ? ExpandedSize : _hovering ? HoverSize : IdleSize;
+        Size target;
+        if (IsExpanded)
+        {
+            var a = ExpandedActivity;
+            target = new Size(a?.ExpandedWidth ?? ExpandedSize.Width, a?.ExpandedHeight ?? ExpandedSize.Height);
+        }
+        else
+        {
+            target = new Size(CurrentAmbient?.CompactWidth ?? IdleSize.Width, IdleSize.Height);
+            if (_hovering)
+                target = new Size(target.Width + HoverGrowWidth, target.Height + HoverGrowHeight);
+        }
+
         double scale = _pressed ? PressScale : 1.0;
 
         _width.Target = target.Width * scale;
         _height.Target = target.Height * scale;
         _reveal.Target = IsExpanded ? 1 : 0;
-
-        UpdateClock(); // 異象結束時，標題立刻回到時辰顯示
 
         StartAnimation();
     }
@@ -295,15 +382,30 @@ public partial class IslandWindow : Window, IIslandHost
 
     private void ApplyVisuals()
     {
-        double w = Math.Max(1, _width.Value);
-        double h = Math.Max(1, _height.Value);
+        double w = Math.Max(2, _width.Value);
+        double h = Math.Max(2, _height.Value);
+        double radius = Math.Min(h / 2, MaxCornerRadius);
 
         Capsule.Width = w;
         Capsule.Height = h;
-        Capsule.CornerRadius = new CornerRadius(Math.Min(h / 2, MaxCornerRadius));
+        Capsule.CornerRadius = new CornerRadius(radius);
+
+        // 內容沿著圓角裁切，變形時邊緣依然乾淨
+        double innerR = Math.Max(0, radius - 1);
+        ContentRoot.Clip = new RectangleGeometry(new Rect(0, 0, w - 2, h - 2), innerR, innerR);
 
         double p = Math.Clamp(_reveal.Value, 0, 1);
-        IdleLayer.Opacity = Math.Clamp(1 - p * 2.2, 0, 1);   // 靜息內容先快速隱去
-        ExpandedLayer.Opacity = Math.Clamp((p - 0.35) / 0.65, 0, 1); // 形體撐開後內容才浮現
+        double idleOpacity = Math.Clamp(1 - p * 2.2, 0, 1);          // 收合內容先快速隱去
+        double expandedOpacity = Math.Clamp((p - 0.35) / 0.65, 0, 1); // 形體撐開後內容才浮現
+
+        SetLayer(IdleLayer, idleOpacity, interactive: p < 0.5);
+        SetLayer(ExpandedLayer, expandedOpacity, interactive: p >= 0.5);
+    }
+
+    private static void SetLayer(UIElement layer, double opacity, bool interactive)
+    {
+        layer.Opacity = opacity;
+        layer.Visibility = opacity > 0 ? Visibility.Visible : Visibility.Hidden;
+        layer.IsHitTestVisible = interactive;
     }
 }

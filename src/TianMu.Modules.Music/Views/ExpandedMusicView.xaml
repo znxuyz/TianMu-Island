@@ -1,0 +1,152 @@
+<UserControl x:Class="TianMu.Modules.Music.Views.ExpandedMusicView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:TianMu.Modules.Music.Views">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
+        <!-- 無邊框圖示按鈕：懸停時泛起金光 -->
+        <Style x:Key="IconButton" TargetType="Button">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Foreground" Value="#EDE8DC" />
+            <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Width" Value="44" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="Transparent" CornerRadius="15">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#1FE8C872" />
+                                <Setter Property="Foreground" Value="#E8C872" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#38E8C872" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <!-- 背景：隨音樂起伏的萬象頻譜 -->
+        <local:SpectrumBars x:Name="Spectrum"
+                            Height="54"
+                            VerticalAlignment="Bottom"
+                            Margin="18,0,18,4"
+                            BarCount="40"
+                            Opacity="0.2"
+                            IsHitTestVisible="False" />
+
+        <Grid Margin="16,14,16,8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- 封面 + 文字 -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Grid Width="80" Height="80" VerticalAlignment="Top">
+                    <Grid.Effect>
+                        <DropShadowEffect BlurRadius="16" ShadowDepth="0" Color="#E8C872" Opacity="0.25" />
+                    </Grid.Effect>
+                    <Border CornerRadius="14" Background="#1FE8C872" />
+                    <TextBlock Text="♪" FontSize="30" Foreground="#99E8C872"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <Image Source="{Binding Cover}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality">
+                        <Image.Clip>
+                            <RectangleGeometry Rect="0,0,80,80" RadiusX="14" RadiusY="14" />
+                        </Image.Clip>
+                    </Image>
+                </Grid>
+
+                <StackPanel Grid.Column="1" Margin="14,1,0,0">
+                    <TextBlock Text="{Binding Title}"
+                               FontSize="16" FontWeight="SemiBold"
+                               Foreground="#E8C872"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Artist}"
+                               Margin="0,2,0,0"
+                               FontSize="12"
+                               Foreground="#99EDE8DC"
+                               TextTrimming="CharacterEllipsis" />
+
+                    <!-- 動態歌詞：每換一句就淡入上浮 -->
+                    <TextBlock Text="{Binding CurrentLyric, NotifyOnTargetUpdated=True}"
+                               Margin="0,11,0,0"
+                               FontSize="14"
+                               Foreground="#EDE8DC"
+                               TextTrimming="CharacterEllipsis">
+                        <TextBlock.RenderTransform>
+                            <TranslateTransform />
+                        </TextBlock.RenderTransform>
+                        <TextBlock.Triggers>
+                            <EventTrigger RoutedEvent="Binding.TargetUpdated">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                         From="0" To="1" Duration="0:0:0.35" />
+                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                                         From="7" To="0" Duration="0:0:0.4">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </TextBlock.Triggers>
+                    </TextBlock>
+                    <TextBlock Text="{Binding NextLyric}"
+                               Margin="0,3,0,0"
+                               FontSize="11"
+                               Foreground="#66EDE8DC"
+                               TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+            </Grid>
+
+            <!-- 進度條 -->
+            <Grid Grid.Row="1" Margin="0,8,0,0"
+                  Visibility="{Binding HasTimeline, Converter={StaticResource BoolToVis}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding PositionText}" FontSize="10" Foreground="#80EDE8DC"
+                           VerticalAlignment="Center" Width="34" />
+                <Grid Grid.Column="1" Height="3" VerticalAlignment="Center" Margin="4,0">
+                    <Border CornerRadius="1.5" Background="#24EDE8DC" />
+                    <Border CornerRadius="1.5" Background="#E8C872" RenderTransformOrigin="0,0.5">
+                        <Border.RenderTransform>
+                            <ScaleTransform ScaleX="{Binding Progress}" />
+                        </Border.RenderTransform>
+                    </Border>
+                </Grid>
+                <TextBlock Grid.Column="2" Text="{Binding DurationText}" FontSize="10" Foreground="#80EDE8DC"
+                           VerticalAlignment="Center" Width="34" TextAlignment="Right" />
+            </Grid>
+
+            <!-- 控制鍵：上一首 / 播放暫停 / 下一首 -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,0">
+                <Button Style="{StaticResource IconButton}" Content="&#xE892;" Command="{Binding PreviousCommand}" ToolTip="上一首" />
+                <Button Style="{StaticResource IconButton}" Content="{Binding PlayPauseGlyph}" Command="{Binding PlayPauseCommand}"
+                        FontSize="18" Margin="10,0" ToolTip="播放 / 暫停" />
+                <Button Style="{StaticResource IconButton}" Content="&#xE893;" Command="{Binding NextCommand}" ToolTip="下一首" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -55,63 +55,75 @@
                 </ContextMenu>
             </Border.ContextMenu>
 
-            <Grid ClipToBounds="True">
+            <Grid x:Name="ContentRoot">
 
-                <!-- 靜息態：左側靈氣呼吸點 + 右側時辰 -->
+                <!-- 收合態 -->
                 <Grid x:Name="IdleLayer">
-                    <Ellipse x:Name="SpiritDot"
-                             Width="7" Height="7"
-                             HorizontalAlignment="Left" VerticalAlignment="Center"
-                             Margin="15,0,0,0"
-                             Fill="{StaticResource LiuJinBrush}">
-                        <Ellipse.Effect>
-                            <DropShadowEffect BlurRadius="8" ShadowDepth="0" Color="#E8C872" Opacity="0.9" />
-                        </Ellipse.Effect>
-                        <Ellipse.Triggers>
-                            <EventTrigger RoutedEvent="Loaded">
-                                <BeginStoryboard>
-                                    <Storyboard RepeatBehavior="Forever" AutoReverse="True">
-                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                         From="1" To="0.3" Duration="0:0:1.6">
-                                            <DoubleAnimation.EasingFunction>
-                                                <SineEase EasingMode="EaseInOut" />
-                                            </DoubleAnimation.EasingFunction>
-                                        </DoubleAnimation>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                        </Ellipse.Triggers>
-                    </Ellipse>
+                    <!-- 預設：左側靈氣呼吸點 + 右側時辰 -->
+                    <Grid x:Name="DefaultCompact">
+                        <Ellipse x:Name="SpiritDot"
+                                 Width="7" Height="7"
+                                 HorizontalAlignment="Left" VerticalAlignment="Center"
+                                 Margin="15,0,0,0"
+                                 Fill="{StaticResource LiuJinBrush}">
+                            <Ellipse.Effect>
+                                <DropShadowEffect BlurRadius="8" ShadowDepth="0" Color="#E8C872" Opacity="0.9" />
+                            </Ellipse.Effect>
+                            <Ellipse.Triggers>
+                                <EventTrigger RoutedEvent="Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                             From="1" To="0.3" Duration="0:0:1.6">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <SineEase EasingMode="EaseInOut" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Ellipse.Triggers>
+                        </Ellipse>
 
-                    <TextBlock x:Name="ClockText"
-                               Text="00:00"
-                               HorizontalAlignment="Right" VerticalAlignment="Center"
-                               Margin="0,0,16,0"
-                               FontSize="13" FontWeight="SemiBold"
-                               Foreground="{StaticResource YueBaiDimBrush}" />
+                        <TextBlock x:Name="ClockText"
+                                   Text="00:00"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center"
+                                   Margin="0,0,16,0"
+                                   FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{StaticResource YueBaiDimBrush}" />
+                    </Grid>
+
+                    <!-- 法器自訂的收合畫面（例如：封面 + 迷你頻譜） -->
+                    <ContentControl x:Name="CompactHost" Focusable="False" IsTabStop="False"
+                                    HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
                 </Grid>
 
-                <!-- 展開態：主標題 + 副標題 -->
-                <StackPanel x:Name="ExpandedLayer"
-                            Opacity="0"
-                            HorizontalAlignment="Center" VerticalAlignment="Center"
-                            IsHitTestVisible="False">
-                    <TextBlock x:Name="TitleText"
-                               Text="天幕島"
-                               HorizontalAlignment="Center"
-                               FontSize="22" FontWeight="SemiBold"
-                               Foreground="{StaticResource LiuJinBrush}">
-                        <TextBlock.Effect>
-                            <DropShadowEffect BlurRadius="14" ShadowDepth="0" Color="#E8C872" Opacity="0.45" />
-                        </TextBlock.Effect>
-                    </TextBlock>
-                    <TextBlock x:Name="SubtitleText"
-                               Text="靈台初開 · 第一重"
-                               HorizontalAlignment="Center"
-                               Margin="0,8,0,0"
-                               FontSize="13"
-                               Foreground="{StaticResource YueBaiDimBrush}" />
-                </StackPanel>
+                <!-- 展開態 -->
+                <Grid x:Name="ExpandedLayer" Opacity="0" Visibility="Hidden">
+                    <!-- 預設：主標題 + 副標題 -->
+                    <StackPanel x:Name="DefaultExpanded"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock x:Name="TitleText"
+                                   Text="天幕島"
+                                   HorizontalAlignment="Center"
+                                   FontSize="22" FontWeight="SemiBold"
+                                   Foreground="{StaticResource LiuJinBrush}">
+                            <TextBlock.Effect>
+                                <DropShadowEffect BlurRadius="14" ShadowDepth="0" Color="#E8C872" Opacity="0.45" />
+                            </TextBlock.Effect>
+                        </TextBlock>
+                        <TextBlock x:Name="SubtitleText"
+                                   Text="靈台初開 · 第一重"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,8,0,0"
+                                   FontSize="13"
+                                   Foreground="{StaticResource YueBaiDimBrush}" />
+                    </StackPanel>
+
+                    <!-- 法器自訂的展開畫面（例如：音樂面板） -->
+                    <ContentControl x:Name="ExpandedHost" Focusable="False" IsTabStop="False"
+                                    HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+                </Grid>
             </Grid>
         </Border>
     </Grid>

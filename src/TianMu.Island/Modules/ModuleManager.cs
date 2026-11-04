@@ -9,12 +9,19 @@ namespace TianMu.Island.Modules;
 /// 法器總管：負責發現、祭煉（初始化）與收功（釋放）所有法器模組。
 ///
 /// 來源有二：
-///   1. 內建法器：本程式集內所有實作 <see cref="IIslandModule"/> 的類別。
+///   1. 內建法器：<see cref="BuiltInAssemblies"/> 中所有實作 <see cref="IIslandModule"/> 的類別。
 ///   2. 外部法器：exe 同層 <c>modules\</c> 資料夾中的 *.dll。
 /// 任何一件法器出錯都只會被記錄，不會讓天幕崩潰。
 /// </summary>
 internal sealed class ModuleManager(IIslandHost host) : IAsyncDisposable
 {
+    /// <summary>隨主程式一起打包的內建法器所在的組件。</summary>
+    private static readonly Assembly[] BuiltInAssemblies =
+    [
+        typeof(ModuleManager).Assembly,                       // 開幕問候
+        typeof(TianMu.Modules.Music.MusicModule).Assembly,    // 萬象樂律
+    ];
+
     private readonly List<IIslandModule> _modules = [];
     private readonly CancellationTokenSource _cts = new();
 
@@ -23,7 +30,8 @@ internal sealed class ModuleManager(IIslandHost host) : IAsyncDisposable
     public async Task LoadAllAsync()
     {
         var types = new List<Type>();
-        types.AddRange(FindModuleTypes(typeof(ModuleManager).Assembly));
+        foreach (var assembly in BuiltInAssemblies)
+            types.AddRange(FindModuleTypes(assembly));
 
         string moduleDir = Path.Combine(AppContext.BaseDirectory, "modules");
         if (Directory.Exists(moduleDir))

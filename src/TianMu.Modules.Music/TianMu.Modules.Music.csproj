@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    法器「萬象樂律」：接管系統媒體（瀏覽器 YouTube、Spotify…）、歌詞、音訊頻譜。
+    windows10.0.19041.0 → 可使用 WinRT 的 GlobalSystemMediaTransportControls。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>TianMu.Modules.Music</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TianMu.Core\TianMu.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- WASAPI 迴路擷取：聽見系統正在播放的聲音，用來畫頻譜 -->
+    <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TianMu.Tests" />
+  </ItemGroup>
+
+</Project>
