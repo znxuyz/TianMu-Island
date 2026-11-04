@@ -1,0 +1,118 @@
+<Window x:Class="TianMu.Island.IslandWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="天幕島"
+        Width="640" Height="260"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        ResizeMode="NoResize"
+        WindowStartupLocation="Manual"
+        UseLayoutRounding="True"
+        FontFamily="Microsoft JhengHei UI, Microsoft YaHei UI, Segoe UI">
+
+    <!--
+      整個視窗是一塊「透明畫布」，只有中間的天幕膠囊是實體。
+      AllowsTransparency=True 會讓 Windows 以像素為單位做命中測試：
+      透明的地方滑鼠自動穿透，不會擋住底下的視窗。
+    -->
+    <Grid>
+        <Border x:Name="Capsule"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Margin="0,10,0,0"
+                Width="180" Height="34"
+                CornerRadius="17"
+                Background="{StaticResource XuanYeBrush}"
+                BorderThickness="1"
+                Cursor="Hand"
+                MouseEnter="Capsule_MouseEnter"
+                MouseLeave="Capsule_MouseLeave"
+                MouseLeftButtonDown="Capsule_MouseLeftButtonDown"
+                MouseLeftButtonUp="Capsule_MouseLeftButtonUp">
+
+            <!-- 鎏金描邊：若有似無的一圈靈光 -->
+            <Border.BorderBrush>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#66E8C872" Offset="0" />
+                    <GradientStop Color="#10E8C872" Offset="0.45" />
+                    <GradientStop Color="#10E8C872" Offset="0.55" />
+                    <GradientStop Color="#55E8C872" Offset="1" />
+                </LinearGradientBrush>
+            </Border.BorderBrush>
+
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="22" ShadowDepth="3" Direction="270"
+                                  Color="#000000" Opacity="0.5" RenderingBias="Performance" />
+            </Border.Effect>
+
+            <Border.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="收起天幕（結束程式）" Click="Exit_Click" />
+                </ContextMenu>
+            </Border.ContextMenu>
+
+            <Grid ClipToBounds="True">
+
+                <!-- 靜息態：左側靈氣呼吸點 + 右側時辰 -->
+                <Grid x:Name="IdleLayer">
+                    <Ellipse x:Name="SpiritDot"
+                             Width="7" Height="7"
+                             HorizontalAlignment="Left" VerticalAlignment="Center"
+                             Margin="15,0,0,0"
+                             Fill="{StaticResource LiuJinBrush}">
+                        <Ellipse.Effect>
+                            <DropShadowEffect BlurRadius="8" ShadowDepth="0" Color="#E8C872" Opacity="0.9" />
+                        </Ellipse.Effect>
+                        <Ellipse.Triggers>
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                         From="1" To="0.3" Duration="0:0:1.6">
+                                            <DoubleAnimation.EasingFunction>
+                                                <SineEase EasingMode="EaseInOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Ellipse.Triggers>
+                    </Ellipse>
+
+                    <TextBlock x:Name="ClockText"
+                               Text="00:00"
+                               HorizontalAlignment="Right" VerticalAlignment="Center"
+                               Margin="0,0,16,0"
+                               FontSize="13" FontWeight="SemiBold"
+                               Foreground="{StaticResource YueBaiDimBrush}" />
+                </Grid>
+
+                <!-- 展開態：主標題 + 副標題 -->
+                <StackPanel x:Name="ExpandedLayer"
+                            Opacity="0"
+                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                            IsHitTestVisible="False">
+                    <TextBlock x:Name="TitleText"
+                               Text="天幕島"
+                               HorizontalAlignment="Center"
+                               FontSize="22" FontWeight="SemiBold"
+                               Foreground="{StaticResource LiuJinBrush}">
+                        <TextBlock.Effect>
+                            <DropShadowEffect BlurRadius="14" ShadowDepth="0" Color="#E8C872" Opacity="0.45" />
+                        </TextBlock.Effect>
+                    </TextBlock>
+                    <TextBlock x:Name="SubtitleText"
+                               Text="靈台初開 · 第一重"
+                               HorizontalAlignment="Center"
+                               Margin="0,8,0,0"
+                               FontSize="13"
+                               Foreground="{StaticResource YueBaiDimBrush}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

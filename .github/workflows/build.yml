@@ -1,0 +1,32 @@
+name: 煉器（Build & Publish）
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: 編譯
+        run: dotnet build TianMu-Island.slnx -c Release
+
+      - name: 打包單一 exe (win-x64)
+        run: >
+          dotnet publish src/TianMu.Island/TianMu.Island.csproj
+          -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true
+          -o dist/win-x64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TianMuIsland-win-x64
+          path: dist/win-x64/TianMuIsland.exe

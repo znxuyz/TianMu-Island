@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    天幕島「核心契約」：外掛（法器模組）只需引用這個專案，
+    不需要知道任何 WPF / 視窗細節。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>TianMu.Core</RootNamespace>
+  </PropertyGroup>
+
+</Project>

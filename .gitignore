@@ -1,0 +1,74 @@
+# ===== 天幕島 .gitignore (C# / .NET / Visual Studio / Rider / VS Code) =====
+
+# 編譯產物
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+artifacts/
+publish/
+dist/
+x64/
+x86/
+[Aa][Rr][Mm]64/
+[Dd]ebug/
+[Rr]elease/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+*.VC.db
+*.VC.opendb
+ipch/
+*.aps
+*.ncb
+*.opensdf
+*.sdf
+*.cachefile
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# VS Code（保留共用設定）
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+project.lock.json
+project.fragment.lock.json
+.nuget/
+
+# 測試與覆蓋率
+TestResults/
+[Tt]est[Rr]esult*/
+coverage*.json
+coverage*.xml
+*.coverage
+*.coveragexml
+
+# 發佈設定中的私密資訊
+*.pubxml.user
+*.publishsettings
+
+# 系統雜物
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# 天幕島本地外掛目錄（開發時手動放入的 DLL）
+modules/

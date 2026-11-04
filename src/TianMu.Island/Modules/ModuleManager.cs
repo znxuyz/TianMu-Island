@@ -1,0 +1,84 @@
+using System.Diagnostics;
+using System.IO;
+using System.Reflection;
+using TianMu.Core;
+
+namespace TianMu.Island.Modules;
+
+/// <summary>
+/// 法器總管：負責發現、祭煉（初始化）與收功（釋放）所有法器模組。
+///
+/// 來源有二：
+///   1. 內建法器：本程式集內所有實作 <see cref="IIslandModule"/> 的類別。
+///   2. 外部法器：exe 同層 <c>modules\</c> 資料夾中的 *.dll。
+/// 任何一件法器出錯都只會被記錄，不會讓天幕崩潰。
+/// </summary>
+internal sealed class ModuleManager(IIslandHost host) : IAsyncDisposable
+{
+    private readonly List<IIslandModule> _modules = [];
+    private readonly CancellationTokenSource _cts = new();
+
+    public IReadOnlyList<IIslandModule> Modules => _modules;
+
+    public async Task LoadAllAsync()
+    {
+        var types = new List<Type>();
+        types.AddRange(FindModuleTypes(typeof(ModuleManager).Assembly));
+
+        string moduleDir = Path.Combine(AppContext.BaseDirectory, "modules");
+        if (Directory.Exists(moduleDir))
+        {
+            foreach (string dll in Directory.EnumerateFiles(moduleDir, "*.dll"))
+            {
+                try
+                {
+                    types.AddRange(FindModuleTypes(Assembly.LoadFrom(dll)));
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[天幕] 無法載入外部法器 {dll}: {ex.Message}");
+                }
+            }
+        }
+
+        foreach (var type in types)
+        {
+            try
+            {
+                var module = (IIslandModule)Activator.CreateInstance(type)!;
+                // 在背景執行緒祭煉，避免卡住 UI
+                await Task.Run(() => module.InitializeAsync(host, _cts.Token)).ConfigureAwait(true);
+                _modules.Add(module);
+                Debug.WriteLine($"[天幕] 法器已祭煉：{module.DisplayName} ({module.Id})");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[天幕] 法器 {type.FullName} 祭煉失敗：{ex}");
+            }
+        }
+    }
+
+    private static IEnumerable<Type> FindModuleTypes(Assembly assembly)
+    {
+        Type[] all;
+        try { all = assembly.GetTypes(); }
+        catch (ReflectionTypeLoadException ex) { all = ex.Types.Where(t => t is not null).ToArray()!; }
+
+        return all.Where(t =>
+            t is { IsClass: true, IsAbstract: false } &&
+            typeof(IIslandModule).IsAssignableFrom(t) &&
+            t.GetConstructor(Type.EmptyTypes) is not null);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _cts.Cancel();
+        foreach (var module in _modules)
+        {
+            try { await module.DisposeAsync().ConfigureAwait(false); }
+            catch (Exception ex) { Debug.WriteLine($"[天幕] 法器 {module.Id} 收功失敗：{ex.Message}"); }
+        }
+        _modules.Clear();
+        _cts.Dispose();
+    }
+}

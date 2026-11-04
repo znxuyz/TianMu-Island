@@ -1,0 +1,14 @@
+<Project>
+  <!-- 全專案共用設定：所有 csproj 會自動繼承 -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- 允許在 Linux / macOS 上的 CI 也能編譯 Windows 專案（純編譯，不執行） -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+
+    <Product>TianMu-Island 天幕島</Product>
+    <Company>TianMu-Island</Company>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+</Project>

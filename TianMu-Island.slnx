@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TianMu.Core/TianMu.Core.csproj" />
+    <Project Path="src/TianMu.Island/TianMu.Island.csproj" />
+  </Folder>
+</Solution>
