@@ -1,10 +1,18 @@
 name: 出爐（Release）
 
-# 推送 v 開頭的標籤（例如 v0.3.0）時，自動編譯、測試、打包並建立 GitHub Release。
-# 天幕島內建的自動更新就是讀取這裡發佈的檔案與 .sha256 校驗檔。
+# 兩種觸發方式：
+#   1. 推送 v 開頭的標籤（例如 v0.3.0）
+#   2. 在 Actions 頁面手動執行，輸入版本號（例如 0.3.0），工作流程會自己建立標籤
+# 會自動編譯、測試、打包 x64 與 ARM64 單檔 exe（附 .sha256 校驗檔）並建立 GitHub Release。
+# 天幕島內建的自動更新就是讀取這裡發佈的檔案。
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本號（不含 v，例如 0.3.0）'
+        required: true
 
 permissions:
   contents: write
@@ -13,7 +21,9 @@ jobs:
   release:
     runs-on: windows-latest
     env:
-      TAG: ${{ github.ref_name }}
+      TAG_FROM_PUSH: ${{ github.ref_name }}
+      VERSION_INPUT: ${{ inputs.version }}
+      EVENT: ${{ github.event_name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -25,8 +35,10 @@ jobs:
         id: ver
         shell: pwsh
         run: |
-          $v = $env:TAG.TrimStart('v')
+          $v = if ($env:EVENT -eq 'workflow_dispatch') { $env:VERSION_INPUT } else { $env:TAG_FROM_PUSH.TrimStart('v') }
+          if ($v -notmatch '^\d+\.\d+\.\d+$') { throw "版本號格式必須是 X.Y.Z，收到：$v" }
           "version=$v" >> $env:GITHUB_OUTPUT
+          "tag=v$v" >> $env:GITHUB_OUTPUT
 
       - name: 試煉（單元測試）
         run: dotnet test TianMu-Island.slnx -c Release -p:Version=${{ steps.ver.outputs.version }}
@@ -52,6 +64,8 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
-          name: 天幕島 ${{ github.ref_name }}
+          tag_name: ${{ steps.ver.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: 天幕島 ${{ steps.ver.outputs.tag }}
           generate_release_notes: true
           files: release/*
