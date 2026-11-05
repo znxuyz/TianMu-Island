@@ -40,6 +40,26 @@ internal static class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool SetWindowPos(nint hWnd, nint hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
 
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool SetForegroundWindow(nint hWnd);
+
+    [DllImport("dwmapi.dll")]
+    public static extern int DwmSetWindowAttribute(nint hwnd, int attribute, ref int value, int size);
+
+    public const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+    public const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
+    public const int DWMWCP_ROUND = 2;
+
+    /// <summary>Windows 11：讓自訂邊框的視窗也有系統圓角與深色外框。舊版 Windows 會安靜地忽略。</summary>
+    public static void ApplyModernFrame(nint hwnd)
+    {
+        int round = DWMWCP_ROUND;
+        DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, ref round, sizeof(int));
+        int dark = 1;
+        DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref dark, sizeof(int));
+    }
+
     public static long GetExStyle(nint hwnd) =>
         IntPtr.Size == 8 ? GetWindowLongPtr64(hwnd, GWL_EXSTYLE) : GetWindowLong32(hwnd, GWL_EXSTYLE);
 

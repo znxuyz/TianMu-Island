@@ -19,4 +19,7 @@ public interface IIslandHost
     /// 在 UI 執行緒上執行動作。建立或修改自訂畫面（WPF 元件）時必須透過它。
     /// </summary>
     Task InvokeAsync(Action action);
+
+    /// <summary>取得某法器的使用者選項。</summary>
+    IModuleSettings GetModuleSettings(string moduleId);
 }

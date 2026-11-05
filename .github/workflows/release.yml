@@ -1,0 +1,57 @@
+name: 出爐（Release）
+
+# 推送 v 開頭的標籤（例如 v0.3.0）時，自動編譯、測試、打包並建立 GitHub Release。
+# 天幕島內建的自動更新就是讀取這裡發佈的檔案與 .sha256 校驗檔。
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: 版本號
+        id: ver
+        shell: pwsh
+        run: |
+          $v = $env:TAG.TrimStart('v')
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: 試煉（單元測試）
+        run: dotnet test TianMu-Island.slnx -c Release -p:Version=${{ steps.ver.outputs.version }}
+
+      - name: 出爐（x64 與 ARM64 單檔 exe + 校驗檔）
+        shell: pwsh
+        run: |
+          $v = "${{ steps.ver.outputs.version }}"
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          foreach ($rid in 'win-x64', 'win-arm64') {
+            dotnet publish src/TianMu.Island/TianMu.Island.csproj `
+              -c Release -r $rid --self-contained true `
+              -p:PublishSingleFile=true -p:Version=$v `
+              -o "dist/$rid"
+            if ($LASTEXITCODE -ne 0) { throw "打包 $rid 失敗" }
+
+            $name = "TianMuIsland-$rid.exe"
+            Copy-Item "dist/$rid/TianMuIsland.exe" "release/$name"
+            $hash = (Get-FileHash "release/$name" -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $name" | Out-File -Encoding ascii "release/$name.sha256"
+          }
+          Get-ChildItem release
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: 天幕島 ${{ github.ref_name }}
+          generate_release_notes: true
+          files: release/*

@@ -84,7 +84,7 @@ public sealed class SpectrumBars : FrameworkElement
     private static Brush DefaultBrush()
     {
         var brush = new LinearGradientBrush(
-            Color.FromRgb(0xF3, 0xDC, 0x9A), Color.FromRgb(0xC9, 0x9A, 0x3C), new Point(0, 0), new Point(0, 1));
+            Color.FromRgb(0xE6, 0xCF, 0x98), Color.FromRgb(0xA8, 0x8A, 0x4E), new Point(0, 0), new Point(0, 1));
         brush.Freeze();
         return brush;
     }

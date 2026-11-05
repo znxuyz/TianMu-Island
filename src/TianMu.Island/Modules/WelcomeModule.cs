@@ -6,10 +6,12 @@ namespace TianMu.Island.Modules;
 /// 第一件內建法器：開機問候。
 /// 它的存在是為了示範「法器 → 宿主 → 天幕動畫」整條管線已經接通。
 /// </summary>
-internal sealed class WelcomeModule : IIslandModule
+internal sealed class WelcomeModule : IIslandModule, IDescribedModule
 {
     public string Id => "tianmu.welcome";
     public string DisplayName => "開幕問候";
+    public string Description => "啟動時，天幕展開向你問好。";
+    public IReadOnlyList<ModuleOption> Options => [];
 
     public Task InitializeAsync(IIslandHost host, CancellationToken cancellationToken)
     {

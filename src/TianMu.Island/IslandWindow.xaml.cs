@@ -7,6 +7,8 @@ using System.Windows.Threading;
 using TianMu.Core;
 using TianMu.Island.Interop;
 using TianMu.Island.Physics;
+using TianMu.Island.Settings;
+using TianMu.Island.Time;
 
 namespace TianMu.Island;
 
@@ -52,13 +54,12 @@ public partial class IslandWindow : Window, IIslandHost
     private readonly DispatcherTimer _transientTimer;
     private readonly DispatcherTimer _autoCollapseTimer;
 
-    private static readonly string[] Stems = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
-    private static readonly string[] Branches = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
-    private static readonly ChineseLunisolarCalendar Lunar = new();
+    private readonly SettingsStore _settings;
 
-    public IslandWindow()
+    public IslandWindow(SettingsStore settings)
     {
         InitializeComponent();
+        _settings = settings;
 
         _clockTimer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background,
             (_, _) => UpdateClock(), Dispatcher);
@@ -197,7 +198,9 @@ public partial class IslandWindow : Window, IIslandHost
         e.Handled = true;
     }
 
-    private void Exit_Click(object sender, RoutedEventArgs e) => Close();
+    private void Settings_Click(object sender, RoutedEventArgs e) => App.Current.ShowSettings();
+    private void Hide_Click(object sender, RoutedEventArgs e) => Hide();
+    private void Exit_Click(object sender, RoutedEventArgs e) => App.Current.Quit();
 
     // ═══════════════════════ 法器宿主 IIslandHost ═══════════════════════
 
@@ -244,6 +247,8 @@ public partial class IslandWindow : Window, IIslandHost
 
     public Task InvokeAsync(Action action) => Dispatcher.InvokeAsync(action).Task;
 
+    public IModuleSettings GetModuleSettings(string moduleId) => _settings.ForModule(moduleId);
+
     // ═══════════════════════ 內容切換 ═══════════════════════
 
     private bool IsExpanded => _userExpanded || _transient is not null;
@@ -288,32 +293,23 @@ public partial class IslandWindow : Window, IIslandHost
         var shown = ExpandedActivity;
         if (shown is null || shown.ExpandedView is not null)
         {
-            // 沒有異象（或異象自帶畫面）時，預設面板顯示時辰
+            // 沒有異象（或異象自帶畫面）時，預設面板顯示時辰：大字時間、農曆、直書時辰
+            TitleText.FontSize = 38;
             TitleText.Text = now.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
-            SubtitleText.Text = $"{GanZhiYear(now)}年 · {Shichen(now)}時";
+            string? year = Lunar.GanZhiYear(now);
+            string? monthDay = Lunar.MonthDay(now);
+            SubtitleText.Text = year is null || monthDay is null ? string.Empty : $"{year}年 · {monthDay}";
+            ShichenText.Text = $"{Lunar.Shichen(now)}\n時";
+            ShichenText.Visibility = Visibility.Visible;
         }
         else
         {
+            TitleText.FontSize = 24;
             TitleText.Text = shown.Title;
             SubtitleText.Text = shown.Subtitle ?? string.Empty;
+            ShichenText.Visibility = Visibility.Collapsed;
         }
     }
-
-    private static string GanZhiYear(DateTime date)
-    {
-        try
-        {
-            int year = Lunar.GetSexagenaryYear(date);
-            return Stems[Lunar.GetCelestialStem(year) - 1] + Branches[Lunar.GetTerrestrialBranch(year) - 1];
-        }
-        catch (ArgumentOutOfRangeException)
-        {
-            return "天幕";
-        }
-    }
-
-    // 子時 = 23:00–00:59，丑時 = 01:00–02:59 ……
-    private static string Shichen(DateTime date) => Branches[(date.Hour + 1) / 2 % 12];
 
     // ═══════════════════════ 彈簧動畫核心 ═══════════════════════
 
@@ -391,8 +387,7 @@ public partial class IslandWindow : Window, IIslandHost
         Capsule.CornerRadius = new CornerRadius(radius);
 
         // 內容沿著圓角裁切，變形時邊緣依然乾淨
-        double innerR = Math.Max(0, radius - 1);
-        ContentRoot.Clip = new RectangleGeometry(new Rect(0, 0, w - 2, h - 2), innerR, innerR);
+        ContentRoot.Clip = new RectangleGeometry(new Rect(0, 0, w, h), radius, radius);
 
         double p = Math.Clamp(_reveal.Value, 0, 1);
         double idleOpacity = Math.Clamp(1 - p * 2.2, 0, 1);          // 收合內容先快速隱去

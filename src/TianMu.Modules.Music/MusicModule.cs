@@ -17,8 +17,11 @@ namespace TianMu.Modules.Music;
 ///   · 自 LRCLIB 取得逐句同步歌詞
 ///   · 以 WASAPI 迴路擷取系統聲音，畫出隨節奏律動的頻譜
 /// </summary>
-public sealed class MusicModule : IIslandModule
+public sealed class MusicModule : IIslandModule, IDescribedModule
 {
+    /// <summary>選項：是否向 LRCLIB 查詢歌詞。</summary>
+    public const string LyricsOption = "lyrics";
+
     private const double CompactWidth = 250;
     private const double ExpandedWidth = 430;
     private const double ExpandedHeight = 180;
@@ -54,6 +57,12 @@ public sealed class MusicModule : IIslandModule
 
     public string Id => "tianmu.music";
     public string DisplayName => "萬象樂律";
+    public string Description => "接管瀏覽器與播放器的音樂：封面、歌名、頻譜與播放控制。";
+
+    public IReadOnlyList<ModuleOption> Options { get; } =
+    [
+        new(LyricsOption, "同步歌詞", "向 LRCLIB 歌詞庫查詢歌詞，只會送出歌名與歌手。", true),
+    ];
 
     public async Task InitializeAsync(IIslandHost host, CancellationToken cancellationToken)
     {
@@ -115,7 +124,10 @@ public sealed class MusicModule : IIslandModule
             _vm.NextLyric = string.Empty;
             _coverBytes = null;
             _vm.Cover = null;
-            StartLyricsLookup(identity, s.Duration);
+            if (_host?.GetModuleSettings(Id).GetBool(LyricsOption, true) == false)
+                _vm.CurrentLyric = "歌詞查詢已關閉";
+            else
+                StartLyricsLookup(identity, s.Duration);
         }
 
         if (!ReferenceEquals(s.Thumbnail, _coverBytes))

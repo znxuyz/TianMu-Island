@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\TianMu.Modules.Music\TianMu.Modules.Music.csproj" />
+    <ProjectReference Include="..\..\src\TianMu.Island\TianMu.Island.csproj" />
   </ItemGroup>
 
 </Project>

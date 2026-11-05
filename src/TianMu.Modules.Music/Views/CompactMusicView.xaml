@@ -11,8 +11,8 @@
         </Grid.ColumnDefinitions>
 
         <Grid Width="24" Height="24" VerticalAlignment="Center">
-            <Border CornerRadius="7" Background="#26E8C872" />
-            <TextBlock Text="♪" FontSize="12" Foreground="#CCE8C872"
+            <Border CornerRadius="7" Background="#26C8A869" />
+            <TextBlock Text="♪" FontSize="12" Foreground="#CCC8A869"
                        HorizontalAlignment="Center" VerticalAlignment="Center" />
             <Image Source="{Binding Cover}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality">
                 <Image.Clip>
@@ -26,7 +26,7 @@
                    Margin="9,0,10,0"
                    VerticalAlignment="Center"
                    FontSize="12"
-                   Foreground="#B3EDE8DC"
+                   Foreground="#B3ECE6D8"
                    TextTrimming="CharacterEllipsis" />
 
         <local:SpectrumBars x:Name="Spectrum"

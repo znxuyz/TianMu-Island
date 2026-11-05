@@ -9,7 +9,7 @@
         <Style x:Key="IconButton" TargetType="Button">
             <Setter Property="Focusable" Value="False" />
             <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Foreground" Value="#EDE8DC" />
+            <Setter Property="Foreground" Value="#ECE6D8" />
             <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
             <Setter Property="FontSize" Value="15" />
             <Setter Property="Width" Value="44" />
@@ -22,11 +22,11 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg" Property="Background" Value="#1FE8C872" />
-                                <Setter Property="Foreground" Value="#E8C872" />
+                                <Setter TargetName="Bg" Property="Background" Value="#1FC8A869" />
+                                <Setter Property="Foreground" Value="#C8A869" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Bg" Property="Background" Value="#38E8C872" />
+                                <Setter TargetName="Bg" Property="Background" Value="#38C8A869" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -61,10 +61,10 @@
 
                 <Grid Width="80" Height="80" VerticalAlignment="Top">
                     <Grid.Effect>
-                        <DropShadowEffect BlurRadius="16" ShadowDepth="0" Color="#E8C872" Opacity="0.25" />
+                        <DropShadowEffect BlurRadius="16" ShadowDepth="0" Color="#C8A869" Opacity="0.25" />
                     </Grid.Effect>
-                    <Border CornerRadius="14" Background="#1FE8C872" />
-                    <TextBlock Text="♪" FontSize="30" Foreground="#99E8C872"
+                    <Border CornerRadius="14" Background="#1FC8A869" />
+                    <TextBlock Text="♪" FontSize="30" Foreground="#99C8A869"
                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                     <Image Source="{Binding Cover}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality">
                         <Image.Clip>
@@ -75,20 +75,21 @@
 
                 <StackPanel Grid.Column="1" Margin="14,1,0,0">
                     <TextBlock Text="{Binding Title}"
-                               FontSize="16" FontWeight="SemiBold"
-                               Foreground="#E8C872"
+                               FontFamily="{DynamicResource SerifFont}"
+                               FontSize="17" FontWeight="Bold"
+                               Foreground="#C8A869"
                                TextTrimming="CharacterEllipsis" />
                     <TextBlock Text="{Binding Artist}"
                                Margin="0,2,0,0"
                                FontSize="12"
-                               Foreground="#99EDE8DC"
+                               Foreground="#99ECE6D8"
                                TextTrimming="CharacterEllipsis" />
 
                     <!-- 動態歌詞：每換一句就淡入上浮 -->
                     <TextBlock Text="{Binding CurrentLyric, NotifyOnTargetUpdated=True}"
                                Margin="0,11,0,0"
                                FontSize="14"
-                               Foreground="#EDE8DC"
+                               Foreground="#ECE6D8"
                                TextTrimming="CharacterEllipsis">
                         <TextBlock.RenderTransform>
                             <TranslateTransform />
@@ -113,7 +114,7 @@
                     <TextBlock Text="{Binding NextLyric}"
                                Margin="0,3,0,0"
                                FontSize="11"
-                               Foreground="#66EDE8DC"
+                               Foreground="#66ECE6D8"
                                TextTrimming="CharacterEllipsis" />
                 </StackPanel>
             </Grid>
@@ -126,17 +127,17 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="{Binding PositionText}" FontSize="10" Foreground="#80EDE8DC"
+                <TextBlock Text="{Binding PositionText}" FontSize="10" Foreground="#80ECE6D8"
                            VerticalAlignment="Center" Width="34" />
                 <Grid Grid.Column="1" Height="3" VerticalAlignment="Center" Margin="4,0">
-                    <Border CornerRadius="1.5" Background="#24EDE8DC" />
-                    <Border CornerRadius="1.5" Background="#E8C872" RenderTransformOrigin="0,0.5">
+                    <Border CornerRadius="1.5" Background="#24ECE6D8" />
+                    <Border CornerRadius="1.5" Background="#C8A869" RenderTransformOrigin="0,0.5">
                         <Border.RenderTransform>
                             <ScaleTransform ScaleX="{Binding Progress}" />
                         </Border.RenderTransform>
                     </Border>
                 </Grid>
-                <TextBlock Grid.Column="2" Text="{Binding DurationText}" FontSize="10" Foreground="#80EDE8DC"
+                <TextBlock Grid.Column="2" Text="{Binding DurationText}" FontSize="10" Foreground="#80ECE6D8"
                            VerticalAlignment="Center" Width="34" TextAlignment="Right" />
             </Grid>
 

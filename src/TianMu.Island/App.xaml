@@ -1,16 +1,13 @@
 <Application x:Class="TianMu.Island.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             ShutdownMode="OnMainWindowClose">
+             ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
-        <!-- 天幕島色票：玄夜黑、鎏金、月白 -->
-        <Color x:Key="XuanYeColor">#FF050507</Color>
-        <Color x:Key="LiuJinColor">#FFE8C872</Color>
-        <Color x:Key="YueBaiColor">#FFEDE8DC</Color>
-
-        <SolidColorBrush x:Key="XuanYeBrush" Color="{StaticResource XuanYeColor}" />
-        <SolidColorBrush x:Key="LiuJinBrush" Color="{StaticResource LiuJinColor}" />
-        <SolidColorBrush x:Key="YueBaiBrush" Color="{StaticResource YueBaiColor}" />
-        <SolidColorBrush x:Key="YueBaiDimBrush" Color="#99EDE8DC" />
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- 設計語言「玄漆描金」：所有顏色、字體與元件樣式 -->
+                <ResourceDictionary Source="Theme/Tokens.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>
