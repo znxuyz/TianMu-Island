@@ -55,6 +55,13 @@ internal sealed class TrayIcon : IDisposable
             Placement = PlacementMode.MousePoint,
         };
 
+        // 法器捷徑（凝神、飲水…）
+        var quick = _app.QuickActions;
+        foreach (var action in quick)
+            menu.Items.Add(Item(action.Label, action.Invoke, accent: true));
+        if (quick.Count > 0)
+            menu.Items.Add(new Separator { Style = (Style)_app.FindResource("TianMu.Separator") });
+
         menu.Items.Add(Item("開啟設定", _app.ShowSettings));
         menu.Items.Add(Item(_app.IsIslandVisible ? "暫時隱藏天幕" : "顯示天幕", _app.ToggleIsland));
 

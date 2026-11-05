@@ -3,6 +3,7 @@
     <Project Path="src/TianMu.Core/TianMu.Core.csproj" />
     <Project Path="src/TianMu.Island/TianMu.Island.csproj" />
     <Project Path="src/TianMu.Modules.Music/TianMu.Modules.Music.csproj" />
+    <Project Path="src/TianMu.Modules.Focus/TianMu.Modules.Focus.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/TianMu.Tests/TianMu.Tests.csproj" />

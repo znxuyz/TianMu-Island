@@ -77,6 +77,8 @@ public partial class App : Application
 
     public bool IsIslandVisible => _island?.IsVisible == true;
 
+    public IReadOnlyList<QuickAction> QuickActions => _island?.QuickActions ?? [];
+
     public void ToggleIsland()
     {
         if (_island is null) return;

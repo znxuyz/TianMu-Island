@@ -19,7 +19,10 @@
       AllowsTransparency=True 會讓 Windows 以像素為單位做命中測試：
       透明的地方滑鼠自動穿透，不會擋住底下的視窗。
     -->
-    <Grid>
+    <Grid x:Name="Stage">
+        <!-- 靈氣粒子：閒置時金塵從膠囊兩端飄散（不擋滑鼠） -->
+        <Canvas x:Name="ParticleLayer" IsHitTestVisible="False" />
+
         <Border x:Name="Capsule"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Top"
@@ -41,7 +44,7 @@
             </Border.Effect>
 
             <Border.ContextMenu>
-                <ContextMenu Style="{StaticResource TianMu.ContextMenu}">
+                <ContextMenu x:Name="CapsuleMenu" Style="{StaticResource TianMu.ContextMenu}" Opened="CapsuleMenu_Opened">
                     <MenuItem Style="{StaticResource TianMu.MenuItem}" Header="開啟設定" Click="Settings_Click" />
                     <MenuItem Style="{StaticResource TianMu.MenuItem}" Header="暫時隱藏天幕" Click="Hide_Click" />
                     <Separator Style="{StaticResource TianMu.Separator}" />
@@ -50,6 +53,20 @@
             </Border.ContextMenu>
 
             <Grid x:Name="ContentRoot">
+
+                <!-- 金丹光暈（金丹境以上）：膠囊中心透出微暖的光 -->
+                <Ellipse x:Name="CoreGlow" Width="150" Height="70" Visibility="Collapsed" IsHitTestVisible="False"
+                         HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Ellipse.Fill>
+                        <RadialGradientBrush>
+                            <GradientStop Color="#40C8A869" Offset="0" />
+                            <GradientStop Color="#00C8A869" Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+
+                <!-- 渡劫雷光 -->
+                <Border x:Name="FlashLayer" Background="#FFF4EEE2" Opacity="0" IsHitTestVisible="False" Panel.ZIndex="20" />
 
                 <!-- 描金頂線：唯一的光源來自正上方 -->
                 <Rectangle Height="1" VerticalAlignment="Top" Fill="{StaticResource TopHairlineBrush}"
@@ -83,6 +100,14 @@
                             </Ellipse.Triggers>
                         </Ellipse>
 
+                        <!-- 化神神印 -->
+                        <Border x:Name="IdleSeal" Width="15" Height="15" CornerRadius="3" Visibility="Collapsed"
+                                HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,60,0"
+                                Background="{StaticResource ZhuShaBrush}">
+                            <TextBlock Text="神" FontFamily="{StaticResource SerifFont}" FontWeight="Bold" FontSize="9"
+                                       Foreground="#FFF4EEE2" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+
                         <TextBlock x:Name="ClockText"
                                    Text="00:00"
                                    HorizontalAlignment="Right" VerticalAlignment="Center"
@@ -102,6 +127,11 @@
                 <Grid x:Name="ExpandedLayer" Opacity="0" Visibility="Hidden">
                     <!-- 預設：主標題 + 副標題 -->
                     <Grid x:Name="DefaultExpanded">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock x:Name="TitleText"
                                        Text="天幕島"
@@ -127,6 +157,17 @@
                                    TextAlignment="Center"
                                    LineHeight="20" LineStackingStrategy="BlockLineHeight"
                                    Foreground="{StaticResource MiaoJinBrush}" />
+
+                        <!-- 捷徑列：左側修為狀態、右側法器捷徑（凝神、飲水…） -->
+                        <Grid x:Name="QuickBar" Grid.Row="1" Margin="24,0,18,16" Visibility="Collapsed">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="StatusText" VerticalAlignment="Center" FontSize="12"
+                                       Foreground="{StaticResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                            <StackPanel x:Name="QuickButtons" Grid.Column="1" Orientation="Horizontal" />
+                        </Grid>
                     </Grid>
 
                     <!-- 法器自訂的展開畫面（例如：音樂面板） -->
@@ -135,5 +176,13 @@
                 </Grid>
             </Grid>
         </Border>
+
+        <!-- 渡劫金線：沿膠囊邊緣走一圈 -->
+        <Rectangle x:Name="EdgeRun" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,10,0,0"
+                   Stroke="#FFE6CF98" StrokeThickness="1.5" Visibility="Collapsed" IsHitTestVisible="False">
+            <Rectangle.Effect>
+                <DropShadowEffect BlurRadius="10" ShadowDepth="0" Color="#E6CF98" Opacity="0.9" />
+            </Rectangle.Effect>
+        </Rectangle>
     </Grid>
 </Window>

@@ -12,6 +12,9 @@ public sealed class AppSettings
     /// <summary>開機時自動啟動天幕島。</summary>
     public bool StartWithWindows { get; set; }
 
+    /// <summary>閒置時，膠囊兩端飄散靈氣粒子。</summary>
+    public bool ShowParticles { get; set; } = true;
+
     /// <summary>自動檢查新版本（每天最多一次）。</summary>
     public bool AutoCheckUpdates { get; set; } = true;
 

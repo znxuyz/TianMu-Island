@@ -9,7 +9,7 @@
 ![platform](https://img.shields.io/badge/平台-Windows%2010%2F11-0a0a0f?style=flat-square)
 ![dotnet](https://img.shields.io/badge/.NET-10-E8C872?style=flat-square)
 ![ui](https://img.shields.io/badge/UI-WPF-0a0a0f?style=flat-square)
-![stage](https://img.shields.io/badge/版本-v0.3-C8A869?style=flat-square)
+![stage](https://img.shields.io/badge/版本-v0.4-C8A869?style=flat-square)
 
 </div>
 
@@ -34,7 +34,9 @@
 | 金丹 | **萬象樂律** | 接管系統媒體（含瀏覽器 YouTube）：曲名、歌手、封面、同步歌詞、音訊頻譜、播放控制 | ✅ |
 | 金丹 | **傳音入密** | 系統通知從天幕中滑出 | ⏳ |
 | 金丹 | **靈識感應** | USB 插拔、藍牙耳機、音量 / 亮度變化提示 | ⏳ |
-| 元嬰 | **專注陣法** | 番茄鐘與時辰面板 | ⏳ |
+| 元嬰 | **專注陣法** | 番茄鐘 + 修為五境（練氣→化神）、突破時渡劫雷光、散功不扣修為 | ✅ |
+| 元嬰 | **清泉** | 每 45 分鐘提醒喝水、每日 8 盞，專注時與離開座位時不打擾 | ✅ |
+| 元嬰 | **靈氣粒子** | 閒置一分鐘後金塵自膠囊兩端飄散，境界越高越多 | ✅ |
 
 ## 🧰 煉器材料（技術棧）
 
@@ -76,6 +78,7 @@ dotnet run --project src/TianMu.Island
 - 👆 **左鍵點擊**：展開成大面板（顯示時辰、干支年），再點一次收回
 - 📋 **右鍵膠囊**：開啟設定、暫時隱藏、結束
 - 🔔 **系統匣圖示**（右下角）：左鍵開設定、右鍵選單；再次執行 exe 也會直接打開設定
+- 🧘 **展開天幕按「凝神」**：開始 25 分鐘專注，完成後累積修為；右鍵膠囊或系統匣也找得到「凝神」「飲水」
 - 🎵 **播放音樂**（YouTube / Spotify / 任何播放器）：膠囊變成「封面 + 歌名 + 跳動頻譜」，換歌時自動彈開；
   點開可看同步歌詞、進度條，並可上一首 / 暫停 / 下一首
 
@@ -119,7 +122,8 @@ TianMu-Island/
 ├─ src/
 │  ├─ TianMu.Core/            # 核心契約：法器介面、異象資料（外掛只需引用它）
 │  ├─ TianMu.Island/          # 宿主：視窗、渲染、彈簧物理、法器總管
-│  └─ TianMu.Modules.Music/   # 法器「萬象樂律」：媒體接管、歌詞、頻譜
+│  ├─ TianMu.Modules.Music/   # 法器「萬象樂律」：媒體接管、歌詞、頻譜
+│  └─ TianMu.Modules.Focus/   # 法器「專注陣法」「清泉」：番茄鐘、修為、飲水
 │     ├─ Interop/             # Win32 符咒（P/Invoke）
 │     ├─ Physics/             # 阻尼彈簧
 │     ├─ Modules/             # 法器總管 + 內建法器

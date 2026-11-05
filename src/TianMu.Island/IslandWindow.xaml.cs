@@ -60,6 +60,7 @@ public partial class IslandWindow : Window, IIslandHost
     {
         InitializeComponent();
         _settings = settings;
+        InitHostExtensions();
 
         _clockTimer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background,
             (_, _) => UpdateClock(), Dispatcher);
@@ -301,6 +302,7 @@ public partial class IslandWindow : Window, IIslandHost
             SubtitleText.Text = year is null || monthDay is null ? string.Empty : $"{year}年 · {monthDay}";
             ShichenText.Text = $"{Lunar.Shichen(now)}\n時";
             ShichenText.Visibility = Visibility.Visible;
+            UpdateQuickBarVisibility(showingClock: true);
         }
         else
         {
@@ -308,6 +310,7 @@ public partial class IslandWindow : Window, IIslandHost
             TitleText.Text = shown.Title;
             SubtitleText.Text = shown.Subtitle ?? string.Empty;
             ShichenText.Visibility = Visibility.Collapsed;
+            UpdateQuickBarVisibility(showingClock: false);
         }
     }
 
@@ -319,7 +322,9 @@ public partial class IslandWindow : Window, IIslandHost
         if (IsExpanded)
         {
             var a = ExpandedActivity;
-            target = new Size(a?.ExpandedWidth ?? ExpandedSize.Width, a?.ExpandedHeight ?? ExpandedSize.Height);
+            // 沒有異象時是「時辰」面板，若有捷徑列會再高一些
+            double defaultHeight = a is null ? DefaultExpandedHeight : ExpandedSize.Height;
+            target = new Size(a?.ExpandedWidth ?? ExpandedSize.Width, a?.ExpandedHeight ?? defaultHeight);
         }
         else
         {

@@ -29,6 +29,7 @@ internal sealed class ModuleManager(IIslandHost host, SettingsStore settings) : 
     [
         typeof(ModuleManager).Assembly,                       // 開幕問候
         typeof(TianMu.Modules.Music.MusicModule).Assembly,    // 萬象樂律
+        typeof(TianMu.Modules.Focus.FocusModule).Assembly,    // 專注陣法、清泉
     ];
 
     private readonly List<IIslandModule> _modules = [];

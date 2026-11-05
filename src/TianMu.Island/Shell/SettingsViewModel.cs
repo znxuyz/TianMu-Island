@@ -32,6 +32,7 @@ public sealed class SettingsViewModel : Observable
     private readonly SettingsStore _store;
     private readonly UpdateCoordinator _updates;
     private bool _startWithWindows;
+    private bool _showParticles;
     private bool _autoCheckUpdates;
     private bool _needsRestart;
     private string? _notice;
@@ -43,6 +44,7 @@ public sealed class SettingsViewModel : Observable
 
         var s = store.Snapshot();
         _startWithWindows = s.StartWithWindows;
+        _showParticles = s.ShowParticles;
         _autoCheckUpdates = s.AutoCheckUpdates;
 
         foreach (var d in catalog)
@@ -75,6 +77,16 @@ public sealed class SettingsViewModel : Observable
             _startWithWindows = value;
             _store.Update(s => s.StartWithWindows = value);
             Raise();
+        }
+    }
+
+    public bool ShowParticles
+    {
+        get => _showParticles;
+        set
+        {
+            if (!Set(ref _showParticles, value)) return;
+            _store.Update(s => s.ShowParticles = value);
         }
     }
 

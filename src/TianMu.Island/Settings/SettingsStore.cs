@@ -41,6 +41,12 @@ public sealed class SettingsStore
         lock (_gate) return Clone(_current);
     }
 
+    /// <summary>讀取單一設定值（不複製整份設定，適合頻繁呼叫）。</summary>
+    public T Read<T>(Func<AppSettings, T> selector)
+    {
+        lock (_gate) return selector(_current);
+    }
+
     /// <summary>修改並立即存檔。</summary>
     public void Update(Action<AppSettings> mutate)
     {

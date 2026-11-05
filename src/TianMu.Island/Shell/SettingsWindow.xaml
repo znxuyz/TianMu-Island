@@ -128,6 +128,21 @@
                                   IsChecked="{Binding StartWithWindows, Mode=TwoWay}" />
                     </Grid>
                 </Border>
+                <Border Style="{StaticResource Row}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource RowTitle}" Text="靈氣粒子" />
+                            <TextBlock Style="{StaticResource RowDescription}" Text="閒置一分鐘後，金塵自膠囊兩端緩緩飄散；境界越高越多。" />
+                        </StackPanel>
+                        <CheckBox Grid.Column="1" Style="{StaticResource TianMu.Toggle}" VerticalAlignment="Center"
+                                  Margin="16,0,0,0" AutomationProperties.Name="靈氣粒子"
+                                  IsChecked="{Binding ShowParticles, Mode=TwoWay}" />
+                    </Grid>
+                </Border>
 
                 <!-- ═══ 法器 ═══ -->
                 <TextBlock Style="{StaticResource SectionTitle}" theme:Typo.SpacedText="法器" />

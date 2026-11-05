@@ -1,0 +1,29 @@
+<UserControl x:Class="TianMu.Modules.Focus.Views.BreakthroughView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- 破境：左朱砂圓印「劫」，右新境界 -->
+    <Grid Margin="26,0,28,0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Grid x:Name="Seal" Width="60" Height="60" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+            <Grid.RenderTransform>
+                <ScaleTransform />
+            </Grid.RenderTransform>
+            <Ellipse Fill="{DynamicResource ZhuShaBrush}" />
+            <Ellipse Margin="4" Stroke="#66F4EEE2" StrokeThickness="1" />
+            <TextBlock Text="劫" FontFamily="{DynamicResource SerifFont}" FontWeight="Bold" FontSize="28"
+                       Foreground="#FFF4EEE2" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Grid>
+
+        <StackPanel Grid.Column="1" Margin="22,0,0,0" VerticalAlignment="Center">
+            <TextBlock FontSize="12" Foreground="{DynamicResource MiaoJinBrush}" Text="渡劫功成 · 突破境界" />
+            <TextBlock Margin="0,6,0,0" FontFamily="{DynamicResource SerifFont}" FontWeight="Bold" FontSize="28"
+                       Foreground="{DynamicResource YueBaiBrush}" Text="{Binding RealmTitle}" />
+            <TextBlock Margin="0,6,0,0" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"
+                       Text="{Binding Detail}" TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+    </Grid>
+</UserControl>

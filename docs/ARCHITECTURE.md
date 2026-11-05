@@ -22,6 +22,18 @@
 - **法器只管一件事**：感知某種「萬象」（音樂、通知、時間…），轉成 `IslandActivity` 交給宿主。
 - **契約層 `TianMu.Core`** 不依賴 WPF，未來外部法器可以獨立成專案、編譯成 DLL 丟進 `modules\` 資料夾即可被載入。
 
+## 宿主開放給法器的能力（IIslandHost）
+
+| 能力 | 用途 |
+|---|---|
+| `Post` / `Dismiss` | 顯化、撤回異象 |
+| `InvokeAsync` | 在 UI 執行緒建立畫面 |
+| `GetModuleSettings` | 讀取使用者在設定面板調整的選項 |
+| `GetDataDirectory` | 法器專屬的資料資料夾（存修為、飲水紀錄等） |
+| `SetRealm` / `PlayTribulation` | 修為外觀、渡劫特效 |
+| `AddQuickAction` / `SetStatus` | 時辰面板下方的捷徑列（凝神、飲水）與狀態文字 |
+| `IsFocusMode` / `SetFocusMode` / `FocusModeChanged` | 專注模式：番茄鐘進行時，其他法器應避免打擾 |
+
 ## 異象的顯示規則
 
 | 優先級 | 行為 |

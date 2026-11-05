@@ -5,6 +5,8 @@ namespace TianMu.Core;
 /// </summary>
 public interface IIslandHost
 {
+    // ── 異象 ───────────────────────────────────
+
     /// <summary>
     /// 在天幕上顯化一則異象。
     /// <see cref="ActivityPriority.Ambient"/> 會常駐在收合的膠囊中（同一法器只保留最新一則）；
@@ -20,6 +22,43 @@ public interface IIslandHost
     /// </summary>
     Task InvokeAsync(Action action);
 
+    // ── 設定與資料 ─────────────────────────────
+
     /// <summary>取得某法器的使用者選項。</summary>
     IModuleSettings GetModuleSettings(string moduleId);
+
+    /// <summary>
+    /// 法器專屬的資料資料夾（已建立），例如 %APPDATA%\TianMu-Island\data\tianmu.focus。
+    /// 法器自行在裡面存放紀錄檔。
+    /// </summary>
+    string GetDataDirectory(string moduleId);
+
+    // ── 天幕外觀 ───────────────────────────────
+
+    /// <summary>設定修為境界，天幕外觀隨之進化。</summary>
+    void SetRealm(IslandRealm realm);
+
+    /// <summary>播放「渡劫」特效：三道雷光，金線沿邊緣走一圈。</summary>
+    void PlayTribulation();
+
+    // ── 捷徑與狀態 ─────────────────────────────
+
+    /// <summary>在展開的預設面板加入捷徑按鈕。</summary>
+    void AddQuickAction(QuickAction action);
+
+    /// <summary>
+    /// 設定預設面板捷徑列左側的一行狀態文字（例如「築基 · 中期 · 今日 50 分」）。傳 null 清除。
+    /// </summary>
+    void SetStatus(string moduleId, string? text);
+
+    // ── 專注模式 ───────────────────────────────
+
+    /// <summary>目前是否在專注中（番茄鐘進行時）。其他法器應避免在此時打擾。</summary>
+    bool IsFocusMode { get; }
+
+    /// <summary>專注模式切換時觸發（UI 執行緒）。</summary>
+    event Action<bool>? FocusModeChanged;
+
+    /// <summary>開啟或關閉專注模式。</summary>
+    void SetFocusMode(bool enabled);
 }
