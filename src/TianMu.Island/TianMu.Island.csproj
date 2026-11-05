@@ -13,6 +13,8 @@
     <!-- 只為了系統匣圖示（NotifyIcon）；WinForms 的命名空間不全域匯入，避免和 WPF 撞名 -->
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>Assets\TianMu.ico</ApplicationIcon>
+    <!-- WFO0003 建議改用 WinForms 的 DPI 設定；但本程式的介面是 WPF，DPI 必須由 app.manifest 宣告 -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
     <AssemblyName>TianMuIsland</AssemblyName>
     <RootNamespace>TianMu.Island</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
