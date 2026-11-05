@@ -10,6 +10,7 @@ namespace TianMu.Modules.Todo;
 ///   · 日期：「明天 9 點」「後天 14:00」「11/20 9:00」「2026/11/20 9:00」
 /// 只給時刻且已經過了，就當作明天。
 /// </summary>
+/// <remarks>給人看的寫法在 <see cref="TodoTime.Describe"/>（TodoTimeText.cs）。</remarks>
 public static partial class TodoTime
 {
     public static DateTime? Parse(string? input, DateTime now)
@@ -73,17 +74,6 @@ public static partial class TodoTime
         var at = (date ?? now.Date).AddHours(hour).AddMinutes(minute);
         if (date is null && at <= now) at = at.AddDays(1); // 只給時刻而且過了，就是明天
         return at;
-    }
-
-    /// <summary>「11/6（四）15:30」或「今天 15:30」這類給人看的寫法。</summary>
-    public static string Describe(DateTime at, DateTime now)
-    {
-        string time = at.ToString("HH:mm", CultureInfo.InvariantCulture);
-        if (at.Date == now.Date) return $"今天 {time}";
-        if (at.Date == now.Date.AddDays(1)) return $"明天 {time}";
-        if (at.Date == now.Date.AddDays(-1)) return $"昨天 {time}";
-        string week = "日一二三四五六"[(int)at.DayOfWeek].ToString();
-        return $"{at.Month}/{at.Day}（{week}）{time}";
     }
 
     private static DateTime Trim(DateTime t) => new(t.Year, t.Month, t.Day, t.Hour, t.Minute, 0, t.Kind);
