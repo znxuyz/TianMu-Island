@@ -72,3 +72,7 @@ $RECYCLE.BIN/
 
 # 天幕島本地外掛目錄（開發時手動放入的 DLL）
 modules/
+
+# Python 快取
+__pycache__/
+*.pyc
