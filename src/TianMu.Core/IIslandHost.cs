@@ -37,8 +37,8 @@ public interface IIslandHost
 
     /// <summary>
     /// 加入（或更新）一個常駐頁面：展開天幕後可用左右箭頭切換到它（例如「AI 額度」）。
-    /// 只會用到 <see cref="IslandActivity.ExpandedView"/>、<see cref="IslandActivity.ExpandedWidth"/>、
-    /// <see cref="IslandActivity.ExpandedHeight"/> 與 <see cref="IslandActivity.Title"/>；同一法器只保留一頁。
+    /// 只會用到 <see cref="IslandActivity.ExpandedView"/> 與 <see cref="IslandActivity.Title"/>；同一法器只保留一頁。
+    /// 頁面大小固定（見 <see cref="IslandActivity.ExpandedView"/> 的說明）。
     /// </summary>
     void SetPage(IslandActivity page);
 

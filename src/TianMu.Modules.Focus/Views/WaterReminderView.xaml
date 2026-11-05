@@ -17,11 +17,11 @@
         <StackPanel Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center">
             <TextBlock FontFamily="{DynamicResource SerifFont}" FontWeight="Bold" FontSize="19"
                        Foreground="{DynamicResource YueBaiBrush}" Text="該飲一盞清泉了" />
-            <TextBlock Margin="0,5,0,0" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"
+            <TextBlock Margin="0,3,0,0" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"
                        Text="{Binding Detail}" />
 
             <!-- 今日進度：每盞一小段 -->
-            <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding Cups}" Focusable="False">
+            <ItemsControl Margin="0,6,0,0" ItemsSource="{Binding Cups}" Focusable="False">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Orientation="Horizontal" />
@@ -40,10 +40,10 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                 <Button Style="{DynamicResource TianMu.Button.Primary}" Background="{DynamicResource TianQingBrush}"
-                        MinHeight="30" Padding="18,0" Content="已飲" Command="{Binding DrinkCommand}" Focusable="False" />
-                <Button Style="{DynamicResource TianMu.Button.Ghost}" MinHeight="30" Padding="16,0" Margin="8,0,0,0"
+                        MinHeight="28" Padding="18,0" Content="已飲" Command="{Binding DrinkCommand}" Focusable="False" />
+                <Button Style="{DynamicResource TianMu.Button.Ghost}" MinHeight="28" Padding="16,0" Margin="8,0,0,0"
                         Content="稍後" ToolTip="15 分鐘後再提醒" Command="{Binding LaterCommand}" Focusable="False" />
             </StackPanel>
         </StackPanel>

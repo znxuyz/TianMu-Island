@@ -74,8 +74,14 @@
             </Border.ContextMenu>
 
             <Grid x:Name="Body">
-            <!-- 天幕形體：貼齊上緣時上方是平的，兩肩向外彎出（像瀏海）；側邊停靠時是圓膠囊 -->
-            <Path x:Name="CapsuleShape" Fill="{StaticResource LacquerBrush}" IsHitTestVisible="False" />
+            <!--
+              天幕形體：貼齊上緣時上方是平的，兩肩向外彎出（像瀏海）；側邊停靠時是圓膠囊。
+              兩肩的曲面畫在膠囊範圍之外，所以放在 Canvas 裡：Canvas 不會依版面裁切子元素，
+              直接放在 Grid 裡的話曲面會被切掉、看起來變成直角。
+            -->
+            <Canvas IsHitTestVisible="False">
+                <Path x:Name="CapsuleShape" Fill="{StaticResource LacquerBrush}" IsHitTestVisible="False" />
+            </Canvas>
 
             <Grid x:Name="ContentRoot">
 
@@ -90,9 +96,9 @@
                     </Ellipse.Fill>
                 </Ellipse>
 
-                <!-- 狀態燈（例如麥克風、相機使用中）：右上角的小圖示 -->
-                <StackPanel x:Name="IndicatorPanel" Orientation="Horizontal" HorizontalAlignment="Right"
-                            VerticalAlignment="Top" Margin="0,4,16,0" Panel.ZIndex="12" />
+                <!-- 狀態燈（例如麥克風、相機使用中）：收合時是下緣正中的小光點，展開時是右上角的小圖示 -->
+                <StackPanel x:Name="IndicatorPanel" Orientation="Horizontal" HorizontalAlignment="Center"
+                            VerticalAlignment="Bottom" Margin="0,0,0,3" Panel.ZIndex="12" />
 
                 <!-- 拖放提示：把檔案拖到天幕上時出現 -->
                 <Border x:Name="DropHint" Visibility="Collapsed" Panel.ZIndex="18" Background="#E60E0C0A"
@@ -106,8 +112,8 @@
                 <Border x:Name="FlashLayer" Background="#FFF4EEE2" Opacity="0" IsHitTestVisible="False" Panel.ZIndex="20" />
 
                 <!-- 描金頂線：唯一的光源來自正上方 -->
-                <Rectangle Height="1" VerticalAlignment="Top" Fill="{StaticResource TopHairlineBrush}"
-                           IsHitTestVisible="False" Panel.ZIndex="10" />
+                <Rectangle x:Name="TopHairline" Height="1" VerticalAlignment="Top" Fill="{StaticResource TopHairlineBrush}"
+                           Opacity="0.7" IsHitTestVisible="False" Panel.ZIndex="10" />
 
                 <!-- 收合態 -->
                 <Grid x:Name="IdleLayer">

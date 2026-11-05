@@ -41,15 +41,12 @@ public sealed record IslandActivity(
     /// </summary>
     public object? BadgeView { get; init; }
 
-    /// <summary>展開時大面板的自訂畫面（WPF <c>FrameworkElement</c>）。</summary>
+    /// <summary>
+    /// 展開時大面板的自訂畫面（WPF <c>FrameworkElement</c>）。
+    /// 天幕只有三種固定大小，畫面要能自適應：
+    ///   · 跳出提示（Normal 以上的異象）：約 420×108
+    ///   · 使用者點開的頁面：約 440×184（有翻頁箭頭時；只有一頁時是 500×200）
+    /// 收合畫面約 240×34（直式停靠時轉 90 度）。
+    /// </summary>
     public object? ExpandedView { get; init; }
-
-    /// <summary>收合時膠囊寬度（DIP）。null 用宿主預設。</summary>
-    public double? CompactWidth { get; init; }
-
-    /// <summary>展開時面板寬度（DIP）。null 用宿主預設。</summary>
-    public double? ExpandedWidth { get; init; }
-
-    /// <summary>展開時面板高度（DIP）。null 用宿主預設。</summary>
-    public double? ExpandedHeight { get; init; }
 }

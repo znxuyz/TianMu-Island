@@ -19,9 +19,6 @@ public sealed class FocusModule : IIslandModule, IDescribedModule
     public const string AutoBreakOption = "autoBreak";
     public const string TribulationOption = "tribulation";
 
-    private const double CompactWidth = 232;
-    private const double ExpandedWidth = 420;
-    private const double ExpandedHeight = 172;
     private static readonly TimeSpan FlashDuration = TimeSpan.FromSeconds(6);
 
     private readonly PomodoroTimer _timer = new(PomodoroConfig.Default);
@@ -206,8 +203,6 @@ public sealed class FocusModule : IIslandModule, IDescribedModule
         _host.Post(new IslandActivity(Id, $"突破 · {result.After.RealmName}", null, ActivityPriority.Alert, TimeSpan.FromSeconds(7))
         {
             ExpandedView = _breakView,
-            ExpandedWidth = 420,
-            ExpandedHeight = 136,
         });
 
         if (_host.GetModuleSettings(Id).GetBool(TribulationOption, true))
@@ -268,9 +263,6 @@ public sealed class FocusModule : IIslandModule, IDescribedModule
             CompactView = _compact,
             ExpandedView = _expanded,
             BadgeView = _badge,
-            CompactWidth = CompactWidth,
-            ExpandedWidth = ExpandedWidth,
-            ExpandedHeight = ExpandedHeight,
         };
 
     private void Show()

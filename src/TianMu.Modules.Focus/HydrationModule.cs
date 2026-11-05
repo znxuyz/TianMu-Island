@@ -106,8 +106,6 @@ public sealed class HydrationModule : IIslandModule, IDescribedModule
         _host.Post(new IslandActivity(Id, "該飲一盞清泉了", null, ActivityPriority.Normal, null)
         {
             ExpandedView = _view,
-            ExpandedWidth = 390,
-            ExpandedHeight = 150,
         });
         _showing = true;
         _autoHide?.Stop();

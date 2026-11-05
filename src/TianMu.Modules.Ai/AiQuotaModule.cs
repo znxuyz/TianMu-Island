@@ -19,8 +19,6 @@ public sealed class AiQuotaModule : IIslandModule, IDescribedModule
     public const string UseClaudeCodeOption = "useClaudeCode";
     public const string LowQuotaAlertOption = "lowQuotaAlert";
 
-    private const double PageWidth = 440;
-    private const double PageHeight = 176;
     private const double LowQuotaThreshold = 15;
     private static readonly TimeSpan RefreshInterval = TimeSpan.FromMinutes(5);
 
@@ -68,8 +66,6 @@ public sealed class AiQuotaModule : IIslandModule, IDescribedModule
         host.SetPage(new IslandActivity(Id, DisplayName)
         {
             ExpandedView = _view,
-            ExpandedWidth = PageWidth,
-            ExpandedHeight = PageHeight,
         });
 
         await host.InvokeAsync(() => _ = RefreshAsync());

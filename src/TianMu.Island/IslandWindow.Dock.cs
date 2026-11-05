@@ -33,6 +33,9 @@ public partial class IslandWindow
     /// <summary>停在左右側時為直式（拖曳中恢復橫式）。</summary>
     private bool IsVertical => !_dragging && DockLayout.IsVertical(_dock);
 
+    /// <summary>嵌在螢幕角落（同時貼住上緣與側邊）。</summary>
+    private bool IsCorner => !_dragging && DockLayout.IsCorner(_dock);
+
     // ═══════════════════════ 停靠 ═══════════════════════
 
     /// <summary>依設定把天幕放到對應螢幕的停靠位置。</summary>
@@ -115,88 +118,10 @@ public partial class IslandWindow
     {
         Capsule.CornerRadius = new CornerRadius(0);
         var edges = CurrentEdges;
-        CapsuleShape.Data = BuildShape(w, h, radius, ShoulderRadius, edges);
-        ContentRoot.Clip = BuildShape(w, h, radius, flare: 0, edges);
-    }
-
-    /// <summary>
-    /// 天幕外形。四個角依「貼住哪些邊」決定：
-    ///   · 兩邊都貼住（嵌在螢幕角落）：直角，剛好填滿角落
-    ///   · 只貼住其中一邊：沿著那一邊以平滑曲面向外延伸、融進螢幕邊緣
-    ///   · 都沒貼：一般圓角
-    /// 整條輪廓的切線連續，沒有折角。
-    /// </summary>
-    /// <param name="flare">曲面沿邊緣延伸的長度（0 = 不延伸，用於裁切內容）。</param>
-    internal static Geometry BuildShape(double w, double h, double r, double flare, DockEdges edges)
-    {
-        if (edges == DockEdges.None)
-        {
-            var pill = new RectangleGeometry(new Rect(0, 0, w, h), r, r);
-            pill.Freeze();
-            return pill;
-        }
-
-        r = Math.Max(0, Math.Min(r, Math.Min(w, h) / 2));
-        const double k = 0.6; // 控制點位置，越大曲面越柔、延伸得越開
-        bool top = edges.HasFlag(DockEdges.Top), left = edges.HasFlag(DockEdges.Left), right = edges.HasFlag(DockEdges.Right);
-
-        // 依順時針：左上、右上、右下、左下。a = 進入此角的行進方向、b = 離開此角的方向。
-        var corners = new (Point P, Vector A, Vector B, bool InAttached, bool OutAttached, double InSide, double OutSide)[]
-        {
-            (new Point(0, 0), new Vector(0, -1), new Vector(1, 0), left, top, h, w),
-            (new Point(w, 0), new Vector(1, 0), new Vector(0, 1), top, right, w, h),
-            (new Point(w, h), new Vector(0, 1), new Vector(-1, 0), right, false, h, w),
-            (new Point(0, h), new Vector(-1, 0), new Vector(0, -1), false, left, w, h),
-        };
-
-        var geometry = new StreamGeometry();
-        using (var ctx = geometry.Open())
-        {
-            bool started = false;
-            foreach (var (p, a, b, inAttached, outAttached, inSide, outSide) in corners)
-            {
-                Point entry;
-                Action draw;
-
-                if (inAttached && outAttached)
-                {
-                    entry = p;                                   // 嵌在角落：直角
-                    draw = () => { };
-                }
-                else if (inAttached)
-                {
-                    // 來的那一邊貼住螢幕：先沿邊緣多延伸一段，再以曲面彎進離開的那一邊
-                    double d = Math.Min(flare * 0.8, Math.Max(0, outSide - r));
-                    entry = p + a * flare;
-                    draw = () => ctx.BezierTo(p + a * (flare * k), p + b * (d * k), p + b * d, true, true);
-                }
-                else if (outAttached)
-                {
-                    // 去的那一邊貼住螢幕：從自由邊以曲面彎出，沿邊緣延伸出去
-                    double d = Math.Min(flare * 0.8, Math.Max(0, inSide - r));
-                    entry = p - a * d;
-                    draw = () => ctx.BezierTo(p - a * (d * k), p - b * (flare * k), p - b * flare, true, true);
-                }
-                else
-                {
-                    entry = p - a * r;                           // 一般圓角
-                    draw = () => ctx.ArcTo(p + b * r, new Size(r, r), 0, false, SweepDirection.Clockwise, true, true);
-                }
-
-                if (!started)
-                {
-                    ctx.BeginFigure(entry, isFilled: true, isClosed: true);
-                    started = true;
-                }
-                else
-                {
-                    ctx.LineTo(entry, true, false);
-                }
-                draw();
-            }
-        }
-        geometry.Freeze();
-        return geometry;
+        // 角落形體：朝向畫面內側的那個角用大圓弧，像一片從螢幕角落長出來的扇形
+        double inner = IsCorner ? IslandShape.CornerInnerRadius(w, h) : radius;
+        CapsuleShape.Data = IslandShape.Build(w, h, radius, ShoulderRadius, edges, inner);
+        ContentRoot.Clip = IslandShape.Build(w, h, radius, flare: 0, edges, inner);
     }
 
     // ═══════════════════════ 拖曳 ═══════════════════════

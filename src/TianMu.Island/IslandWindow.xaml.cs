@@ -25,17 +25,20 @@ namespace TianMu.Island;
 public partial class IslandWindow : Window, IIslandHost
 {
     // ── 形態尺寸（DIP）──────────────────────────────────────
-    private static readonly Size IdleSize = new(180, 34);
-    private static readonly Size ExpandedSize = new(400, 136);
-    private const double HoverGrowWidth = 24;
-    private const double HoverGrowHeight = 4;
+    // 天幕只有三種大小，畫面永遠不會因為內容不同而忽大忽小：
+    //   小：收合（預設狀態）· 中：提示（通知、驗證碼、裝置、提醒）· 大：使用者點開
+    internal static readonly Size SmallSize = new(240, 34);
+    internal static readonly Size MediumSize = new(420, 108);
+    internal static readonly Size LargeSize = new(500, 200);
+    /// <summary>嵌在角落時的收合形體：較厚，才放得下朝內的大圓弧。</summary>
+    internal static readonly Size CornerSmallSize = new(212, 44);
     private const double PressScale = 0.94;
     private const double MaxCornerRadius = 34;
     private static readonly TimeSpan AutoCollapseDelay = TimeSpan.FromSeconds(3);
 
     // ── 彈簧：寬與高用不同頻率，才會出現「先橫拉、再縱彈」的果凍感 ──
-    private readonly Spring _width = new(IdleSize.Width, stiffness: 260, damping: 19);   // ζ ≈ 0.59
-    private readonly Spring _height = new(IdleSize.Height, stiffness: 340, damping: 21);  // ζ ≈ 0.57
+    private readonly Spring _width = new(SmallSize.Width, stiffness: 260, damping: 19);   // ζ ≈ 0.59
+    private readonly Spring _height = new(SmallSize.Height, stiffness: 340, damping: 21);  // ζ ≈ 0.57
     private readonly Spring _reveal = new(0, stiffness: 180, damping: 25);               // ζ ≈ 0.93（內容淡入不回彈）
 
     // ── 狀態 ──────────────────────────────────────────────
@@ -142,7 +145,9 @@ public partial class IslandWindow : Window, IIslandHost
 
     private void Capsule_MouseEnter(object sender, MouseEventArgs e)
     {
+        // 大小固定，滑過時只讓頂端的描金線亮起來
         _hovering = true;
+        TopHairline.Opacity = 1;
         _autoCollapseTimer.Stop();
         UpdateTargets();
     }
@@ -150,6 +155,7 @@ public partial class IslandWindow : Window, IIslandHost
     private void Capsule_MouseLeave(object sender, MouseEventArgs e)
     {
         _hovering = false;
+        TopHairline.Opacity = 0.7;
         _pressed = false;
 
         // 使用者展開後滑鼠離開，過幾秒自動收回（像靈動島一樣）
@@ -263,6 +269,14 @@ public partial class IslandWindow : Window, IIslandHost
 
     private bool IsExpanded => _userExpanded || _transient is not null;
 
+    internal enum SizeClass { Small, Medium, Large }
+
+    /// <summary>目前該用哪一種大小：使用者點開一律是大；只是跳出提示是中；其餘是小。</summary>
+    private SizeClass CurrentSizeClass =>
+        _userExpanded ? SizeClass.Large
+        : _transient is not null ? SizeClass.Medium
+        : SizeClass.Small;
+
     private IslandActivity? CurrentAmbient => _ambient.Count > 0 ? _ambient[^1] : null;
 
     /// <summary>目前展開時要顯示的異象。</summary>
@@ -284,6 +298,7 @@ public partial class IslandWindow : Window, IIslandHost
 
         UpdatePager();
         UpdateSatellite();
+        UpdateIndicators();
         UpdateClock();
         UpdateTargets();
     }
@@ -330,25 +345,15 @@ public partial class IslandWindow : Window, IIslandHost
 
     private void UpdateTargets()
     {
-        Size target;
-        if (IsExpanded)
+        Size target = CurrentSizeClass switch
         {
-            var a = ExpandedActivity;
-            // 沒有異象時是「時辰」面板，若有捷徑列會再高一些
-            double defaultHeight = a is null ? DefaultExpandedHeight : ExpandedSize.Height;
-            target = new Size(a?.ExpandedWidth ?? ExpandedSize.Width, a?.ExpandedHeight ?? defaultHeight);
-
-            // 有多頁時，兩側留給翻頁箭頭、下方留給頁點
-            if (PagerVisible)
-                target = new Size(target.Width + 2 * PagerGutter, target.Height + PagerDotsHeight);
-        }
-        else
-        {
-            // 收合：長邊是膠囊長度、短邊是厚度；停在左右側時轉成直式
-            double length = (CurrentAmbient?.CompactWidth ?? IdleSize.Width) + (_hovering ? HoverGrowWidth : 0);
-            double thickness = IdleSize.Height + (_hovering ? HoverGrowHeight : 0);
-            target = IsVertical ? new Size(thickness, length) : new Size(length, thickness);
-        }
+            SizeClass.Large => LargeSize,
+            SizeClass.Medium => MediumSize,
+            // 收合：停在左右側時轉成直式；嵌在角落時用較厚的角落形體
+            _ when IsVertical => new Size(SmallSize.Height, SmallSize.Width),
+            _ when IsCorner => CornerSmallSize,
+            _ => SmallSize,
+        };
 
         double scale = _pressed ? PressScale : 1.0;
 

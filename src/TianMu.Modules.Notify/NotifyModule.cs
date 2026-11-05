@@ -85,8 +85,6 @@ public sealed class NotifyModule : IIslandModule, IDescribedModule
         host.SetPage(new IslandActivity(Id, DisplayName)
         {
             ExpandedView = _inboxView,
-            ExpandedWidth = 470,
-            ExpandedHeight = 176,
         });
 
         _watcher.Arrived += notice => _ = host.InvokeAsync(() => OnNotice(notice));
@@ -123,8 +121,6 @@ public sealed class NotifyModule : IIslandModule, IDescribedModule
             _host.Post(new IslandActivity(Id, "驗證碼", OtpExtractor.Pretty(code), ActivityPriority.Alert, OtpDuration)
             {
                 ExpandedView = _otpView,
-                ExpandedWidth = 380,
-                ExpandedHeight = 108,
             });
             return;
         }
@@ -140,8 +136,6 @@ public sealed class NotifyModule : IIslandModule, IDescribedModule
         _host.Post(new IslandActivity(Id, notice.Title, notice.Body, ActivityPriority.Normal, NoticeDuration)
         {
             ExpandedView = _noticeView,
-            ExpandedWidth = 430,
-            ExpandedHeight = 104,
         });
     }
 

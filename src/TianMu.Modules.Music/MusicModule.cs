@@ -22,9 +22,6 @@ public sealed class MusicModule : IIslandModule, IDescribedModule
     /// <summary>選項：是否向 LRCLIB 查詢歌詞。</summary>
     public const string LyricsOption = "lyrics";
 
-    private const double CompactWidth = 300;   // 夠寬才放得下一句歌詞
-    private const double ExpandedWidth = 430;
-    private const double ExpandedHeight = 180;
     private const int FftSize = 2048;
     private const int BandCount = 40;
     private static readonly TimeSpan HideAfterPaused = TimeSpan.FromSeconds(30);
@@ -189,9 +186,6 @@ public sealed class MusicModule : IIslandModule, IDescribedModule
             CompactView = _compact,
             ExpandedView = _expanded,
             BadgeView = _badge,
-            CompactWidth = CompactWidth,
-            ExpandedWidth = ExpandedWidth,
-            ExpandedHeight = ExpandedHeight,
         };
 
     /// <summary>封面取色：頻譜、進度條、分身小圓都跟著這首歌的封面換色。</summary>

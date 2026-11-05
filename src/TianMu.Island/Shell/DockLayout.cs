@@ -50,6 +50,13 @@ public static class DockLayout
     /// <summary>停在左右側時改為直式（收合時是一條直立的膠囊）。</summary>
     public static bool IsVertical(DockPosition dock) => dock is DockPosition.Left or DockPosition.Right;
 
+    /// <summary>嵌在螢幕角落（同時貼住上緣與一條側邊）。</summary>
+    public static bool IsCorner(DockPosition dock)
+    {
+        var edges = Edges(dock);
+        return edges.HasFlag(DockEdges.Top) && (edges.HasFlag(DockEdges.Left) || edges.HasFlag(DockEdges.Right));
+    }
+
     /// <summary>
     /// 拖曳放開時，依游標落在螢幕的哪一區決定停靠位置：
     /// 上方 30% 分成左、中、右三格；其餘依左右半邊停到側邊。

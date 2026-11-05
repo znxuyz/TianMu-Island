@@ -163,8 +163,6 @@ public sealed class SenseModule : IIslandModule, IDescribedModule
         _host.Post(new IslandActivity(Id, title, subtitle, ActivityPriority.Normal, DeviceDuration)
         {
             ExpandedView = _deviceView,
-            ExpandedWidth = 360,
-            ExpandedHeight = 72,
         });
     }
 
@@ -200,8 +198,6 @@ public sealed class SenseModule : IIslandModule, IDescribedModule
         _host.Post(new IslandActivity(Id, title, levelText, ActivityPriority.Normal, LevelDuration)
         {
             ExpandedView = _levelView,
-            ExpandedWidth = 320,
-            ExpandedHeight = 64,
         });
     }
 

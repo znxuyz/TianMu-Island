@@ -16,7 +16,6 @@ namespace TianMu.Island;
 /// </summary>
 public partial class IslandWindow
 {
-    private const double QuickBarHeight = 44;
     private static readonly TimeSpan ParticleIdleDelay = TimeSpan.FromSeconds(60);
 
     private IslandRealm _realm = IslandRealm.ZhuJi;     // 尚未有修為紀錄時，以築基外觀示人
@@ -202,9 +201,6 @@ public partial class IslandWindow
         }
         CapsuleMenu.Items.Insert(index, new Separator { Tag = QuickMenuTag, Style = (Style)FindResource("TianMu.Separator") });
     }
-
-    /// <summary>預設面板（時辰）的高度：有捷徑列時多留一列空間。</summary>
-    private double DefaultExpandedHeight => ExpandedSize.Height + (HasQuickBar ? QuickBarHeight : 0);
 
     private void RebuildQuickButtons()
     {

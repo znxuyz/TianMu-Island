@@ -187,19 +187,58 @@ public partial class IslandWindow
     {
         if (indicator is null) _indicators.Remove(key);
         else _indicators[key] = indicator;
+        _indicatorsExpanded = null; // 強制重畫
+        UpdateIndicators();
+    });
+
+    private bool? _indicatorsExpanded;
+
+    /// <summary>
+    /// 狀態燈：收合時是膠囊下緣正中的小光點（像鏡頭旁的指示燈，不會壓到時鐘或歌詞）；
+    /// 展開時改成右上角的小圖示，看得出是麥克風還是相機。
+    /// </summary>
+    private void UpdateIndicators()
+    {
+        bool expanded = IsExpanded;
+        if (_indicatorsExpanded == expanded) return;
+        _indicatorsExpanded = expanded;
 
         IndicatorPanel.Children.Clear();
+        IndicatorPanel.HorizontalAlignment = expanded ? HorizontalAlignment.Right : HorizontalAlignment.Center;
+        IndicatorPanel.VerticalAlignment = expanded ? VerticalAlignment.Top : VerticalAlignment.Bottom;
+        IndicatorPanel.Margin = expanded ? new Thickness(0, 7, 12, 0) : new Thickness(0, 0, 0, 3);
+
         foreach (var item in _indicators.Values)
         {
-            IndicatorPanel.Children.Add(new TextBlock
+            var brush = TryFindResource(item.ToneKey) as Brush ?? (Brush)FindResource("ZhuShaBrush");
+            if (expanded)
             {
-                Text = item.Glyph,
-                FontFamily = (FontFamily)FindResource("IconFont"),
-                FontSize = 9,
-                Margin = new Thickness(3, 0, 0, 0),
-                Foreground = TryFindResource(item.ToneKey) as Brush ?? (Brush)FindResource("ZhuShaBrush"),
-                ToolTip = item.Label,
-            });
+                IndicatorPanel.Children.Add(new TextBlock
+                {
+                    Text = item.Glyph,
+                    FontFamily = (FontFamily)FindResource("IconFont"),
+                    FontSize = 10,
+                    Margin = new Thickness(4, 0, 0, 0),
+                    Foreground = brush,
+                    ToolTip = item.Label,
+                });
+            }
+            else
+            {
+                var color = brush is SolidColorBrush solid ? solid.Color : Colors.OrangeRed;
+                IndicatorPanel.Children.Add(new System.Windows.Shapes.Ellipse
+                {
+                    Width = 4,
+                    Height = 4,
+                    Margin = new Thickness(2, 0, 2, 0),
+                    Fill = brush,
+                    ToolTip = item.Label,
+                    Effect = new System.Windows.Media.Effects.DropShadowEffect
+                    {
+                        BlurRadius = 6, ShadowDepth = 0, Color = color, Opacity = 0.9,
+                    },
+                });
+            }
         }
-    });
+    }
 }

@@ -82,12 +82,9 @@ public sealed class ShelfModule : IIslandModule, IDescribedModule
 
         if (_store.Paths.Count > 0)
         {
-            int rows = Math.Min(2, (_store.Paths.Count + 5) / 6);
             _host.SetPage(new IslandActivity(Id, DisplayName)
             {
                 ExpandedView = _view,
-                ExpandedWidth = 500,
-                ExpandedHeight = 64 + rows * 84,
             });
             _pageShown = true;
         }
