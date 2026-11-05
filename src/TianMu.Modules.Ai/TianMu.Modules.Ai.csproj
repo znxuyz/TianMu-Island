@@ -14,7 +14,10 @@
     <ProjectReference Include="..\TianMu.Core\TianMu.Core.csproj" />
   </ItemGroup>
 
-  <!-- Windows 資料保護（DPAPI，用來加密 sessionKey）已內建於 .NET 10 的 Windows 桌面框架，不需另外引用套件 -->
+  <ItemGroup>
+    <!-- 內嵌 Edge WebView2：在天幕島裡直接登入 claude.ai（Windows 10/11 已內建執行環境） -->
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
+  </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="TianMu.Tests" />

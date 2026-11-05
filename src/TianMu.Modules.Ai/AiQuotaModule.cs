@@ -10,7 +10,8 @@ namespace TianMu.Modules.Ai;
 
 /// <summary>
 /// 法器「AI 額度」：在天幕上常駐一頁，用雙環顯示 Claude 訂閱方案的 5 小時與 7 天剩餘額度。
-///   · 自動使用 Claude Code 的登入（可在設定關閉），或使用者貼上的 claude.ai sessionKey
+///   · 主要來源：在天幕島裡登入 claude.ai 一次（內嵌瀏覽器，跟網站用一樣的方式查詢）
+///   · 備用來源：這台電腦上 Claude Code 的登入（可在設定關閉）
 ///   · 每 5 分鐘更新一次；5 小時額度低於 15% 時提醒一次
 /// </summary>
 public sealed class AiQuotaModule : IIslandModule, IDescribedModule
@@ -25,7 +26,7 @@ public sealed class AiQuotaModule : IIslandModule, IDescribedModule
 
     private readonly ClaudeUsageClient _client = new();
     private IIslandHost? _host;
-    private SecretStore? _secrets;
+    private ClaudeWebSession? _web;
     private CancellationTokenSource? _fetchCts;
 
     // 以下只在 UI 執行緒存取
@@ -48,7 +49,7 @@ public sealed class AiQuotaModule : IIslandModule, IDescribedModule
     public async Task InitializeAsync(IIslandHost host, CancellationToken cancellationToken)
     {
         _host = host;
-        _secrets = new SecretStore(Path.Combine(host.GetDataDirectory(Id), "claude-session.bin"));
+        _web = new ClaudeWebSession(Path.Combine(host.GetDataDirectory(Id), "webview"));
 
         await host.InvokeAsync(() =>
         {
@@ -78,33 +79,47 @@ public sealed class AiQuotaModule : IIslandModule, IDescribedModule
 
     private async Task RefreshAsync()
     {
-        if (_vm is null || _host is null || _secrets is null) return;
+        if (_vm is null || _host is null || _web is null) return;
 
         _fetchCts?.Cancel();
         var cts = _fetchCts = new CancellationTokenSource();
         _vm.Status = "查詢中…";
 
         bool useClaudeCode = _host.GetModuleSettings(Id).GetBool(UseClaudeCodeOption, true);
-        string? sessionKey = _secrets.Read();
         var login = useClaudeCode ? ClaudeCodeCredentials.TryRead() : null;
-
-        if (sessionKey is null && login is null)
-        {
-            ShowDisconnected(useClaudeCode
-                ? "按右上角「連結」：登入過 Claude Code 會自動偵測，或貼上 claude.ai 的 sessionKey。"
-                : "已關閉「使用 Claude Code 的登入」。按右上角「連結」貼上 claude.ai 的 sessionKey。");
-            return;
-        }
 
         try
         {
-            // 使用者主動貼上的 sessionKey 優先；否則用 Claude Code 的登入
-            var usage = await Task.Run(() => sessionKey is not null
-                ? _client.FetchWithSessionKeyAsync(sessionKey, cts.Token)
-                : _client.FetchWithClaudeCodeAsync(login!, cts.Token), cts.Token);
+            ClaudeUsage usage;
+            if (await _web.IsLoggedInAsync())
+            {
+                // 主要來源：天幕島裡的 claude.ai 登入
+                var result = await _web.FetchUsageAsync(cts.Token);
+                string body = result.Body.TrimStart();
+                ClaudeUsageClient.ThrowIfFailed(result.Status, body.StartsWith('{') || body.StartsWith('['), "claude.ai");
+                usage = ClaudeUsageParser.Parse(result.Body, DateTimeOffset.Now);
+                _plan = result.Plan;
+            }
+            else if (login is not null)
+            {
+                // 備用來源：Claude Code 的登入
+                try
+                {
+                    usage = await Task.Run(() => _client.FetchWithClaudeCodeAsync(login, cts.Token), cts.Token);
+                    _plan = login.Plan;
+                }
+                catch (UsageException ex)
+                {
+                    throw new UsageException($"{ex.Message}或按右上角「連結」直接登入 Claude。");
+                }
+            }
+            else
+            {
+                ShowDisconnected("按右上角「連結」登入你的 Claude 帳號，登入一次之後就會自動顯示剩餘額度。");
+                return;
+            }
 
             if (cts.IsCancellationRequested) return;
-            _plan = sessionKey is null ? login?.Plan : _plan;
             ShowUsage(usage);
         }
         catch (OperationCanceledException) when (cts.IsCancellationRequested)
@@ -210,23 +225,26 @@ public sealed class AiQuotaModule : IIslandModule, IDescribedModule
 
     private void OpenConnectWindow()
     {
-        if (_secrets is null) return;
+        if (_web is null) return;
+        var web = _web;
         var window = new ConnectWindow(
             claudeCodeFound: ClaudeCodeCredentials.Exists(),
-            hasSavedKey: _secrets.HasValue,
-            save: key =>
+            isLoggedIn: web.IsLoggedInAsync,
+            login: OpenLoginWindow,
+            logout: async () =>
             {
-                _secrets.Write(key);
-                _client.ForgetOrganization();
+                await web.LogOutAsync();
                 _plan = null;
                 _ = RefreshAsync();
-            },
-            clear: () =>
-            {
-                _secrets.Clear();
-                _client.ForgetOrganization();
-                _ = RefreshAsync();
             });
+        window.Show();
+        window.Activate();
+    }
+
+    private void OpenLoginWindow()
+    {
+        if (_web is null) return;
+        var window = new LoginWindow(_web, () => _ = RefreshAsync());
         window.Show();
         window.Activate();
     }
@@ -236,6 +254,7 @@ public sealed class AiQuotaModule : IIslandModule, IDescribedModule
         _fetchCts?.Cancel();
         _timer?.Stop();
         _client.Dispose();
+        // 內嵌瀏覽器隨程式結束一併關閉（不可在此跨執行緒操作它）
         return ValueTask.CompletedTask;
     }
 }

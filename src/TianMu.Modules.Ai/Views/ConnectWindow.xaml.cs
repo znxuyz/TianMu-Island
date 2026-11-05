@@ -2,43 +2,52 @@ using System.Windows;
 
 namespace TianMu.Modules.Ai.Views;
 
-/// <summary>連結 Claude 的說明與 sessionKey 輸入視窗。</summary>
+/// <summary>連結 Claude：顯示登入狀態，提供登入與登出。</summary>
 public partial class ConnectWindow : Window
 {
-    private readonly Action<string> _save;
-    private readonly Action _clear;
+    private readonly Func<Task<bool>> _isLoggedIn;
+    private readonly Action _login;
+    private readonly Func<Task> _logout;
 
-    public ConnectWindow(bool claudeCodeFound, bool hasSavedKey, Action<string> save, Action clear)
+    public ConnectWindow(bool claudeCodeFound, Func<Task<bool>> isLoggedIn, Action login, Func<Task> logout)
     {
         InitializeComponent();
-        _save = save;
-        _clear = clear;
+        _isLoggedIn = isLoggedIn;
+        _login = login;
+        _logout = logout;
 
-        ClaudeCodeStatus.Text = claudeCodeFound ? "✓ 已偵測到 Claude Code 的登入" : "尚未偵測到 Claude Code 的登入";
-        KeyStatus.Text = hasSavedKey ? "已存有一組 sessionKey（貼上新的會取代它）" : string.Empty;
-        ClearButton.IsEnabled = hasSavedKey;
+        ClaudeCodeStatus.Text = claudeCodeFound
+            ? "另外偵測到 Claude Code 的登入：沒登入 Claude 時會改用它（需要最近開過 Claude Code）。"
+            : string.Empty;
+
+        Loaded += async (_, _) => await RefreshAsync();
     }
 
-    private void Save_Click(object sender, RoutedEventArgs e)
+    private async Task RefreshAsync()
     {
-        string key = KeyBox.Password.Trim();
-        if (key.StartsWith("sessionKey=", StringComparison.OrdinalIgnoreCase)) key = key["sessionKey=".Length..];
-
-        if (key.Length < 20)
+        bool loggedIn;
+        try { loggedIn = await _isLoggedIn(); }
+        catch (Exception ex)
         {
-            KeyStatus.Text = "這看起來不像 sessionKey，請確認是否完整複製";
+            Status.Text = ex.Message;
             return;
         }
 
-        _save(key);
+        Status.Text = loggedIn ? "✓ 已登入 Claude" : "尚未登入";
+        LoginButton.Content = loggedIn ? "重新登入" : "登入 Claude";
+        LogoutButton.IsEnabled = loggedIn;
+    }
+
+    private void Login_Click(object sender, RoutedEventArgs e)
+    {
+        _login();
         Close();
     }
 
-    private void Clear_Click(object sender, RoutedEventArgs e)
+    private async void Logout_Click(object sender, RoutedEventArgs e)
     {
-        _clear();
-        KeyStatus.Text = "已移除";
-        ClearButton.IsEnabled = false;
+        await _logout();
+        await RefreshAsync();
     }
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();

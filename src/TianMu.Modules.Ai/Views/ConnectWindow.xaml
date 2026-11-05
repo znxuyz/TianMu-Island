@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="連結 Claude"
-        Width="480" SizeToContent="Height"
+        Width="460" SizeToContent="Height"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None" ResizeMode="NoResize"
         Background="{DynamicResource XuanQiBrush}"
@@ -26,39 +26,25 @@
                         Click="Close_Click" />
             </Grid>
 
-            <!-- 方法一：Claude Code -->
-            <TextBlock Margin="0,18,0,0" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource MiaoJinBrush}"
-                       Text="方法一 · 自動（建議）" />
-            <TextBlock Margin="0,6,0,0" FontSize="12" LineHeight="19" TextWrapping="Wrap"
+            <TextBlock Margin="0,14,0,0" FontSize="13" LineHeight="20" TextWrapping="Wrap"
                        Foreground="{DynamicResource TextSecondaryBrush}"
-                       Text="只要這台電腦登入過 Claude Code（命令列或桌面版裡的 Code 分頁），天幕島就會自動讀取它的登入來查額度，不需要任何設定。" />
-            <TextBlock x:Name="ClaudeCodeStatus" Margin="0,6,0,0" FontSize="12" Foreground="{DynamicResource YueBaiBrush}" />
+                       Text="在天幕島裡登入你的 Claude 帳號一次，之後就會自動顯示 5 小時與 7 天的剩餘額度。" />
 
-            <!-- 方法二：sessionKey -->
-            <TextBlock Margin="0,20,0,0" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource MiaoJinBrush}"
-                       Text="方法二 · 貼上 claude.ai 的 sessionKey" />
-            <TextBlock Margin="0,6,0,0" FontSize="12" LineHeight="19" TextWrapping="Wrap"
-                       Foreground="{DynamicResource TextSecondaryBrush}">
-                1. 用瀏覽器登入 claude.ai<LineBreak />
-                2. 按 F12 開啟開發者工具 → 「應用程式」→「Cookie」→ claude.ai<LineBreak />
-                3. 找到名稱為 sessionKey 的那一列，複製它的值，貼到下方
-            </TextBlock>
-            <PasswordBox x:Name="KeyBox" Margin="0,10,0,0" Height="34" Padding="10,0" VerticalContentAlignment="Center"
-                         Background="#14ECE6D8" Foreground="{DynamicResource YueBaiBrush}" BorderThickness="1"
-                         BorderBrush="{DynamicResource TrackBrush}" CaretBrush="{DynamicResource MiaoJinBrush}"
-                         AutomationProperties.Name="sessionKey" />
-            <TextBlock x:Name="KeyStatus" Margin="0,6,0,0" FontSize="12" Foreground="{DynamicResource YueBaiBrush}" />
+            <TextBlock x:Name="Status" Margin="0,16,0,0" FontSize="13" Foreground="{DynamicResource YueBaiBrush}" />
+
+            <StackPanel Margin="0,18,0,0" Orientation="Horizontal">
+                <Button x:Name="LoginButton" Style="{DynamicResource TianMu.Button.Primary}" Content="登入 Claude"
+                        Click="Login_Click" />
+                <Button x:Name="LogoutButton" Margin="8,0,0,0" Style="{DynamicResource TianMu.Button.Ghost}" Content="登出"
+                        Click="Logout_Click" />
+            </StackPanel>
+
+            <TextBlock x:Name="ClaudeCodeStatus" Margin="0,18,0,0" FontSize="12" TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextTertiaryBrush}" />
 
             <TextBlock Margin="0,14,0,0" FontSize="11" LineHeight="17" TextWrapping="Wrap"
                        Foreground="{DynamicResource TextTertiaryBrush}"
-                       Text="安全說明：sessionKey 等同你的 claude.ai 登入，請勿分享給任何人。天幕島會用 Windows 加密後只存在這台電腦，只用來向 claude.ai 查詢額度。Anthropic 沒有公開額度的正式介面，日後若改版可能需要更新天幕島。" />
-
-            <StackPanel Margin="0,18,0,0" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button x:Name="ClearButton" Style="{DynamicResource TianMu.Button.Ghost}" Content="移除已存的 sessionKey"
-                        Click="Clear_Click" />
-                <Button Margin="8,0,0,0" Style="{DynamicResource TianMu.Button.Primary}" Content="儲存並查詢"
-                        Click="Save_Click" />
-            </StackPanel>
+                       Text="登入狀態只存在這台電腦的天幕島資料夾裡，只用來向 claude.ai 查詢額度。Anthropic 沒有公開額度的正式介面，日後若網站改版可能需要更新天幕島。" />
         </StackPanel>
     </Grid>
 </Window>

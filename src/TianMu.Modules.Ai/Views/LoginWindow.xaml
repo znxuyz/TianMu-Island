@@ -1,0 +1,28 @@
+<Window x:Class="TianMu.Modules.Ai.Views.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        Title="登入 Claude"
+        Width="480" Height="720"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource XuanQiBrush}"
+        Foreground="{DynamicResource YueBaiBrush}"
+        FontFamily="{DynamicResource SansFont}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 說明列 -->
+        <Border Background="{DynamicResource LacquerBrush}" Padding="20,12">
+            <StackPanel>
+                <TextBlock x:Name="Hint" FontSize="12" LineHeight="18" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           Text="在下方登入你的 Claude 帳號，登入後這個視窗會自動關閉。若用 Google 登入被擋，請改選「用電子郵件繼續」，輸入同一個信箱即可。" />
+            </StackPanel>
+        </Border>
+
+        <wv2:WebView2 x:Name="Browser" Grid.Row="1" />
+    </Grid>
+</Window>
