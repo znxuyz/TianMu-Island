@@ -61,6 +61,8 @@ public partial class IslandWindow : Window, IIslandHost
         InitializeComponent();
         _settings = settings;
         InitHostExtensions();
+        InitAmbience();
+        _settings.Changed += _ => Dispatcher.InvokeAsync(OnSettingsChanged);
 
         _clockTimer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background,
             (_, _) => UpdateClock(), Dispatcher);
@@ -206,7 +208,7 @@ public partial class IslandWindow : Window, IIslandHost
     }
 
     private void Settings_Click(object sender, RoutedEventArgs e) => App.Current.ShowSettings();
-    private void Hide_Click(object sender, RoutedEventArgs e) => Hide();
+    private void Hide_Click(object sender, RoutedEventArgs e) => SetUserHidden(true);
     private void Exit_Click(object sender, RoutedEventArgs e) => App.Current.Quit();
 
     // ═══════════════════════ 法器宿主 IIslandHost ═══════════════════════
@@ -386,10 +388,11 @@ public partial class IslandWindow : Window, IIslandHost
         _width.Step(dt);
         _height.Step(dt);
         _reveal.Step(dt);
+        bool magnetAtRest = StepMagnet(dt);
 
         ApplyVisuals();
 
-        if (_width.IsAtRest && _height.IsAtRest && _reveal.IsAtRest)
+        if (_width.IsAtRest && _height.IsAtRest && _reveal.IsAtRest && magnetAtRest)
             StopAnimation(); // 靜止時不耗任何 CPU/GPU
     }
 

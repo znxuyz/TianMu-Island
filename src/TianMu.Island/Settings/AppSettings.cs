@@ -22,6 +22,18 @@ public sealed class AppSettings
     /// <summary>停靠在哪一個螢幕（裝置名稱，例如 \\.\DISPLAY2）；找不到時用主螢幕。</summary>
     public string? DockScreen { get; set; }
 
+    /// <summary>前景程式全螢幕時（影片、遊戲、簡報）自動隱藏天幕。</summary>
+    public bool AutoHideFullscreen { get; set; } = true;
+
+    /// <summary>滑鼠靠近時，天幕微微朝游標偏移。</summary>
+    public bool Magnetic { get; set; } = true;
+
+    /// <summary>多螢幕時，天幕跟著滑鼠移到所在的螢幕。</summary>
+    public bool FollowCursorScreen { get; set; } = true;
+
+    /// <summary>漆面色溫隨時辰流轉。</summary>
+    public bool DayNightTint { get; set; } = true;
+
     /// <summary>閒置時，膠囊兩端飄散靈氣粒子。</summary>
     public bool ShowParticles { get; set; } = true;
 

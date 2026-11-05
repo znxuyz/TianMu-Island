@@ -21,6 +21,7 @@ public partial class IslandWindow
     private const double DragThresholdPx = 6;
 
     private DockPosition _dock = DockPosition.TopCenter;
+    private string? _activeScreenName;
     private bool _dragging;
     private NativeMethods.POINT _dragStartCursor;
     private Point _dragStartWindow;
@@ -35,8 +36,11 @@ public partial class IslandWindow
         var (dock, screenName) = _settings.Read(s => (s.Dock, s.DockScreen));
         _dock = dock;
 
-        var screen = Forms.Screen.AllScreens.FirstOrDefault(s => s.DeviceName == screenName) ?? Forms.Screen.PrimaryScreen;
+        // 多螢幕跟隨時，以滑鼠所在的螢幕為準；否則用使用者拖曳時選定的螢幕
+        string? wanted = _followScreenName ?? screenName;
+        var screen = Forms.Screen.AllScreens.FirstOrDefault(s => s.DeviceName == wanted) ?? Forms.Screen.PrimaryScreen;
         if (screen is null) return;
+        _activeScreenName = screen.DeviceName;
 
         var (bounds, workArea) = (ToDip(screen.Bounds), ToDip(screen.WorkingArea));
         var origin = DockLayout.WindowOrigin(dock, bounds, workArea, new Size(Width, Height));
@@ -177,6 +181,7 @@ public partial class IslandWindow
             s.Dock = dock;
             s.DockScreen = screen.DeviceName;
         });
+        _followScreenName = null; // 使用者親手放的位置優先
         ApplyDock(animate: true);
         return true;
     }

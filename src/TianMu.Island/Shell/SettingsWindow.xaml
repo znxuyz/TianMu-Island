@@ -144,6 +144,67 @@
                     </Grid>
                 </Border>
 
+                <Border Style="{StaticResource Row}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource RowTitle}" Text="全螢幕時自動隱藏" />
+                            <TextBlock Style="{StaticResource RowDescription}" Text="看影片、玩遊戲或簡報時天幕自動退下，結束後回來。" />
+                        </StackPanel>
+                        <CheckBox Grid.Column="1" Style="{StaticResource TianMu.Toggle}" VerticalAlignment="Center"
+                                  Margin="16,0,0,0" AutomationProperties.Name="全螢幕時自動隱藏"
+                                  IsChecked="{Binding AutoHideFullscreen, Mode=TwoWay}" />
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource Row}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource RowTitle}" Text="磁吸" />
+                            <TextBlock Style="{StaticResource RowDescription}" Text="滑鼠靠近時，天幕微微朝游標偏移，像被吸過去。" />
+                        </StackPanel>
+                        <CheckBox Grid.Column="1" Style="{StaticResource TianMu.Toggle}" VerticalAlignment="Center"
+                                  Margin="16,0,0,0" AutomationProperties.Name="磁吸"
+                                  IsChecked="{Binding Magnetic, Mode=TwoWay}" />
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource Row}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource RowTitle}" Text="跟隨滑鼠所在的螢幕" />
+                            <TextBlock Style="{StaticResource RowDescription}" Text="接多個螢幕時，滑鼠在另一個螢幕停留一秒，天幕就跟過去。" />
+                        </StackPanel>
+                        <CheckBox Grid.Column="1" Style="{StaticResource TianMu.Toggle}" VerticalAlignment="Center"
+                                  Margin="16,0,0,0" AutomationProperties.Name="跟隨滑鼠所在的螢幕"
+                                  IsChecked="{Binding FollowCursorScreen, Mode=TwoWay}" />
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource Row}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource RowTitle}" Text="晝夜變色" />
+                            <TextBlock Style="{StaticResource RowDescription}" Text="漆面色溫隨時辰流轉：子夜偏墨藍、午時偏暖、黃昏帶赭。" />
+                        </StackPanel>
+                        <CheckBox Grid.Column="1" Style="{StaticResource TianMu.Toggle}" VerticalAlignment="Center"
+                                  Margin="16,0,0,0" AutomationProperties.Name="晝夜變色"
+                                  IsChecked="{Binding DayNightTint, Mode=TwoWay}" />
+                    </Grid>
+                </Border>
+
                 <!-- ═══ 法器 ═══ -->
                 <TextBlock Style="{StaticResource SectionTitle}" theme:Typo.SpacedText="法器" />
                 <ItemsControl ItemsSource="{Binding Modules}" Focusable="False">

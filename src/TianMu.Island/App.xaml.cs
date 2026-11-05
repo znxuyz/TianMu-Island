@@ -75,15 +75,13 @@ public partial class App : Application
 
     // ═══════════════════════ 供系統匣與設定面板呼叫 ═══════════════════════
 
-    public bool IsIslandVisible => _island?.IsVisible == true;
+    public bool IsIslandVisible => _island is { UserHidden: false };
 
     public IReadOnlyList<QuickAction> QuickActions => _island?.QuickActions ?? [];
 
     public void ToggleIsland()
     {
-        if (_island is null) return;
-        if (_island.IsVisible) _island.Hide();
-        else _island.Show();
+        _island?.SetUserHidden(!_island.UserHidden);
     }
 
     public void ShowSettings()

@@ -80,6 +80,38 @@ public sealed class SettingsViewModel : Observable
         }
     }
 
+    // 以下開關直接讀寫設定檔，不另存欄位
+    public bool AutoHideFullscreen
+    {
+        get => _store.Read(s => s.AutoHideFullscreen);
+        set => Save(_store.Read(s => s.AutoHideFullscreen), value, s => s.AutoHideFullscreen = value);
+    }
+
+    public bool Magnetic
+    {
+        get => _store.Read(s => s.Magnetic);
+        set => Save(_store.Read(s => s.Magnetic), value, s => s.Magnetic = value);
+    }
+
+    public bool FollowCursorScreen
+    {
+        get => _store.Read(s => s.FollowCursorScreen);
+        set => Save(_store.Read(s => s.FollowCursorScreen), value, s => s.FollowCursorScreen = value);
+    }
+
+    public bool DayNightTint
+    {
+        get => _store.Read(s => s.DayNightTint);
+        set => Save(_store.Read(s => s.DayNightTint), value, s => s.DayNightTint = value);
+    }
+
+    private void Save(bool current, bool value, Action<AppSettings> write, [System.Runtime.CompilerServices.CallerMemberName] string? name = null)
+    {
+        if (current == value) return;
+        _store.Update(write);
+        Raise(name);
+    }
+
     public bool ShowParticles
     {
         get => _showParticles;
