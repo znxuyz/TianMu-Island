@@ -14,10 +14,7 @@
     <ProjectReference Include="..\TianMu.Core\TianMu.Core.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <!-- Windows 資料保護（DPAPI）：把 sessionKey 加密後才存檔 -->
-    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.0" />
-  </ItemGroup>
+  <!-- Windows 資料保護（DPAPI，用來加密 sessionKey）已內建於 .NET 10 的 Windows 桌面框架，不需另外引用套件 -->
 
   <ItemGroup>
     <InternalsVisibleTo Include="TianMu.Tests" />
