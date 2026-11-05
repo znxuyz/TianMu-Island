@@ -88,7 +88,7 @@ public partial class IslandWindow : Window, IIslandHost
         SourceInitialized += OnSourceInitialized;
         Loaded += (_, _) =>
         {
-            PositionAtTopCenter();
+            ApplyDock();
             Refresh();
             ApplyVisuals();
         };
@@ -115,11 +115,8 @@ public partial class IslandWindow : Window, IIslandHost
         return 0;
     }
 
-    private void PositionAtTopCenter()
-    {
-        Left = (SystemParameters.PrimaryScreenWidth - Width) / 2;
-        Top = 0;
-    }
+    /// <summary>回到設定中的停靠位置（解析度、DPI 改變時呼叫）。</summary>
+    private void PositionAtTopCenter() => ApplyDock();
 
     /// <summary>
     /// 預留：讓整個視窗完全滑鼠穿透（例如「全螢幕遊戲時隱身」模式）。
@@ -166,6 +163,7 @@ public partial class IslandWindow : Window, IIslandHost
     private void Capsule_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         _pressed = true;
+        BeginPress();
         Capsule.CaptureMouse();
         UpdateTargets();
         e.Handled = true;
@@ -176,6 +174,14 @@ public partial class IslandWindow : Window, IIslandHost
         bool wasPressed = _pressed;
         _pressed = false;
         Capsule.ReleaseMouseCapture();
+
+        // 剛才是拖曳：吸附到停靠位置，不當作點擊
+        if (EndPressAsDrag())
+        {
+            Refresh();
+            e.Handled = true;
+            return;
+        }
 
         if (wasPressed)
         {
@@ -211,8 +217,9 @@ public partial class IslandWindow : Window, IIslandHost
         {
             if (activity.Priority == ActivityPriority.Ambient)
             {
-                _ambient.RemoveAll(a => a.ModuleId == activity.ModuleId);
+                bool isNew = _ambient.RemoveAll(a => a.ModuleId == activity.ModuleId) == 0;
                 _ambient.Add(activity);
+                if (isNew && activity.ExpandedView is not null) SelectPage(activity.ModuleId); // 新出現的（例如開始播歌）優先顯示
             }
             else
             {
@@ -257,7 +264,7 @@ public partial class IslandWindow : Window, IIslandHost
     private IslandActivity? CurrentAmbient => _ambient.Count > 0 ? _ambient[^1] : null;
 
     /// <summary>目前展開時要顯示的異象。</summary>
-    private IslandActivity? ExpandedActivity => _transient ?? CurrentAmbient;
+    private IslandActivity? ExpandedActivity => _transient ?? CurrentPage;
 
     /// <summary>依目前狀態決定兩個層各顯示什麼，然後更新彈簧目標。</summary>
     private void Refresh()
@@ -273,6 +280,7 @@ public partial class IslandWindow : Window, IIslandHost
         SetHostContent(ExpandedHost, expandedView);
         DefaultExpanded.Visibility = expandedView is null ? Visibility.Visible : Visibility.Collapsed;
 
+        UpdatePager();
         UpdateClock();
         UpdateTargets();
     }
@@ -325,6 +333,10 @@ public partial class IslandWindow : Window, IIslandHost
             // 沒有異象時是「時辰」面板，若有捷徑列會再高一些
             double defaultHeight = a is null ? DefaultExpandedHeight : ExpandedSize.Height;
             target = new Size(a?.ExpandedWidth ?? ExpandedSize.Width, a?.ExpandedHeight ?? defaultHeight);
+
+            // 有多頁時，兩側留給翻頁箭頭、下方留給頁點
+            if (PagerVisible)
+                target = new Size(target.Width + 2 * PagerGutter, target.Height + PagerDotsHeight);
         }
         else
         {
@@ -389,10 +401,9 @@ public partial class IslandWindow : Window, IIslandHost
 
         Capsule.Width = w;
         Capsule.Height = h;
-        Capsule.CornerRadius = new CornerRadius(radius);
 
-        // 內容沿著圓角裁切，變形時邊緣依然乾淨
-        ContentRoot.Clip = new RectangleGeometry(new Rect(0, 0, w, h), radius, radius);
+        // 畫出形體（貼邊瀏海或圓膠囊），內容沿著外形裁切，變形時邊緣依然乾淨
+        ApplyShape(w, h, radius);
 
         double p = Math.Clamp(_reveal.Value, 0, 1);
         double idleOpacity = Math.Clamp(1 - p * 2.2, 0, 1);          // 收合內容先快速隱去

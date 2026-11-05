@@ -33,6 +33,18 @@ public interface IIslandHost
     /// </summary>
     string GetDataDirectory(string moduleId);
 
+    // ── 常駐頁面 ───────────────────────────────
+
+    /// <summary>
+    /// 加入（或更新）一個常駐頁面：展開天幕後可用左右箭頭切換到它（例如「AI 額度」）。
+    /// 只會用到 <see cref="IslandActivity.ExpandedView"/>、<see cref="IslandActivity.ExpandedWidth"/>、
+    /// <see cref="IslandActivity.ExpandedHeight"/> 與 <see cref="IslandActivity.Title"/>；同一法器只保留一頁。
+    /// </summary>
+    void SetPage(IslandActivity page);
+
+    /// <summary>移除某法器的常駐頁面。</summary>
+    void RemovePage(string moduleId);
+
     // ── 天幕外觀 ───────────────────────────────
 
     /// <summary>設定修為境界，天幕外觀隨之進化。</summary>

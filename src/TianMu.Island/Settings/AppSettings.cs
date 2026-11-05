@@ -1,3 +1,6 @@
+using System.Text.Json.Serialization;
+using TianMu.Island.Shell;
+
 namespace TianMu.Island.Settings;
 
 /// <summary>
@@ -11,6 +14,13 @@ public sealed class AppSettings
 
     /// <summary>開機時自動啟動天幕島。</summary>
     public bool StartWithWindows { get; set; }
+
+    /// <summary>天幕停靠位置（拖曳天幕即可改變）。</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<DockPosition>))]
+    public DockPosition Dock { get; set; } = DockPosition.TopCenter;
+
+    /// <summary>停靠在哪一個螢幕（裝置名稱，例如 \\.\DISPLAY2）；找不到時用主螢幕。</summary>
+    public string? DockScreen { get; set; }
 
     /// <summary>閒置時，膠囊兩端飄散靈氣粒子。</summary>
     public bool ShowParticles { get; set; } = true;

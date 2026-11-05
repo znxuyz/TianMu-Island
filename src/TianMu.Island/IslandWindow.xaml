@@ -26,12 +26,13 @@
         <Border x:Name="Capsule"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Top"
-                Margin="0,10,0,0"
+                Margin="0"
                 Width="180" Height="34"
-                CornerRadius="17"
-                Background="{StaticResource LacquerBrush}"
+                Background="Transparent"
                 BorderThickness="0"
                 Cursor="Hand"
+                MouseMove="Capsule_MouseMove"
+                MouseWheel="Capsule_MouseWheel"
                 MouseEnter="Capsule_MouseEnter"
                 MouseLeave="Capsule_MouseLeave"
                 MouseLeftButtonDown="Capsule_MouseLeftButtonDown"
@@ -51,6 +52,10 @@
                     <MenuItem Style="{StaticResource TianMu.MenuItem}" Header="結束天幕島" Click="Exit_Click" />
                 </ContextMenu>
             </Border.ContextMenu>
+
+            <Grid x:Name="Body">
+            <!-- 天幕形體：貼齊上緣時上方是平的，兩肩向外彎出（像瀏海）；側邊停靠時是圓膠囊 -->
+            <Path x:Name="CapsuleShape" Fill="{StaticResource LacquerBrush}" IsHitTestVisible="False" />
 
             <Grid x:Name="ContentRoot">
 
@@ -125,6 +130,7 @@
 
                 <!-- 展開態 -->
                 <Grid x:Name="ExpandedLayer" Opacity="0" Visibility="Hidden">
+                    <Grid x:Name="PageContent">
                     <!-- 預設：主標題 + 副標題 -->
                     <Grid x:Name="DefaultExpanded">
                         <Grid.RowDefinitions>
@@ -173,7 +179,21 @@
                     <!-- 法器自訂的展開畫面（例如：音樂面板） -->
                     <ContentControl x:Name="ExpandedHost" Focusable="False" IsTabStop="False"
                                     HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+                    </Grid>
+
+                    <!-- 翻頁：左右箭頭與頁點（展開後切換時辰、樂律、專注、AI 額度…） -->
+                    <Grid x:Name="PagerLayer" Visibility="Collapsed">
+                        <Button x:Name="PrevPageButton" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8,0,0,0"
+                                Style="{StaticResource TianMu.Button.Icon}" Width="28" Height="28" FontSize="10"
+                                Content="&#xE76B;" ToolTip="上一頁" AutomationProperties.Name="上一頁" Click="PrevPage_Click" />
+                        <Button x:Name="NextPageButton" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0"
+                                Style="{StaticResource TianMu.Button.Icon}" Width="28" Height="28" FontSize="10"
+                                Content="&#xE76C;" ToolTip="下一頁" AutomationProperties.Name="下一頁" Click="NextPage_Click" />
+                        <StackPanel x:Name="PageDots" Orientation="Horizontal" HorizontalAlignment="Center"
+                                    VerticalAlignment="Bottom" Margin="0,0,0,9" IsHitTestVisible="False" />
+                    </Grid>
                 </Grid>
+            </Grid>
             </Grid>
         </Border>
 

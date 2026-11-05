@@ -18,6 +18,7 @@ public sealed class MusicViewModel : INotifyPropertyChanged
     private bool _hasTimeline;
     private string _currentLyric = string.Empty;
     private string _nextLyric = string.Empty;
+    private string _compactText = string.Empty;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -32,6 +33,9 @@ public sealed class MusicViewModel : INotifyPropertyChanged
     public bool HasTimeline { get => _hasTimeline; set => Set(ref _hasTimeline, value); }
     public string CurrentLyric { get => _currentLyric; set => Set(ref _currentLyric, value); }
     public string NextLyric { get => _nextLyric; set => Set(ref _nextLyric, value); }
+
+    /// <summary>收合時膠囊中間的文字：有同步歌詞時顯示當下這一句，否則顯示歌名。</summary>
+    public string CompactText { get => _compactText; set => Set(ref _compactText, value); }
 
     /// <summary>Segoe MDL2 / Fluent Icons：E769 = 暫停、E768 = 播放。</summary>
     public string PlayPauseGlyph => _isPlaying ? "" : "";

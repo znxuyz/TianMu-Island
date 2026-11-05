@@ -22,7 +22,7 @@
         </Grid>
 
         <TextBlock Grid.Column="1"
-                   Text="{Binding Title}"
+                   Text="{Binding CompactText}"
                    Margin="9,0,10,0"
                    VerticalAlignment="Center"
                    FontSize="12"

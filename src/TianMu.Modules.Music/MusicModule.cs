@@ -22,7 +22,7 @@ public sealed class MusicModule : IIslandModule, IDescribedModule
     /// <summary>選項：是否向 LRCLIB 查詢歌詞。</summary>
     public const string LyricsOption = "lyrics";
 
-    private const double CompactWidth = 250;
+    private const double CompactWidth = 300;   // 夠寬才放得下一句歌詞
     private const double ExpandedWidth = 430;
     private const double ExpandedHeight = 180;
     private const int FftSize = 2048;
@@ -118,6 +118,7 @@ public sealed class MusicModule : IIslandModule, IDescribedModule
             var identity = TrackTitleCleaner.Clean(s.Title, s.Artist, s.SourceApp);
             _vm.Title = identity.Title;
             _vm.Artist = identity.Artist;
+            _vm.CompactText = identity.Title;
             _lines = [];
             _lyricIndex = -2;
             _vm.CurrentLyric = "正在推演歌詞…";
@@ -338,6 +339,9 @@ public sealed class MusicModule : IIslandModule, IDescribedModule
 
         _vm.CurrentLyric = index >= 0 && _lines[index].Text.Length > 0 ? _lines[index].Text : "♪";
         _vm.NextLyric = index + 1 < _lines.Count ? _lines[index + 1].Text : string.Empty;
+
+        // 收合時就把歌詞放在島上；前奏或間奏（空白行）時顯示歌名
+        _vm.CompactText = index >= 0 && _lines[index].Text.Length > 0 ? _lines[index].Text : _vm.Title;
     }
 
     private static string Format(TimeSpan t) =>

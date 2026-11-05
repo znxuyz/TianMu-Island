@@ -44,6 +44,17 @@ internal static class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool SetForegroundWindow(nint hWnd);
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct POINT
+    {
+        public int X;
+        public int Y;
+    }
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool GetCursorPos(out POINT point);
+
     [DllImport("dwmapi.dll")]
     public static extern int DwmSetWindowAttribute(nint hwnd, int attribute, ref int value, int size);
 
