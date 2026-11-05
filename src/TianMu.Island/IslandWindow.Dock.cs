@@ -93,7 +93,7 @@ public partial class IslandWindow
         Capsule.CornerRadius = new CornerRadius(0);
         bool flush = FlushTop;
         CapsuleShape.Data = BuildShape(w, h, radius, flush ? ShoulderRadius : 0, flush);
-        ContentRoot.Clip = BuildShape(w, h, radius, shoulder: 0, flushTop: flush);
+        ContentRoot.Clip = BuildShape(w, h, radius, flare: 0, flushTop: flush);
     }
 
     /// <summary>

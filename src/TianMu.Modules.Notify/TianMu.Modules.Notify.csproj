@@ -15,8 +15,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 唯讀讀取 Windows 的通知資料庫（SQLite） -->
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.0" />
+    <!--
+      唯讀讀取 Windows 的通知資料庫（SQLite）。
+      使用 Windows 內建、由 Windows Update 維護的 winsqlite3.dll，不另外打包 SQLite 原生程式庫
+      （打包版的 e_sqlite3 有已知的高風險漏洞，而且會讓 exe 變大）。
+    -->
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="9.0.0" />
+    <PackageReference Include="SQLitePCLRaw.bundle_winsqlite3" Version="2.1.10" />
   </ItemGroup>
 
   <ItemGroup>

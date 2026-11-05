@@ -32,6 +32,12 @@ internal sealed class NotificationDbWatcher : IDisposable
     /// <summary>讀取失敗（例如 Windows 版本的資料庫格式不同），只會觸發一次。</summary>
     public event Action<string>? Failed;
 
+    static NotificationDbWatcher()
+    {
+        // 指定使用 Windows 內建的 SQLite（winsqlite3.dll）
+        SQLitePCL.Batteries_V2.Init();
+    }
+
     public bool Exists => File.Exists(_path);
 
     public void Start() => _timer = new Timer(_ => Poll(), null, TimeSpan.Zero, Interval);
