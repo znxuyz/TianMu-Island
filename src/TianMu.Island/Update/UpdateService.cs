@@ -50,17 +50,22 @@ public sealed partial class UpdateService : IDisposable
     /// <summary>
     /// 是否能自我更新：用 <c>dotnet run</c> 或在 bin 資料夾裡執行的開發版不更新，以免覆蓋編譯產物。
     /// </summary>
-    public static bool CanSelfUpdate
+    public static bool CanSelfUpdate => IsSelfUpdatable(Environment.ProcessPath, AppContext.BaseDirectory);
+
+    /// <summary>
+    /// 判斷某個執行檔能否自我更新。
+    /// 從 Releases 下載的檔名是「TianMuIsland-win-x64.exe」，使用者也可能自己改名，所以只要求以 TianMuIsland 開頭；
+    /// 位在 bin\Debug、bin\Release 底下的是開發中的編譯產物，不更新。
+    /// </summary>
+    public static bool IsSelfUpdatable(string? exePath, string baseDirectory)
     {
-        get
-        {
-            string? exe = Environment.ProcessPath;
-            if (string.IsNullOrEmpty(exe)) return false;
-            if (!Path.GetFileName(exe).Equals("TianMuIsland.exe", StringComparison.OrdinalIgnoreCase)) return false;
-            string dir = AppContext.BaseDirectory.Replace('/', '\\');
-            return !dir.Contains(@"\bin\Debug\", StringComparison.OrdinalIgnoreCase) &&
-                   !dir.Contains(@"\bin\Release\", StringComparison.OrdinalIgnoreCase);
-        }
+        if (string.IsNullOrEmpty(exePath)) return false;
+        if (!Path.GetExtension(exePath).Equals(".exe", StringComparison.OrdinalIgnoreCase)) return false;
+        if (!Path.GetFileName(exePath).StartsWith("TianMuIsland", StringComparison.OrdinalIgnoreCase)) return false;
+
+        string dir = baseDirectory.Replace('/', '\\');
+        return !dir.Contains(@"\bin\Debug\", StringComparison.OrdinalIgnoreCase) &&
+               !dir.Contains(@"\bin\Release\", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

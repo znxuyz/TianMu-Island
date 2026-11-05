@@ -92,6 +92,16 @@ public class UpdateServiceTests
     public void ParseVersion_rejects_garbage(string? input) =>
         Assert.Null(UpdateService.ParseVersion(input));
 
+    [Theory]
+    [InlineData(@"C:\Users\me\Downloads\TianMuIsland-win-x64.exe", @"C:\Users\me\Downloads\", true)]
+    [InlineData(@"C:\Users\me\Desktop\TianMuIsland.exe", @"C:\Users\me\Desktop\", true)]
+    [InlineData(@"D:\src\TianMu-Island\src\TianMu.Island\bin\Debug\net10.0-windows\TianMuIsland.exe",
+                @"D:\src\TianMu-Island\src\TianMu.Island\bin\Debug\net10.0-windows\", false)]
+    [InlineData(@"C:\Program Files\dotnet\dotnet.exe", @"C:\Program Files\dotnet\", false)]
+    [InlineData(null, @"C:\", false)]
+    public void Release_downloads_can_self_update(string? exe, string dir, bool expected) =>
+        Assert.Equal(expected, UpdateService.IsSelfUpdatable(exe, dir));
+
     [Fact]
     public void ParseChecksum_reads_first_token()
     {
