@@ -42,6 +42,7 @@ public sealed class MusicModule : IIslandModule, IDescribedModule
     private MusicViewModel? _vm;
     private CompactMusicView? _compact;
     private ExpandedMusicView? _expanded;
+    private SpectrumBars? _badge;
     private DispatcherTimer? _pausedTimer;
 
     // 以下欄位只在 UI 執行緒存取
@@ -81,6 +82,9 @@ public sealed class MusicModule : IIslandModule, IDescribedModule
             _expanded = new ExpandedMusicView { DataContext = _vm };
             _compact.SpectrumBars.Bands = _bands;
             _expanded.SpectrumBars.Bands = _bands;
+
+            // 分身小圓：四根跳動的頻譜
+            _badge = new SpectrumBars { Width = 14, Height = 12, BarCount = 4, Centered = true, Bands = _bands };
 
             _pausedTimer = new DispatcherTimer { Interval = HideAfterPaused };
             _pausedTimer.Tick += (_, _) =>
@@ -135,6 +139,7 @@ public sealed class MusicModule : IIslandModule, IDescribedModule
         {
             _coverBytes = s.Thumbnail;
             _vm.Cover = DecodeCover(s.Thumbnail);
+            ApplyCoverColor(_vm.Cover as BitmapSource);
         }
 
         _vm.IsPlaying = s.IsPlaying;
@@ -183,10 +188,26 @@ public sealed class MusicModule : IIslandModule, IDescribedModule
         {
             CompactView = _compact,
             ExpandedView = _expanded,
+            BadgeView = _badge,
             CompactWidth = CompactWidth,
             ExpandedWidth = ExpandedWidth,
             ExpandedHeight = ExpandedHeight,
         };
+
+    /// <summary>封面取色：頻譜、進度條、分身小圓都跟著這首歌的封面換色。</summary>
+    private void ApplyCoverColor(BitmapSource? cover)
+    {
+        if (_vm is null) return;
+        var color = CoverPalette.Pick(cover);
+        var top = Color.FromRgb((byte)Math.Min(255, color.R + 30), (byte)Math.Min(255, color.G + 30), (byte)Math.Min(255, color.B + 30));
+        var bottom = Color.FromRgb((byte)(color.R * 0.8), (byte)(color.G * 0.8), (byte)(color.B * 0.8));
+        var bars = new LinearGradientBrush(top, bottom, 90);
+        bars.Freeze();
+
+        _vm.Accent = MusicViewModel.CreateAccent(color);
+        foreach (var spectrum in new[] { _compact?.SpectrumBars, _expanded?.SpectrumBars, _badge })
+            if (spectrum is not null) spectrum.BarBrush = bars;
+    }
 
     private static ImageSource? DecodeCover(byte[]? bytes)
     {
@@ -304,6 +325,7 @@ public sealed class MusicModule : IIslandModule, IDescribedModule
 
         _compact?.SpectrumBars.InvalidateVisual();
         _expanded?.SpectrumBars.InvalidateVisual();
+        _badge?.InvalidateVisual();
         UpdateTimeline();
 
         bool playing = _snapshot?.IsPlaying == true;

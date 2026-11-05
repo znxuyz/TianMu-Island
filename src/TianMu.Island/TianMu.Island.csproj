@@ -46,6 +46,7 @@
     <ProjectReference Include="..\TianMu.Modules.Ai\TianMu.Modules.Ai.csproj" />
     <ProjectReference Include="..\TianMu.Modules.Sense\TianMu.Modules.Sense.csproj" />
     <ProjectReference Include="..\TianMu.Modules.Notify\TianMu.Modules.Notify.csproj" />
+    <ProjectReference Include="..\TianMu.Modules.Shelf\TianMu.Modules.Shelf.csproj" />
   </ItemGroup>
 
 </Project>

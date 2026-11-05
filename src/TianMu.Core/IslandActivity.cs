@@ -35,6 +35,12 @@ public sealed record IslandActivity(
     /// </summary>
     public object? CompactView { get; init; }
 
+    /// <summary>
+    /// 分身小圓的畫面（WPF <c>FrameworkElement</c>，約 22×22）。
+    /// 同時有兩個常駐異象時（例如音樂＋番茄鐘），天幕像水滴一樣分出一顆小圓顯示較早的那一個。
+    /// </summary>
+    public object? BadgeView { get; init; }
+
     /// <summary>展開時大面板的自訂畫面（WPF <c>FrameworkElement</c>）。</summary>
     public object? ExpandedView { get; init; }
 

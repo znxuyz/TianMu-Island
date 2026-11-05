@@ -63,6 +63,21 @@ public interface IIslandHost
     /// </summary>
     void SetStatus(string moduleId, string? text);
 
+    // ── 檔案拖放 ───────────────────────────────
+
+    /// <summary>
+    /// 註冊檔案拖放：使用者把檔案拖到天幕上時，天幕顯示 <paramref name="hint"/>，放開後呼叫 <paramref name="onDrop"/>（UI 執行緒）。
+    /// </summary>
+    void AddFileDropHandler(string moduleId, string hint, Action<IReadOnlyList<string>> onDrop);
+
+    // ── 狀態燈 ─────────────────────────────────
+
+    /// <summary>
+    /// 在天幕右上角亮起（或熄滅）一盞小燈，例如「麥克風使用中」。
+    /// <paramref name="indicator"/> 為 null 時熄滅。同一個 key 只會有一盞。
+    /// </summary>
+    void SetIndicator(string key, IslandIndicator? indicator);
+
     // ── 專注模式 ───────────────────────────────
 
     /// <summary>目前是否在專注中（番茄鐘進行時）。其他法器應避免在此時打擾。</summary>

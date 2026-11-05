@@ -18,6 +18,7 @@ public sealed class SenseModule : IIslandModule, IDescribedModule
     public const string BluetoothOption = "bluetooth";
     public const string VolumeOption = "volume";
     public const string BrightnessOption = "brightness";
+    public const string PrivacyOption = "privacy";
 
     // Segoe Fluent Icons / MDL2 Assets
     private const string GlyphUsb = "";
@@ -25,6 +26,8 @@ public sealed class SenseModule : IIslandModule, IDescribedModule
     private const string GlyphVolume = "";
     private const string GlyphMute = "";
     private const string GlyphBrightness = "";
+    private const string GlyphMic = "\uE720";
+    private const string GlyphCamera = "\uE714";
 
     private static readonly TimeSpan DeviceDuration = TimeSpan.FromSeconds(3.5);
     private static readonly TimeSpan LevelDuration = TimeSpan.FromSeconds(1.6);
@@ -34,6 +37,9 @@ public sealed class SenseModule : IIslandModule, IDescribedModule
     private BluetoothWatcher? _bluetooth;
     private VolumeWatcher? _volume;
     private BrightnessWatcher? _brightness;
+    private PrivacyWatcher? _privacy;
+    private HashSet<string> _micUsers = [];
+    private HashSet<string> _camUsers = [];
 
     // 以下只在 UI 執行緒存取
     private SignalViewModel? _deviceVm;
@@ -51,6 +57,7 @@ public sealed class SenseModule : IIslandModule, IDescribedModule
         new(BluetoothOption, "藍牙裝置", "已配對的耳機、滑鼠等連上或斷線時提示。", true),
         new(VolumeOption, "音量", "調整音量或靜音時，天幕顯示音量刻度。", true),
         new(BrightnessOption, "螢幕亮度", "調整亮度時顯示刻度（僅筆電等內建螢幕）。", true),
+        new(PrivacyOption, "隱私燈", "有程式使用麥克風或相機時，天幕右上角亮起朱砂小燈。", true),
     ];
 
     public async Task InitializeAsync(IIslandHost host, CancellationToken cancellationToken)
@@ -80,6 +87,40 @@ public sealed class SenseModule : IIslandModule, IDescribedModule
         _brightness = new BrightnessWatcher();
         _brightness.Changed += level => OnUi(() => ShowBrightness(level));
         _brightness.Start();
+
+        _privacy = new PrivacyWatcher();
+        _privacy.Changed += (mic, cam) => OnUi(() => ShowPrivacy(mic, cam));
+    }
+
+    // ═══════════════════════ 隱私燈 ═══════════════════════
+
+    /// <summary>
+    /// 有程式正在用麥克風或相機時，右上角亮起朱砂小燈（滑鼠停留可看是哪個程式）；
+    /// 開始使用的那一刻另外彈出一次提示。
+    /// </summary>
+    private void ShowPrivacy(IReadOnlyList<CapabilityUser> mic, IReadOnlyList<CapabilityUser> cam)
+    {
+        if (_host is null) return;
+        bool enabled = Enabled(PrivacyOption);
+
+        var micNow = mic.Select(u => u.AppName).ToHashSet();
+        var camNow = cam.Select(u => u.AppName).ToHashSet();
+
+        _host.SetIndicator("tianmu.sense.mic", enabled && micNow.Count > 0
+            ? new IslandIndicator(GlyphMic, $"麥克風使用中 · {string.Join("、", micNow)}") : null);
+        _host.SetIndicator("tianmu.sense.camera", enabled && camNow.Count > 0
+            ? new IslandIndicator(GlyphCamera, $"相機使用中 · {string.Join("、", camNow)}") : null);
+
+        if (enabled)
+        {
+            var newCam = camNow.Except(_camUsers).ToList();
+            var newMic = micNow.Except(_micUsers).ToList();
+            if (newCam.Count > 0) ShowDevice(GlyphCamera, "相機使用中", string.Join("、", newCam), "ZhuShaBrush");
+            else if (newMic.Count > 0) ShowDevice(GlyphMic, "麥克風使用中", string.Join("、", newMic), "ZhuShaBrush");
+        }
+
+        _micUsers = micNow;
+        _camUsers = camNow;
     }
 
     private void OnUi(Action action) => _ = _host?.InvokeAsync(action);
@@ -174,6 +215,7 @@ public sealed class SenseModule : IIslandModule, IDescribedModule
         _bluetooth?.Dispose();
         _volume?.Dispose();
         _brightness?.Dispose();
+        _privacy?.Dispose();
         return ValueTask.CompletedTask;
     }
 }

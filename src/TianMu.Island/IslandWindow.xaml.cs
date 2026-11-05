@@ -283,6 +283,7 @@ public partial class IslandWindow : Window, IIslandHost
         DefaultExpanded.Visibility = expandedView is null ? Visibility.Visible : Visibility.Collapsed;
 
         UpdatePager();
+        UpdateSatellite();
         UpdateClock();
         UpdateTargets();
     }
@@ -391,10 +392,11 @@ public partial class IslandWindow : Window, IIslandHost
         _height.Step(dt);
         _reveal.Step(dt);
         bool magnetAtRest = StepMagnet(dt);
+        bool gooAtRest = StepGoo(dt);
 
         ApplyVisuals();
 
-        if (_width.IsAtRest && _height.IsAtRest && _reveal.IsAtRest && magnetAtRest)
+        if (_width.IsAtRest && _height.IsAtRest && _reveal.IsAtRest && magnetAtRest && gooAtRest)
             StopAnimation(); // 靜止時不耗任何 CPU/GPU
     }
 

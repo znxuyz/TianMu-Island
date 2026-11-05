@@ -33,6 +33,7 @@ public sealed class FocusModule : IIslandModule, IDescribedModule
     private FocusViewModel? _vm;
     private FocusCompactView? _compact;
     private FocusExpandedView? _expanded;
+    private ProgressRing? _badge;
     private BreakthroughViewModel? _breakVm;
     private BreakthroughView? _breakView;
     private DispatcherTimer? _ticker;
@@ -67,6 +68,10 @@ public sealed class FocusModule : IIslandModule, IDescribedModule
             };
             _compact = new FocusCompactView { DataContext = _vm };
             _expanded = new FocusExpandedView { DataContext = _vm };
+
+            // 分身小圓：只放一個小圓環
+            _badge = new ProgressRing { Width = 20, Height = 20, Thickness = 3, DataContext = _vm };
+            _badge.SetBinding(ProgressRing.ProgressProperty, new System.Windows.Data.Binding(nameof(FocusViewModel.Progress)));
             _breakVm = new BreakthroughViewModel();
             _breakView = new BreakthroughView { DataContext = _breakVm };
 
@@ -262,6 +267,7 @@ public sealed class FocusModule : IIslandModule, IDescribedModule
         {
             CompactView = _compact,
             ExpandedView = _expanded,
+            BadgeView = _badge,
             CompactWidth = CompactWidth,
             ExpandedWidth = ExpandedWidth,
             ExpandedHeight = ExpandedHeight,

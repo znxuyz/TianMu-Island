@@ -23,6 +23,21 @@
         <!-- 靈氣粒子：閒置時金塵從膠囊兩端飄散（不擋滑鼠） -->
         <Canvas x:Name="ParticleLayer" IsHitTestVisible="False" />
 
+        <!-- 水滴融合：兩個常駐異象同時存在時，天幕分出一顆小圓（分身），中間以水滴頸相連 -->
+        <Canvas x:Name="GooLayer">
+            <Path x:Name="GooNeck" Fill="{StaticResource LacquerBrush}" IsHitTestVisible="False" />
+            <Border x:Name="Satellite" Width="32" Height="32" CornerRadius="16" Visibility="Collapsed"
+                    Background="{StaticResource LacquerBrush}" Cursor="Hand"
+                    MouseLeftButtonUp="Satellite_MouseLeftButtonUp" ToolTip="點一下切換到這個畫面">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="18" ShadowDepth="4" Direction="270" Color="#000000" Opacity="0.35"
+                                      RenderingBias="Performance" />
+                </Border.Effect>
+                <ContentControl x:Name="SatelliteHost" Focusable="False" IsTabStop="False"
+                                HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+        </Canvas>
+
         <Border x:Name="Capsule"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Top"
@@ -32,6 +47,11 @@
                 BorderThickness="0"
                 Cursor="Hand"
                 MouseMove="Capsule_MouseMove"
+                AllowDrop="True"
+                DragEnter="Capsule_DragEnter"
+                DragOver="Capsule_DragOver"
+                DragLeave="Capsule_DragLeave"
+                Drop="Capsule_Drop"
                 MouseWheel="Capsule_MouseWheel"
                 MouseEnter="Capsule_MouseEnter"
                 MouseLeave="Capsule_MouseLeave"
@@ -69,6 +89,18 @@
                         </RadialGradientBrush>
                     </Ellipse.Fill>
                 </Ellipse>
+
+                <!-- 狀態燈（例如麥克風、相機使用中）：右上角的小圖示 -->
+                <StackPanel x:Name="IndicatorPanel" Orientation="Horizontal" HorizontalAlignment="Right"
+                            VerticalAlignment="Top" Margin="0,4,16,0" Panel.ZIndex="12" />
+
+                <!-- 拖放提示：把檔案拖到天幕上時出現 -->
+                <Border x:Name="DropHint" Visibility="Collapsed" Panel.ZIndex="18" Background="#E60E0C0A"
+                        IsHitTestVisible="False">
+                    <TextBlock x:Name="DropHintText" HorizontalAlignment="Center" VerticalAlignment="Center"
+                               FontFamily="{StaticResource SerifFont}" FontWeight="Bold" FontSize="13"
+                               Foreground="{StaticResource MiaoJinBrush}" />
+                </Border>
 
                 <!-- 渡劫雷光 -->
                 <Border x:Name="FlashLayer" Background="#FFF4EEE2" Opacity="0" IsHitTestVisible="False" Panel.ZIndex="20" />

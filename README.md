@@ -9,7 +9,7 @@
 ![platform](https://img.shields.io/badge/平台-Windows%2010%2F11-0a0a0f?style=flat-square)
 ![dotnet](https://img.shields.io/badge/.NET-10-E8C872?style=flat-square)
 ![ui](https://img.shields.io/badge/UI-WPF-0a0a0f?style=flat-square)
-![stage](https://img.shields.io/badge/版本-v0.7-C8A869?style=flat-square)
+![stage](https://img.shields.io/badge/版本-v0.8-C8A869?style=flat-square)
 
 </div>
 
@@ -39,6 +39,10 @@
 | 元嬰 | **清泉** | 每 45 分鐘提醒喝水、每日 8 盞，專注時與離開座位時不打擾 | ✅ |
 | 元嬰 | **AI 額度** | Claude 訂閱的 5 小時與 7 天剩餘額度（雙環），額度不足時提醒 | ✅ |
 | 元嬰 | **貼邊・翻頁・拖曳** | 天幕貼齊螢幕上緣；展開後左右箭頭切換頁面；拖曳到左上、正中、右上、左側、右側 | ✅ |
+| 化神 | **水滴融合** | 同時有兩個常駐異象時，天幕像水滴一樣分出一顆小圓，分合之間有會拉長斷開的水滴頸 | ✅ |
+| 化神 | **封面取色** | 頻譜與進度條隨專輯封面換色（收斂到不刺眼的色調） | ✅ |
+| 化神 | **隱私燈** | 麥克風或相機使用中時，右上角亮起朱砂小燈 | ✅ |
+| 化神 | **乾坤袋** | 把檔案拖到天幕上暫存，需要時再拖出去 | ✅ |
 | 元嬰 | **靈氣粒子** | 閒置一分鐘後金塵自膠囊兩端飄散，境界越高越多 | ✅ |
 
 ## 🧰 煉器材料（技術棧）
