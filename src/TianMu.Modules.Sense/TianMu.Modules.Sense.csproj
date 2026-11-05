@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    法器「靈識感應」：隨身碟插拔、藍牙裝置連線、音量與亮度變化。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>TianMu.Modules.Sense</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TianMu.Core\TianMu.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 系統音量變化通知（Core Audio） -->
+    <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
+    <!-- 筆電螢幕亮度變化通知（WMI） -->
+    <PackageReference Include="System.Management" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TianMu.Tests" />
+  </ItemGroup>
+
+</Project>

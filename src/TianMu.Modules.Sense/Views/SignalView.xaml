@@ -1,0 +1,44 @@
+<UserControl x:Class="TianMu.Modules.Sense.Views.SignalView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </UserControl.Resources>
+
+    <!-- 感應提示：左圖示、中文字（或刻度條）、右數值 -->
+    <Grid Margin="16,0,20,0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <Grid Width="36" Height="36" VerticalAlignment="Center">
+            <Ellipse Fill="{DynamicResource HoverFillBrush}" />
+            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                       FontFamily="{DynamicResource IconFont}" FontSize="16"
+                       Foreground="{Binding Accent}" Text="{Binding Glyph}" />
+        </Grid>
+
+        <StackPanel Grid.Column="1" Margin="14,0,12,0" VerticalAlignment="Center">
+            <TextBlock FontFamily="{DynamicResource SerifFont}" FontWeight="Bold" FontSize="15"
+                       Foreground="{DynamicResource YueBaiBrush}" Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
+            <TextBlock Margin="0,3,0,0" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"
+                       Text="{Binding Subtitle}" TextTrimming="CharacterEllipsis" />
+
+            <!-- 刻度條（音量、亮度） -->
+            <Grid Height="4" Margin="0,7,0,0" Visibility="{Binding HasLevel, Converter={StaticResource BoolToVis}}">
+                <Border CornerRadius="2" Background="{DynamicResource TrackBrush}" />
+                <Border CornerRadius="2" Background="{Binding Accent}" RenderTransformOrigin="0,0.5">
+                    <Border.RenderTransform>
+                        <ScaleTransform ScaleX="{Binding Level}" />
+                    </Border.RenderTransform>
+                </Border>
+            </Grid>
+        </StackPanel>
+
+        <TextBlock Grid.Column="2" VerticalAlignment="Center" FontFamily="{DynamicResource SerifMediumFont}"
+                   FontSize="20" Typography.NumeralAlignment="Tabular"
+                   Foreground="{DynamicResource YueBaiBrush}" Text="{Binding LevelText}" />
+    </Grid>
+</UserControl>

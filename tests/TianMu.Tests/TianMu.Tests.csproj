@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\src\TianMu.Island\TianMu.Island.csproj" />
     <ProjectReference Include="..\..\src\TianMu.Modules.Focus\TianMu.Modules.Focus.csproj" />
     <ProjectReference Include="..\..\src\TianMu.Modules.Ai\TianMu.Modules.Ai.csproj" />
+    <ProjectReference Include="..\..\src\TianMu.Modules.Sense\TianMu.Modules.Sense.csproj" />
   </ItemGroup>
 
 </Project>

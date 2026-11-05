@@ -9,7 +9,7 @@
 ![platform](https://img.shields.io/badge/平台-Windows%2010%2F11-0a0a0f?style=flat-square)
 ![dotnet](https://img.shields.io/badge/.NET-10-E8C872?style=flat-square)
 ![ui](https://img.shields.io/badge/UI-WPF-0a0a0f?style=flat-square)
-![stage](https://img.shields.io/badge/版本-v0.5-C8A869?style=flat-square)
+![stage](https://img.shields.io/badge/版本-v0.6-C8A869?style=flat-square)
 
 </div>
 
@@ -33,7 +33,8 @@
 | 築基 | **玄漆描金** | 專屬設計語言：五色、內嵌思源宋體、描金頂線、農曆與直書時辰 | ✅ |
 | 金丹 | **萬象樂律** | 接管系統媒體（含瀏覽器 YouTube）：曲名、歌手、封面、同步歌詞、音訊頻譜、播放控制 | ✅ |
 | 金丹 | **傳音入密** | 系統通知從天幕中滑出 | ⏳ |
-| 金丹 | **靈識感應** | USB 插拔、藍牙耳機、音量 / 亮度變化提示 | ⏳ |
+| 金丹 | **靈識感應** | 隨身碟插拔（含剩餘空間）、藍牙裝置連線、音量 / 亮度刻度提示 | ✅ |
+| 金丹 | **感知周遭** | 全螢幕自動隱身、磁吸、多螢幕跟隨、晝夜變色 | ✅ |
 | 元嬰 | **專注陣法** | 番茄鐘 + 修為五境（練氣→化神）、突破時渡劫雷光、散功不扣修為 | ✅ |
 | 元嬰 | **清泉** | 每 45 分鐘提醒喝水、每日 8 盞，專注時與離開座位時不打擾 | ✅ |
 | 元嬰 | **AI 額度** | Claude 訂閱的 5 小時與 7 天剩餘額度（雙環），額度不足時提醒 | ✅ |
