@@ -27,7 +27,7 @@ WEIGHTS = {500: "NotoSerifTC-Medium.ttf", 700: "NotoSerifTC-Bold.ttf"}
 BASE = "0123456789:：·・、，。！？「」『』（）()…—-+/ v.%年月日時"
 
 # 這些檔案裡的字串是比對規則（正規表示式、簡體關鍵字），不會顯示在畫面上
-NOT_UI = {"TrackTitleCleaner.cs"}
+NOT_UI = {"TrackTitleCleaner.cs", "ToastParsing.cs"}
 
 CS_STRING = re.compile(r'"(?:[^"\\\n]|\\.)*"')
 XML_COMMENT = re.compile(r"<!--.*?-->", re.S)

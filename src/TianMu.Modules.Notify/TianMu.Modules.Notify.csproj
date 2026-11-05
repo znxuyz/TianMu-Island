@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    法器「傳音入密」：系統通知以符紙形式從天幕滑出，驗證碼一鍵複製。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>TianMu.Modules.Notify</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TianMu.Core\TianMu.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 唯讀讀取 Windows 的通知資料庫（SQLite） -->
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TianMu.Tests" />
+  </ItemGroup>
+
+</Project>

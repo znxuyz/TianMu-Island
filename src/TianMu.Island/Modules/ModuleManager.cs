@@ -32,6 +32,7 @@ internal sealed class ModuleManager(IIslandHost host, SettingsStore settings) : 
         typeof(TianMu.Modules.Focus.FocusModule).Assembly,    // 專注陣法、清泉
         typeof(TianMu.Modules.Ai.AiQuotaModule).Assembly,     // AI 額度
         typeof(TianMu.Modules.Sense.SenseModule).Assembly,    // 靈識感應
+        typeof(TianMu.Modules.Notify.NotifyModule).Assembly,  // 傳音入密
     ];
 
     private readonly List<IIslandModule> _modules = [];

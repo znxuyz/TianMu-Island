@@ -1,0 +1,30 @@
+<UserControl x:Class="TianMu.Modules.Notify.Views.NoticeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- 傳音符：左側一張直書「傳音」的符紙，右側寄件者與內文 -->
+    <Grid Margin="14,14,22,14">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Width="32" CornerRadius="6" Background="#FFCDBB8C">
+            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"
+                       FontFamily="{DynamicResource SerifFont}" FontWeight="Bold" FontSize="13"
+                       LineHeight="19" LineStackingStrategy="BlockLineHeight"
+                       Foreground="#FF5E2618" Text="傳&#x0a;音" />
+        </Border>
+
+        <StackPanel Grid.Column="1" Margin="16,2,0,0">
+            <Grid>
+                <TextBlock FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource YueBaiBrush}"
+                           Text="{Binding Title}" TextTrimming="CharacterEllipsis" Margin="0,0,90,0" />
+                <TextBlock HorizontalAlignment="Right" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}"
+                           Text="{Binding Source}" VerticalAlignment="Center" />
+            </Grid>
+            <TextBlock Margin="0,6,0,0" FontSize="13" LineHeight="20" MaxHeight="40" TextWrapping="Wrap"
+                       TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextSecondaryBrush}"
+                       Text="{Binding Body}" />
+        </StackPanel>
+    </Grid>
+</UserControl>
