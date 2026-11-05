@@ -17,7 +17,7 @@ namespace TianMu.Island;
 /// </summary>
 public partial class IslandWindow
 {
-    private const double ShoulderRadius = 10;
+    private const double ShoulderRadius = 40;   // 兩側曲面向外延伸的寬度
     private const double DragThresholdPx = 6;
 
     private DockPosition _dock = DockPosition.TopCenter;
@@ -97,10 +97,12 @@ public partial class IslandWindow
     }
 
     /// <summary>
-    /// 天幕外形。貼齊上緣時：上方兩角是直角，兩側各有一道向外彎的「肩」接到螢幕邊緣；
+    /// 天幕外形。
+    /// 貼齊上緣時：兩側各有一道平滑的曲面向外延伸、融進螢幕邊緣（像從螢幕裡長出來），沒有任何直角；
     /// 否則是一般的圓角膠囊。
     /// </summary>
-    internal static Geometry BuildShape(double w, double h, double r, double shoulder, bool flushTop)
+    /// <param name="flare">曲面向兩側延伸的寬度（0 = 不延伸，用於裁切內容）。</param>
+    internal static Geometry BuildShape(double w, double h, double r, double flare, bool flushTop)
     {
         if (!flushTop)
         {
@@ -109,21 +111,28 @@ public partial class IslandWindow
             return pill;
         }
 
-        double s = Math.Min(shoulder, Math.Max(0, h - r));
+        // 曲面往下延伸的深度：剛好接到底部圓角的起點，整條輪廓的切線連續、沒有折角
+        double depth = Math.Max(0, Math.Min(h - r, flare * 0.8));
+        double f = flare, k = 0.6; // k：控制點位置，越大曲面越柔、延伸得越開
+
         var geometry = new StreamGeometry();
         using (var ctx = geometry.Open())
         {
-            ctx.BeginFigure(new Point(-s, 0), isFilled: true, isClosed: true);
-            ctx.LineTo(new Point(w + s, 0), true, false);
-            if (s > 0)
-                ctx.ArcTo(new Point(w, s), new Size(s, s), 0, false, SweepDirection.Counterclockwise, true, false);
+            ctx.BeginFigure(new Point(-f, 0), isFilled: true, isClosed: true);
+            ctx.LineTo(new Point(w + f, 0), true, false);
+
+            // 右肩：從螢幕邊緣沿曲面滑進天幕右側
+            if (f > 0)
+                ctx.BezierTo(new Point(w + f * k, 0), new Point(w, depth * k), new Point(w, depth), true, true);
             ctx.LineTo(new Point(w, h - r), true, false);
-            ctx.ArcTo(new Point(w - r, h), new Size(r, r), 0, false, SweepDirection.Clockwise, true, false);
+            ctx.ArcTo(new Point(w - r, h), new Size(r, r), 0, false, SweepDirection.Clockwise, true, true);
             ctx.LineTo(new Point(r, h), true, false);
-            ctx.ArcTo(new Point(0, h - r), new Size(r, r), 0, false, SweepDirection.Clockwise, true, false);
-            ctx.LineTo(new Point(0, s), true, false);
-            if (s > 0)
-                ctx.ArcTo(new Point(-s, 0), new Size(s, s), 0, false, SweepDirection.Counterclockwise, true, false);
+            ctx.ArcTo(new Point(0, h - r), new Size(r, r), 0, false, SweepDirection.Clockwise, true, true);
+            ctx.LineTo(new Point(0, depth), true, false);
+
+            // 左肩：對稱
+            if (f > 0)
+                ctx.BezierTo(new Point(0, depth * k), new Point(-f * k, 0), new Point(-f, 0), true, true);
         }
         geometry.Freeze();
         return geometry;

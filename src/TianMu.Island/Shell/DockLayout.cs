@@ -60,8 +60,8 @@ public static class DockLayout
     /// <summary>膠囊在視窗內的對齊方式（決定展開時往哪個方向長大）。</summary>
     public static (HorizontalAlignment H, VerticalAlignment V, Thickness Margin) CapsuleAlignment(DockPosition dock) => dock switch
     {
-        DockPosition.TopLeft => (HorizontalAlignment.Left, VerticalAlignment.Top, new Thickness(28, 0, 0, 0)),
-        DockPosition.TopRight => (HorizontalAlignment.Right, VerticalAlignment.Top, new Thickness(0, 0, 28, 0)),
+        DockPosition.TopLeft => (HorizontalAlignment.Left, VerticalAlignment.Top, new Thickness(44, 0, 0, 0)),
+        DockPosition.TopRight => (HorizontalAlignment.Right, VerticalAlignment.Top, new Thickness(0, 0, 44, 0)),
         DockPosition.Left => (HorizontalAlignment.Left, VerticalAlignment.Center, new Thickness(10, 0, 0, 0)),
         DockPosition.Right => (HorizontalAlignment.Right, VerticalAlignment.Center, new Thickness(0, 0, 10, 0)),
         _ => (HorizontalAlignment.Center, VerticalAlignment.Top, new Thickness(0)),
