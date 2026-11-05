@@ -9,7 +9,7 @@
 ![platform](https://img.shields.io/badge/平台-Windows%2010%2F11-0a0a0f?style=flat-square)
 ![dotnet](https://img.shields.io/badge/.NET-10-E8C872?style=flat-square)
 ![ui](https://img.shields.io/badge/UI-WPF-0a0a0f?style=flat-square)
-![stage](https://img.shields.io/badge/境界-金丹期%20v0.2-E8C872?style=flat-square)
+![stage](https://img.shields.io/badge/版本-v0.3-C8A869?style=flat-square)
 
 </div>
 
@@ -29,6 +29,8 @@
 | 築基 | **天幕成形** | 無邊框、置頂、透明背景、滑鼠穿透的黑色膠囊 | ✅ |
 | 築基 | **靈液彈簧** | 阻尼彈簧物理演算法，懸停 / 點擊時果凍般變形 | ✅ |
 | 築基 | **法器總管** | 外掛式架構，功能皆為可獨立載入的「法器模組」 | ✅ |
+| 築基 | **洞府設施** | 設定面板、開機啟動、系統匣圖示、自動更新（含 SHA-256 校驗） | ✅ |
+| 築基 | **玄漆描金** | 專屬設計語言：五色、內嵌思源宋體、描金頂線、農曆與直書時辰 | ✅ |
 | 金丹 | **萬象樂律** | 接管系統媒體（含瀏覽器 YouTube）：曲名、歌手、封面、同步歌詞、音訊頻譜、播放控制 | ✅ |
 | 金丹 | **傳音入密** | 系統通知從天幕中滑出 | ⏳ |
 | 金丹 | **靈識感應** | USB 插拔、藍牙耳機、音量 / 亮度變化提示 | ⏳ |
@@ -72,9 +74,17 @@ dotnet run --project src/TianMu.Island
 
 - 🖱️ **懸停**：膠囊微微脹起
 - 👆 **左鍵點擊**：展開成大面板（顯示時辰、干支年），再點一次收回
-- 📋 **右鍵**：選單 →「收起天幕」結束程式
+- 📋 **右鍵膠囊**：開啟設定、暫時隱藏、結束
+- 🔔 **系統匣圖示**（右下角）：左鍵開設定、右鍵選單；再次執行 exe 也會直接打開設定
 - 🎵 **播放音樂**（YouTube / Spotify / 任何播放器）：膠囊變成「封面 + 歌名 + 跳動頻譜」，換歌時自動彈開；
   點開可看同步歌詞、進度條，並可上一首 / 暫停 / 下一首
+
+### 免編譯：直接下載
+
+到 [Releases](https://github.com/znxuyz/TianMu-Island/releases) 下載 `TianMuIsland-win-x64.exe`（ARM 筆電選 `win-arm64`），雙擊即可執行。
+之後有新版時，天幕島會自己提醒你，一鍵更新。
+
+> 建議把 exe 放在「文件」或「桌面」等個人資料夾，自動更新才有權限替換檔案。
 
 ### 4. 法寶出爐（打包成單一 .exe）
 
@@ -97,6 +107,11 @@ dotnet run --project src/TianMu.Island
 
 > 歌詞庫以西洋與日文歌最齊全，部分華語歌曲可能查無歌詞，後續會再加入其他來源。
 
+## 🎨 設計語言
+
+天幕島採用自訂的「玄漆描金」設計語言：深色漆面、頂緣一線描金、內嵌思源宋體、朱砂印章只用一處。
+完整規範見 [docs/DESIGN.md](docs/DESIGN.md)。
+
 ## 🏯 洞府佈局（專案結構）
 
 ```
@@ -108,10 +123,15 @@ TianMu-Island/
 │     ├─ Interop/             # Win32 符咒（P/Invoke）
 │     ├─ Physics/             # 阻尼彈簧
 │     ├─ Modules/             # 法器總管 + 內建法器
+│     ├─ Settings/ Shell/     # 設定、系統匣、開機啟動、設定面板
+│     ├─ Update/              # 自動更新
+│     ├─ Theme/               # 設計語言資源（Tokens.xaml）
 │     ├─ IslandWindow.xaml    # 天幕本體
 │     └─ App.xaml             # 開爐入口
 ├─ tests/TianMu.Tests/        # 試煉（單元測試）
 ├─ docs/ARCHITECTURE.md       # 陣法圖（架構說明）
+├─ docs/DESIGN.md             # 設計語言「玄漆描金」
+├─ scripts/build-fonts.py     # 依介面用字裁切內嵌宋體
 ├─ scripts/publish.ps1        # 一鍵出爐
 └─ .github/workflows/         # 雲端煉器（CI）
 ```
