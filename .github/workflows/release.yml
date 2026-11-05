@@ -1,12 +1,15 @@
 name: 出爐（Release）
 
-# 兩種觸發方式：
-#   1. 推送 v 開頭的標籤（例如 v0.3.0）
-#   2. 在 Actions 頁面手動執行，輸入版本號（例如 0.3.0），工作流程會自己建立標籤
-# 會自動編譯、測試、打包 x64 與 ARM64 單檔 exe（附 .sha256 校驗檔）並建立 GitHub Release。
+# 三種觸發方式：
+#   1. 【主要】main 分支的 Directory.Build.props 版本號改變，且該版本尚未發佈 → 自動出爐
+#   2. 推送 v 開頭的標籤（例如 v0.3.0）
+#   3. 在 Actions 頁面手動執行，輸入版本號（例如 0.3.0）
+# 會自動編譯、測試、打包 x64 與 ARM64 單檔 exe（附 .sha256 校驗檔）、建立標籤與 GitHub Release。
 # 天幕島內建的自動更新就是讀取這裡發佈的檔案。
 on:
   push:
+    branches: [main]
+    paths: ['Directory.Build.props']
     tags: ['v*']
   workflow_dispatch:
     inputs:
@@ -26,24 +29,36 @@ jobs:
       EVENT: ${{ github.event_name }}
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 10.0.x
+          fetch-depth: 0
 
       - name: 版本號
         id: ver
         shell: pwsh
         run: |
-          $v = if ($env:EVENT -eq 'workflow_dispatch') { $env:VERSION_INPUT } else { $env:TAG_FROM_PUSH.TrimStart('v') }
+          if ($env:EVENT -eq 'workflow_dispatch') { $v = $env:VERSION_INPUT }
+          elseif ($env:GITHUB_REF -like 'refs/tags/*') { $v = $env:TAG_FROM_PUSH.TrimStart('v') }
+          else { $v = ([xml](Get-Content Directory.Build.props -Raw)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1 }
           if ($v -notmatch '^\d+\.\d+\.\d+$') { throw "版本號格式必須是 X.Y.Z，收到：$v" }
+
+          # 從 main 觸發時，已經發佈過的版本就跳過（只是改了其他設定）
+          $skip = ($env:GITHUB_REF -eq 'refs/heads/main') -and (git tag -l "v$v")
           "version=$v" >> $env:GITHUB_OUTPUT
           "tag=v$v" >> $env:GITHUB_OUTPUT
+          "skip=$($skip.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+          if ($skip) { Write-Host "v$v 已發佈過，略過。" }
+
+      - uses: actions/setup-dotnet@v4
+        if: steps.ver.outputs.skip != 'true'
+        with:
+          dotnet-version: 10.0.x
 
       - name: 試煉（單元測試）
+        if: steps.ver.outputs.skip != 'true'
         run: dotnet test TianMu-Island.slnx -c Release -p:Version=${{ steps.ver.outputs.version }}
 
       - name: 出爐（x64 與 ARM64 單檔 exe + 校驗檔）
+        if: steps.ver.outputs.skip != 'true'
         shell: pwsh
         run: |
           $v = "${{ steps.ver.outputs.version }}"
@@ -63,6 +78,7 @@ jobs:
           Get-ChildItem release
 
       - uses: softprops/action-gh-release@v2
+        if: steps.ver.outputs.skip != 'true'
         with:
           tag_name: ${{ steps.ver.outputs.tag }}
           target_commitish: ${{ github.sha }}
