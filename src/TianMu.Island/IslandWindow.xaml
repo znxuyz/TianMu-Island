@@ -123,6 +123,21 @@
                                    Foreground="{StaticResource TextSecondaryBrush}" />
                     </Grid>
 
+                    <!-- 直式（停在左右側）：呼吸點在上、時鐘直排在下 -->
+                    <StackPanel x:Name="VerticalCompact" Visibility="Collapsed"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Ellipse Width="7" Height="7" HorizontalAlignment="Center" Fill="{StaticResource MiaoJinBrush}">
+                            <Ellipse.Effect>
+                                <DropShadowEffect BlurRadius="8" ShadowDepth="0" Color="#C8A869" Opacity="0.85" />
+                            </Ellipse.Effect>
+                        </Ellipse>
+                        <TextBlock x:Name="VerticalClockText" Margin="0,12,0,0" HorizontalAlignment="Center"
+                                   TextAlignment="Center" FontFamily="{StaticResource SerifMediumFont}" FontSize="13"
+                                   LineHeight="17" LineStackingStrategy="BlockLineHeight"
+                                   Typography.NumeralAlignment="Tabular"
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                    </StackPanel>
+
                     <!-- 法器自訂的收合畫面（例如：封面 + 迷你頻譜） -->
                     <ContentControl x:Name="CompactHost" Focusable="False" IsTabStop="False"
                                     HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />

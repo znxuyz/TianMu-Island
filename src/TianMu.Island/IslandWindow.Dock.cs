@@ -11,8 +11,9 @@ namespace TianMu.Island;
 /// <summary>
 /// 天幕本體的第三部分：停靠位置、貼邊形體、拖曳移動。
 ///
-///   · 上方三個位置（左上、正中、右上）：貼齊螢幕上緣，上方是平的，兩肩向外彎出，像瀏海一樣長在螢幕上
-///   · 左側、右側：浮在邊緣旁的圓膠囊
+///   · 正中：貼齊螢幕上緣，兩肩以曲面向兩側延伸，像瀏海一樣長在螢幕上
+///   · 左上、右上：嵌在螢幕角落，同時貼住上緣與側邊，兩道曲面分別沿上緣與側邊延伸
+///   · 左側、右側：直式，貼住側邊，曲面沿側邊上下延伸
 ///   · 按住膠囊拖動即可移動，放開後吸附到最近的位置，並記住是哪一個螢幕
 /// </summary>
 public partial class IslandWindow
@@ -26,7 +27,11 @@ public partial class IslandWindow
     private NativeMethods.POINT _dragStartCursor;
     private Point _dragStartWindow;
 
-    private bool FlushTop => !_dragging && DockLayout.IsFlushTop(_dock);
+    /// <summary>目前貼住的邊（拖曳中是浮動的圓膠囊，不貼任何邊）。</summary>
+    private DockEdges CurrentEdges => _dragging ? DockEdges.None : DockLayout.Edges(_dock);
+
+    /// <summary>停在左右側時為直式（拖曳中恢復橫式）。</summary>
+    private bool IsVertical => !_dragging && DockLayout.IsVertical(_dock);
 
     // ═══════════════════════ 停靠 ═══════════════════════
 
@@ -42,6 +47,9 @@ public partial class IslandWindow
         if (screen is null) return;
         _activeScreenName = screen.DeviceName;
 
+        // 透明畫布大小：橫式放得下最寬的展開面板；直式（左右側）要放得下直立的長膠囊
+        (Width, Height) = DockLayout.IsVertical(dock) ? (540.0, 420.0) : (640.0, 260.0);
+
         var (bounds, workArea) = (ToDip(screen.Bounds), ToDip(screen.WorkingArea));
         var origin = DockLayout.WindowOrigin(dock, bounds, workArea, new Size(Width, Height));
 
@@ -54,7 +62,22 @@ public partial class IslandWindow
         }
 
         MoveWindow(origin, animate);
+        Refresh();          // 直式／橫式可能改變，重新決定收合內容與尺寸
         ApplyVisuals();
+    }
+
+    /// <summary>
+    /// 收合內容依方向切換：橫式顯示呼吸點＋時鐘；直式顯示上下排列的呼吸點與時鐘。
+    /// 法器的收合畫面（例如音樂）在直式時轉 90 度，像側邊的書籤一樣直讀。
+    /// </summary>
+    private void UpdateCompactOrientation(bool hasModuleView)
+    {
+        bool vertical = IsVertical;
+        DefaultCompact.Visibility = !hasModuleView && !vertical ? Visibility.Visible : Visibility.Collapsed;
+        VerticalCompact.Visibility = !hasModuleView && vertical ? Visibility.Visible : Visibility.Collapsed;
+        CompactHost.LayoutTransform = vertical
+            ? new RotateTransform(_dock == DockPosition.Right ? 90 : -90)
+            : Transform.Identity;
     }
 
     private void MoveWindow(Point origin, bool animate)
@@ -91,48 +114,86 @@ public partial class IslandWindow
     private void ApplyShape(double w, double h, double radius)
     {
         Capsule.CornerRadius = new CornerRadius(0);
-        bool flush = FlushTop;
-        CapsuleShape.Data = BuildShape(w, h, radius, flush ? ShoulderRadius : 0, flush);
-        ContentRoot.Clip = BuildShape(w, h, radius, flare: 0, flushTop: flush);
+        var edges = CurrentEdges;
+        CapsuleShape.Data = BuildShape(w, h, radius, ShoulderRadius, edges);
+        ContentRoot.Clip = BuildShape(w, h, radius, flare: 0, edges);
     }
 
     /// <summary>
-    /// 天幕外形。
-    /// 貼齊上緣時：兩側各有一道平滑的曲面向外延伸、融進螢幕邊緣（像從螢幕裡長出來），沒有任何直角；
-    /// 否則是一般的圓角膠囊。
+    /// 天幕外形。四個角依「貼住哪些邊」決定：
+    ///   · 兩邊都貼住（嵌在螢幕角落）：直角，剛好填滿角落
+    ///   · 只貼住其中一邊：沿著那一邊以平滑曲面向外延伸、融進螢幕邊緣
+    ///   · 都沒貼：一般圓角
+    /// 整條輪廓的切線連續，沒有折角。
     /// </summary>
-    /// <param name="flare">曲面向兩側延伸的寬度（0 = 不延伸，用於裁切內容）。</param>
-    internal static Geometry BuildShape(double w, double h, double r, double flare, bool flushTop)
+    /// <param name="flare">曲面沿邊緣延伸的長度（0 = 不延伸，用於裁切內容）。</param>
+    internal static Geometry BuildShape(double w, double h, double r, double flare, DockEdges edges)
     {
-        if (!flushTop)
+        if (edges == DockEdges.None)
         {
             var pill = new RectangleGeometry(new Rect(0, 0, w, h), r, r);
             pill.Freeze();
             return pill;
         }
 
-        // 曲面往下延伸的深度：剛好接到底部圓角的起點，整條輪廓的切線連續、沒有折角
-        double depth = Math.Max(0, Math.Min(h - r, flare * 0.8));
-        double f = flare, k = 0.6; // k：控制點位置，越大曲面越柔、延伸得越開
+        r = Math.Max(0, Math.Min(r, Math.Min(w, h) / 2));
+        const double k = 0.6; // 控制點位置，越大曲面越柔、延伸得越開
+        bool top = edges.HasFlag(DockEdges.Top), left = edges.HasFlag(DockEdges.Left), right = edges.HasFlag(DockEdges.Right);
+
+        // 依順時針：左上、右上、右下、左下。a = 進入此角的行進方向、b = 離開此角的方向。
+        var corners = new (Point P, Vector A, Vector B, bool InAttached, bool OutAttached, double InSide, double OutSide)[]
+        {
+            (new Point(0, 0), new Vector(0, -1), new Vector(1, 0), left, top, h, w),
+            (new Point(w, 0), new Vector(1, 0), new Vector(0, 1), top, right, w, h),
+            (new Point(w, h), new Vector(0, 1), new Vector(-1, 0), right, false, h, w),
+            (new Point(0, h), new Vector(-1, 0), new Vector(0, -1), false, left, w, h),
+        };
 
         var geometry = new StreamGeometry();
         using (var ctx = geometry.Open())
         {
-            ctx.BeginFigure(new Point(-f, 0), isFilled: true, isClosed: true);
-            ctx.LineTo(new Point(w + f, 0), true, false);
+            bool started = false;
+            foreach (var (p, a, b, inAttached, outAttached, inSide, outSide) in corners)
+            {
+                Point entry;
+                Action draw;
 
-            // 右肩：從螢幕邊緣沿曲面滑進天幕右側
-            if (f > 0)
-                ctx.BezierTo(new Point(w + f * k, 0), new Point(w, depth * k), new Point(w, depth), true, true);
-            ctx.LineTo(new Point(w, h - r), true, false);
-            ctx.ArcTo(new Point(w - r, h), new Size(r, r), 0, false, SweepDirection.Clockwise, true, true);
-            ctx.LineTo(new Point(r, h), true, false);
-            ctx.ArcTo(new Point(0, h - r), new Size(r, r), 0, false, SweepDirection.Clockwise, true, true);
-            ctx.LineTo(new Point(0, depth), true, false);
+                if (inAttached && outAttached)
+                {
+                    entry = p;                                   // 嵌在角落：直角
+                    draw = () => { };
+                }
+                else if (inAttached)
+                {
+                    // 來的那一邊貼住螢幕：先沿邊緣多延伸一段，再以曲面彎進離開的那一邊
+                    double d = Math.Min(flare * 0.8, Math.Max(0, outSide - r));
+                    entry = p + a * flare;
+                    draw = () => ctx.BezierTo(p + a * (flare * k), p + b * (d * k), p + b * d, true, true);
+                }
+                else if (outAttached)
+                {
+                    // 去的那一邊貼住螢幕：從自由邊以曲面彎出，沿邊緣延伸出去
+                    double d = Math.Min(flare * 0.8, Math.Max(0, inSide - r));
+                    entry = p - a * d;
+                    draw = () => ctx.BezierTo(p - a * (d * k), p - b * (flare * k), p - b * flare, true, true);
+                }
+                else
+                {
+                    entry = p - a * r;                           // 一般圓角
+                    draw = () => ctx.ArcTo(p + b * r, new Size(r, r), 0, false, SweepDirection.Clockwise, true, true);
+                }
 
-            // 左肩：對稱
-            if (f > 0)
-                ctx.BezierTo(new Point(0, depth * k), new Point(-f * k, 0), new Point(-f, 0), true, true);
+                if (!started)
+                {
+                    ctx.BeginFigure(entry, isFilled: true, isClosed: true);
+                    started = true;
+                }
+                else
+                {
+                    ctx.LineTo(entry, true, false);
+                }
+                draw();
+            }
         }
         geometry.Freeze();
         return geometry;

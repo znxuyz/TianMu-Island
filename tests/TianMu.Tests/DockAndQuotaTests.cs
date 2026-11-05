@@ -33,6 +33,17 @@ public class DockLayoutTests
     }
 
     [Fact]
+    public void Corners_touch_two_edges_and_sides_are_vertical()
+    {
+        Assert.Equal(DockEdges.Top | DockEdges.Left, DockLayout.Edges(DockPosition.TopLeft));
+        Assert.Equal(DockEdges.Top | DockEdges.Right, DockLayout.Edges(DockPosition.TopRight));
+        Assert.Equal(DockEdges.Top, DockLayout.Edges(DockPosition.TopCenter));
+        Assert.Equal(DockEdges.Left, DockLayout.Edges(DockPosition.Left));
+        Assert.True(DockLayout.IsVertical(DockPosition.Right));
+        Assert.False(DockLayout.IsVertical(DockPosition.TopRight));
+    }
+
+    [Fact]
     public void Window_origin_per_dock()
     {
         var work = new Rect(0, 0, 1920, 1040);

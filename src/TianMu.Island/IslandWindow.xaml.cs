@@ -274,7 +274,7 @@ public partial class IslandWindow : Window, IIslandHost
         // 收合層
         var compactView = CurrentAmbient?.CompactView as UIElement;
         SetHostContent(CompactHost, compactView);
-        DefaultCompact.Visibility = compactView is null ? Visibility.Visible : Visibility.Collapsed;
+        UpdateCompactOrientation(hasModuleView: compactView is not null);
 
         // 展開層
         var expanded = ExpandedActivity;
@@ -300,6 +300,7 @@ public partial class IslandWindow : Window, IIslandHost
     {
         var now = DateTime.Now;
         ClockText.Text = now.ToString("HH:mm", CultureInfo.InvariantCulture);
+        VerticalClockText.Text = now.ToString("HH\nmm", CultureInfo.InvariantCulture);
 
         var shown = ExpandedActivity;
         if (shown is null || shown.ExpandedView is not null)
@@ -342,9 +343,10 @@ public partial class IslandWindow : Window, IIslandHost
         }
         else
         {
-            target = new Size(CurrentAmbient?.CompactWidth ?? IdleSize.Width, IdleSize.Height);
-            if (_hovering)
-                target = new Size(target.Width + HoverGrowWidth, target.Height + HoverGrowHeight);
+            // 收合：長邊是膠囊長度、短邊是厚度；停在左右側時轉成直式
+            double length = (CurrentAmbient?.CompactWidth ?? IdleSize.Width) + (_hovering ? HoverGrowWidth : 0);
+            double thickness = IdleSize.Height + (_hovering ? HoverGrowHeight : 0);
+            target = IsVertical ? new Size(thickness, length) : new Size(length, thickness);
         }
 
         double scale = _pressed ? PressScale : 1.0;
@@ -400,7 +402,7 @@ public partial class IslandWindow : Window, IIslandHost
     {
         double w = Math.Max(2, _width.Value);
         double h = Math.Max(2, _height.Value);
-        double radius = Math.Min(h / 2, MaxCornerRadius);
+        double radius = Math.Min(Math.Min(w, h) / 2, MaxCornerRadius);
 
         Capsule.Width = w;
         Capsule.Height = h;

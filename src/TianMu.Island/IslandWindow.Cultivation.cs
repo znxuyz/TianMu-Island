@@ -255,12 +255,18 @@ public partial class IslandWindow
         else _particles.Stop();
     }
 
-    /// <summary>膠囊左右兩端（粒子出生處），以粒子層的座標表示。</summary>
+    /// <summary>膠囊兩端（粒子出生處），以粒子層的座標表示。直式時是上下兩端。</summary>
     private (Point Left, Point Right, double Height) CapsuleEnds()
     {
-        double h = Capsule.ActualHeight;
+        double w = Capsule.ActualWidth, h = Capsule.ActualHeight;
+        if (h > w)
+        {
+            var upper = Capsule.TranslatePoint(new Point(w / 2, w * 0.3), ParticleLayer);
+            var lower = Capsule.TranslatePoint(new Point(w / 2, h - w * 0.3), ParticleLayer);
+            return (upper, lower, w);
+        }
         var left = Capsule.TranslatePoint(new Point(h * 0.3, h / 2), ParticleLayer);
-        var right = Capsule.TranslatePoint(new Point(Capsule.ActualWidth - h * 0.3, h / 2), ParticleLayer);
+        var right = Capsule.TranslatePoint(new Point(w - h * 0.3, h / 2), ParticleLayer);
         return (left, right, h);
     }
 }
