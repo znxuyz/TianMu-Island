@@ -95,5 +95,10 @@ public sealed class HydrationPlanner(TimeSpan interval, int dailyGoal, TimeOnly 
         state.SnoozedUntil = null;
     }
 
-    public void Snooze(HydrationState state, DateTime now) => state.SnoozedUntil = now + SnoozeTime;
+    public void Snooze(HydrationState state, DateTime now)
+    {
+        // 先處理換日，否則下一次檢查時的換日歸零會把剛設定的延後一併清掉
+        RollDay(state, now);
+        state.SnoozedUntil = now + SnoozeTime;
+    }
 }
