@@ -235,6 +235,7 @@ public partial class IslandWindow : Window, IIslandHost
                     return; // 低階異象不能壓過高階異象
 
                 _transient = activity;
+                PlayGlow(activity);
                 _transientTimer.Stop();
                 if (activity.Duration is { } duration)
                 {

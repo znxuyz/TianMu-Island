@@ -8,6 +8,7 @@
     <Project Path="src/TianMu.Modules.Sense/TianMu.Modules.Sense.csproj" />
     <Project Path="src/TianMu.Modules.Notify/TianMu.Modules.Notify.csproj" />
     <Project Path="src/TianMu.Modules.Shelf/TianMu.Modules.Shelf.csproj" />
+    <Project Path="src/TianMu.Modules.Todo/TianMu.Modules.Todo.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/TianMu.Tests/TianMu.Tests.csproj" />

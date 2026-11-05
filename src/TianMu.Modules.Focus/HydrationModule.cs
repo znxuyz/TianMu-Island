@@ -106,6 +106,7 @@ public sealed class HydrationModule : IIslandModule, IDescribedModule
         _host.Post(new IslandActivity(Id, "該飲一盞清泉了", null, ActivityPriority.Normal, null)
         {
             ExpandedView = _view,
+            GlowKey = "TianQingBrush",
         });
         _showing = true;
         _autoHide?.Stop();

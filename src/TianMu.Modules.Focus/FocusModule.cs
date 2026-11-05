@@ -203,6 +203,7 @@ public sealed class FocusModule : IIslandModule, IDescribedModule
         _host.Post(new IslandActivity(Id, $"突破 · {result.After.RealmName}", null, ActivityPriority.Alert, TimeSpan.FromSeconds(7))
         {
             ExpandedView = _breakView,
+            GlowKey = "ZhuShaBrush",
         });
 
         if (_host.GetModuleSettings(Id).GetBool(TribulationOption, true))

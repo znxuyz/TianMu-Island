@@ -60,7 +60,7 @@
 
 
             <Border.Effect>
-                <DropShadowEffect BlurRadius="28" ShadowDepth="6" Direction="270"
+                <DropShadowEffect x:Name="CapsuleShadow" BlurRadius="28" ShadowDepth="6" Direction="270"
                                   Color="#000000" Opacity="0.42" RenderingBias="Performance" />
             </Border.Effect>
 

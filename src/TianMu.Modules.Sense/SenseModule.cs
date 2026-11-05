@@ -163,6 +163,7 @@ public sealed class SenseModule : IIslandModule, IDescribedModule
         _host.Post(new IslandActivity(Id, title, subtitle, ActivityPriority.Normal, DeviceDuration)
         {
             ExpandedView = _deviceView,
+            GlowKey = accentKey,
         });
     }
 
@@ -198,6 +199,7 @@ public sealed class SenseModule : IIslandModule, IDescribedModule
         _host.Post(new IslandActivity(Id, title, levelText, ActivityPriority.Normal, LevelDuration)
         {
             ExpandedView = _levelView,
+            GlowKey = string.Empty, // 調音量、亮度時一直閃會很煩
         });
     }
 

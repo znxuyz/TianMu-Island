@@ -49,4 +49,10 @@ public sealed record IslandActivity(
     /// 收合畫面約 240×34（直式停靠時轉 90 度）。
     /// </summary>
     public object? ExpandedView { get; init; }
+
+    /// <summary>
+    /// 異象出現時，天幕外圍光暈閃一下的顏色（主題色鍵，例如 "ZhuShaBrush"、"TianQingBrush"）。
+    /// null 依優先級決定：一般與提醒為描金、緊急為朱砂；空字串代表不閃（例如調音量）。常駐異象不閃。
+    /// </summary>
+    public string? GlowKey { get; init; }
 }

@@ -170,7 +170,7 @@ public sealed class MusicModule : IIslandModule, IDescribedModule
 
         // 換歌時自動彈開幾秒，像靈動島一樣
         if (popup)
-            _host.Post(CreateActivity(ActivityPriority.Normal, NewTrackPopup));
+            _host.Post(CreateActivity(ActivityPriority.Normal, NewTrackPopup) with { GlowKey = string.Empty }); // 換歌不閃
     }
 
     private void Hide()
