@@ -20,6 +20,7 @@ public sealed class NotifyModule : IIslandModule, IDescribedModule
     public const string ShowAllOption = "showAll";
     public const string OtpOption = "otp";
     public const string FocusQuietOption = "focusQuiet";
+    public const string TakeOverOption = "takeOver";
 
     private const int InboxSize = 3;
     private static readonly TimeSpan NoticeDuration = TimeSpan.FromSeconds(5);
@@ -29,6 +30,7 @@ public sealed class NotifyModule : IIslandModule, IDescribedModule
     private static readonly TimeSpan DuplicateWindow = TimeSpan.FromSeconds(5);
 
     private readonly NotificationDbWatcher _watcher = new();
+    private NotificationListenerSource? _official;
     private readonly List<ToastNotice> _recent = [];
     private IIslandHost? _host;
 
@@ -54,6 +56,7 @@ public sealed class NotifyModule : IIslandModule, IDescribedModule
         new(ShowAllOption, "顯示所有通知", "每則新通知都從天幕滑出（關閉後只記在「傳音」頁）。", true),
         new(OtpOption, "驗證碼一鍵複製", "辨識通知裡的驗證碼，大字顯示並可一鍵複製。", true),
         new(FocusQuietOption, "專注時只顯示驗證碼", "番茄鐘進行時，一般通知不打擾，驗證碼照常顯示。", true),
+        new(TakeOverOption, "接管系統通知", "天幕顯示後，從 Windows 通知中心移除那一則，避免出現兩次（需要允許通知存取）。", false),
     ];
 
     public async Task InitializeAsync(IIslandHost host, CancellationToken cancellationToken)
@@ -87,6 +90,15 @@ public sealed class NotifyModule : IIslandModule, IDescribedModule
             ExpandedView = _inboxView,
         });
 
+        // 優先用 Windows 官方的通知接口（可以接管、刪掉重複的系統通知）；拿不到就讀通知資料庫
+        _official = await NotificationListenerSource.TryCreateAsync();
+        if (_official is not null)
+        {
+            _official.Arrived += notice => _ = host.InvokeAsync(() => OnNotice(notice));
+            _official.Start();
+            return;
+        }
+
         _watcher.Arrived += notice => _ = host.InvokeAsync(() => OnNotice(notice));
         _watcher.Failed += message => _ = host.InvokeAsync(() =>
             host.Post(new IslandActivity(Id, "無法讀取系統通知", "這個 Windows 版本的通知紀錄格式不同，傳音入密暫時無法使用",
@@ -110,6 +122,9 @@ public sealed class NotifyModule : IIslandModule, IDescribedModule
 
         var settings = _host.GetModuleSettings(Id);
         string source = SourceName(notice);
+
+        // 接管：天幕已經收到了，系統通知中心那一則就不必留著
+        if (_official is not null && settings.GetBool(TakeOverOption, false)) _official.Remove(notice.Id);
 
         // 驗證碼優先：使用者正在等它
         string? code = settings.GetBool(OtpOption, true) ? OtpExtractor.Find($"{notice.Title}\n{notice.Body}") : null;
@@ -223,6 +238,7 @@ public sealed class NotifyModule : IIslandModule, IDescribedModule
     public ValueTask DisposeAsync()
     {
         _watcher.Dispose();
+        _official?.Dispose();
         _clipboardTimer?.Stop();
         _freshTimer?.Stop();
         return ValueTask.CompletedTask;

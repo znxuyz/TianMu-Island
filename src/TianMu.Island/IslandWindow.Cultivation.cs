@@ -243,7 +243,7 @@ public partial class IslandWindow
     {
         if (_particles is null) return;
 
-        bool idle = IsVisible && !IsExpanded && !_hovering && _ambient.Count == 0 && _transient is null;
+        bool idle = IsVisible && !IsExpanded && !_hovering && !_dormant && _ambient.Count == 0 && _transient is null;
         bool allowed = _settings.Read(s => s.ShowParticles) && SystemParameters.ClientAreaAnimation;
 
         _idleFor = idle && allowed ? _idleFor + TimeSpan.FromSeconds(1) : TimeSpan.Zero;

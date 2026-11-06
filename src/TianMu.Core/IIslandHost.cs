@@ -53,6 +53,19 @@ public interface IIslandHost
     /// <summary>播放「渡劫」特效：三道雷光，金線沿邊緣走一圈。</summary>
     void PlayTribulation();
 
+    /// <summary>
+    /// 敲鐘：螢幕四邊亮起強烈閃動的光框，直到使用者點一下螢幕（或 30 秒後）。
+    /// 用在「時間到了」這類不能錯過的時刻，例如番茄鐘專注結束。
+    /// </summary>
+    /// <param name="message">畫面上方的一行字，例如「一回專注圓滿」。</param>
+    /// <param name="toneKey">光的顏色（主題色鍵）；null 為描金。</param>
+    void RingBell(string message, string? toneKey = null);
+
+    /// <summary>
+    /// 註冊「雙擊天幕」要做的事（例如開始／停止番茄鐘）。同時只有一件法器能註冊，後註冊的優先。
+    /// </summary>
+    void SetDoubleClickAction(string moduleId, Action action);
+
     // ── 捷徑與狀態 ─────────────────────────────
 
     /// <summary>在展開的預設面板加入捷徑按鈕。</summary>

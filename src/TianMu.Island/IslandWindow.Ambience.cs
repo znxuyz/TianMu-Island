@@ -47,6 +47,7 @@ public partial class IslandWindow
         Capsule.RenderTransform = _magnetShift;
         _senseTimer = new DispatcherTimer(SenseInterval, DispatcherPriority.Background, (_, _) => OnSenseTick(), Dispatcher);
         ApplyTint(force: true);
+        ApplySpringFeel();
     }
 
     // ═══════════════════════ 顯示與隱藏 ═══════════════════════
@@ -77,6 +78,7 @@ public partial class IslandWindow
         if (!IsVisible || _dragging) return;
 
         NativeMethods.GetCursorPos(out var cursor);
+        UpdateDormant(cursor);
         UpdateMagnet(cursor);
         FollowCursorScreen(cursor);
     }
@@ -224,6 +226,7 @@ public partial class IslandWindow
     internal void OnSettingsChanged()
     {
         ApplyTint(force: true);
+        ApplySpringFeel();
         if (!_settings.Read(s => s.FollowCursorScreen)) _followScreenName = null;
         CheckFullscreen();
         UpdateBarrier();

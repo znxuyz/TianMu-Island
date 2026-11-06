@@ -55,4 +55,9 @@ public sealed record IslandActivity(
     /// null 依優先級決定：一般與提醒為描金、緊急為朱砂；空字串代表不閃（例如調音量）。常駐異象不閃。
     /// </summary>
     public string? GlowKey { get; init; }
+
+    /// <summary>
+    /// 背景常駐：只在沒有其他常駐異象時才佔據收合的膠囊；否則退居分身小圓（例如乾坤袋的件數）。
+    /// </summary>
+    public bool IsBackground { get; init; }
 }

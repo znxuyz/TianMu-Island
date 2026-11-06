@@ -2,7 +2,8 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:TianMu.Modules.Focus.Views">
-    <!-- 收合態：左小圓環、中兩字標籤、右倒數 -->
+    <!-- 收合態：左小圓環、中兩字標籤、右倒數；底部一條發光進度線 -->
+    <Grid>
     <Grid Margin="10,0,16,0">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
@@ -20,6 +21,19 @@
                    FontFamily="{DynamicResource SerifMediumFont}" FontSize="14"
                    Typography.NumeralAlignment="Tabular"
                    Foreground="{DynamicResource YueBaiBrush}" Text="{Binding TimeText}" />
+    </Grid>
+        <!-- 底部發光進度線：像一縷香慢慢燃盡 -->
+        <Grid VerticalAlignment="Bottom" Height="2" Margin="18,0,18,3" IsHitTestVisible="False">
+            <Border CornerRadius="1" Background="#14ECE6D8" />
+            <Border CornerRadius="1" Background="{DynamicResource MiaoJinBrush}" RenderTransformOrigin="0,0.5">
+                <Border.RenderTransform>
+                    <ScaleTransform ScaleX="{Binding Progress}" />
+                </Border.RenderTransform>
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="6" ShadowDepth="0" Color="#C8A869" Opacity="0.9" />
+                </Border.Effect>
+            </Border>
+        </Grid>
     </Grid>
 
 </UserControl>

@@ -9,7 +9,7 @@
 ![platform](https://img.shields.io/badge/平台-Windows%2010%2F11-0a0a0f?style=flat-square)
 ![dotnet](https://img.shields.io/badge/.NET-10-E8C872?style=flat-square)
 ![ui](https://img.shields.io/badge/UI-WPF-0a0a0f?style=flat-square)
-![stage](https://img.shields.io/badge/版本-v0.11-C8A869?style=flat-square)
+![stage](https://img.shields.io/badge/版本-v0.12-C8A869?style=flat-square)
 
 </div>
 
@@ -44,6 +44,9 @@
 | 化神 | **隱私燈** | 麥克風或相機使用中時，膠囊下緣亮起朱砂小光點 | ✅ |
 | 化神 | **乾坤袋** | 把檔案拖到天幕上暫存（袋口張開金色漩渦吸入），需要時再拖出去 | ✅ |
 | 化神 | **煉化進度** | 下載、複製大檔、安裝程式時，工作列上的進度直接顯示在天幕上，完成時提示 | ✅ |
+| 化神 | **智慧隱藏** | 閒置時天幕縮成一條細線，滑鼠碰到螢幕邊緣或靠近時才變回來 | ✅ |
+| 化神 | **時辰已到** | 番茄鐘結束時螢幕四邊閃起金光並寫明成果，點一下才關；雙擊天幕即可凝神或散功 | ✅ |
+| 化神 | **自訂時長** | 專注／調息時長、喝水間隔、時段、目標盞數與指定時刻都能在設定裡調 | ✅ |
 | 化神 | **周天運轉** | CPU、記憶體、網路上下行速度一頁看完，也可常駐在收合的膠囊 | ✅ |
 | 化神 | **專注結界** | 番茄鐘專注時，螢幕四邊亮起緩緩呼吸的金光 | ✅ |
 | 化神 | **天機簿** | 記下待辦與時間（可寫「明天 9 點」「30 分」），到點時天幕落下朱砂令印提醒 | ✅ |

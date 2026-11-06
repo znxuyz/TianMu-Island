@@ -155,6 +155,7 @@ public partial class IslandWindow : Window, IIslandHost
         StopAnimation();
         if (HotkeyRegistered) NativeMethods.UnregisterHotKey(_hwnd, ToggleHotkeyId);
         _barrier?.Close();
+        _bell?.Close();
         base.OnClosed(e);
     }
 
@@ -187,6 +188,12 @@ public partial class IslandWindow : Window, IIslandHost
 
     private void Capsule_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        if (TryHandleDoubleClick(e.ClickCount))
+        {
+            e.Handled = true;
+            return;
+        }
+
         _pressed = true;
         BeginPress();
         Capsule.CaptureMouse();
@@ -199,6 +206,15 @@ public partial class IslandWindow : Window, IIslandHost
         bool wasPressed = _pressed;
         _pressed = false;
         Capsule.ReleaseMouseCapture();
+
+        if (_swallowNextUp)
+        {
+            // 雙擊的第二下：已經交給法器處理了
+            _swallowNextUp = false;
+            e.Handled = true;
+            return;
+        }
+        _expandedBeforeClick = _userExpanded;
 
         // 剛才是拖曳：吸附到停靠位置，不當作點擊
         if (EndPressAsDrag())
@@ -244,15 +260,18 @@ public partial class IslandWindow : Window, IIslandHost
             {
                 bool isNew = _ambient.RemoveAll(a => a.ModuleId == activity.ModuleId) == 0;
                 _ambient.Add(activity);
-                if (isNew && activity.ExpandedView is not null) SelectPage(activity.ModuleId); // 新出現的（例如開始播歌）優先顯示
+                // 新出現的（例如開始播歌）優先顯示；背景常駐（乾坤袋）不搶
+                if (isNew && activity.ExpandedView is not null && !activity.IsBackground) SelectPage(activity.ModuleId);
             }
             else
             {
                 if (_transient is not null && activity.Priority < _transient.Priority)
                     return; // 低階異象不能壓過高階異象
 
+                bool replaced = _transient is not null;
                 _transient = activity;
                 PlayGlow(activity);
+                if (!replaced || !_userExpanded) Dispatcher.InvokeAsync(PlayEntrance, DispatcherPriority.Loaded);
                 _transientTimer.Stop();
                 if (activity.Duration is { } duration)
                 {
@@ -295,7 +314,8 @@ public partial class IslandWindow : Window, IIslandHost
         : _transient is not null || _dropping ? SizeClass.Medium
         : SizeClass.Small;
 
-    private IslandActivity? CurrentAmbient => _ambient.Count > 0 ? _ambient[^1] : null;
+    /// <summary>收合時佔據膠囊的常駐異象：最新的前景常駐，沒有才輪到背景常駐（例如乾坤袋）。</summary>
+    private IslandActivity? CurrentAmbient => _ambient.LastOrDefault(a => !a.IsBackground) ?? _ambient.LastOrDefault();
 
     /// <summary>目前展開時要顯示的異象。</summary>
     private IslandActivity? ExpandedActivity => _transient ?? CurrentPage;
@@ -365,6 +385,7 @@ public partial class IslandWindow : Window, IIslandHost
     {
         Size target = CurrentSizeClass switch
         {
+            SizeClass.Small when _dormant => IsVertical ? new Size(ThreadSize.Height, ThreadSize.Width) : ThreadSize,
             SizeClass.Large => LargeSize,
             SizeClass.Medium => MediumSize,
             // 收合：停在左右側時轉成直式；嵌在角落時用較厚的角落形體
@@ -437,9 +458,11 @@ public partial class IslandWindow : Window, IIslandHost
 
         double p = Math.Clamp(_reveal.Value, 0, 1);
         double idleOpacity = Math.Clamp(1 - p * 2.2, 0, 1);          // 收合內容先快速隱去
+        idleOpacity *= Math.Clamp((Math.Min(w, h) - 12) / 14, 0, 1);  // 縮成細線（智慧隱藏）時內容跟著淡去
         double expandedOpacity = Math.Clamp((p - 0.35) / 0.65, 0, 1); // 形體撐開後內容才浮現
 
         SetLayer(IdleLayer, idleOpacity, interactive: p < 0.5);
+        IndicatorPanel.Opacity = Math.Clamp((Math.Min(w, h) - 12) / 14, 0, 1);
         SetLayer(ExpandedLayer, expandedOpacity, interactive: p >= 0.5);
     }
 

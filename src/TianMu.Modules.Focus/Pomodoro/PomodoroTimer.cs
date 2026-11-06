@@ -34,7 +34,8 @@ public sealed class PomodoroTimer(PomodoroConfig config)
     private DateTime? _endsAt;
     private TimeSpan _pausedRemaining;
 
-    public PomodoroConfig Config { get; } = config;
+    /// <summary>時長設定；改變後從下一個階段開始生效。</summary>
+    public PomodoroConfig Config { get; set; } = config;
     public PomodoroPhase Phase { get; private set; } = PomodoroPhase.Idle;
     public bool IsPaused { get; private set; }
 

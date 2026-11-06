@@ -73,7 +73,11 @@ public sealed class SettingsStore
                 if (loaded is not null)
                 {
                     loaded.Modules ??= [];
-                    foreach (var m in loaded.Modules.Values) m.Options ??= [];
+                    foreach (var m in loaded.Modules.Values)
+                    {
+                        m.Options ??= [];
+                        m.Values ??= [];
+                    }
                     return loaded;
                 }
             }
@@ -113,6 +117,17 @@ public sealed class SettingsStore
             {
                 return store._current.Modules.TryGetValue(moduleId, out var m) &&
                        m.Options.TryGetValue(key, out bool value)
+                    ? value
+                    : defaultValue;
+            }
+        }
+
+        public string GetString(string key, string defaultValue)
+        {
+            lock (store._gate)
+            {
+                return store._current.Modules.TryGetValue(moduleId, out var m) &&
+                       m.Values.TryGetValue(key, out string? value) && value is not null
                     ? value
                     : defaultValue;
             }

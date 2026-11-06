@@ -11,6 +11,9 @@ public sealed class HydrationState
     public DateTime? LastDrink { get; set; }
     public DateTime? SnoozedUntil { get; set; }
 
+    /// <summary>上一次跳出提醒的時間（「指定時刻」模式用來避免同一個時刻重複提醒）。</summary>
+    public DateTime? LastPrompted { get; set; }
+
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
 
     public static HydrationState Load(string path)
@@ -77,6 +80,43 @@ public sealed class HydrationPlanner(TimeSpan interval, int dailyGoal, TimeOnly 
         DateTime due = reference + Interval;
         if (state.SnoozedUntil is { } snooze && snooze > due) due = snooze;
         return due;
+    }
+
+    /// <summary>
+    /// 「指定時刻」模式：到了某個時刻、而且那之後還沒喝水也還沒提醒過，就該提醒。
+    /// 錯過超過一小時的時刻不補提醒（例如晚上才開機，不會一次跳出早上的那幾個）。
+    /// </summary>
+    public bool IsDueAt(HydrationState state, DateTime now, IReadOnlyList<TimeOnly> times)
+    {
+        RollDay(state, now);
+        if (state.Cups >= DailyGoal || times.Count == 0) return false;
+        if (state.SnoozedUntil is { } snooze) return now >= snooze;
+
+        DateTime? slot = null;
+        foreach (var t in times)
+        {
+            var at = now.Date + t.ToTimeSpan();
+            if (at <= now && (slot is null || at > slot)) slot = at;
+        }
+        if (slot is not { } s || now - s > TimeSpan.FromHours(1)) return false;
+        if (state.LastDrink is { } drink && drink >= s) return false;
+        if (state.LastPrompted is { } prompted && prompted >= s) return false;
+        return true;
+    }
+
+    /// <summary>解析「10:00, 14:30、16:00」這類時刻清單；看不懂的略過，結果由早到晚排好。</summary>
+    public static IReadOnlyList<TimeOnly> ParseTimes(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return [];
+        var result = new SortedSet<TimeOnly>();
+        foreach (string raw in text.Split([',', '，', '、', ';', '；', ' ', '\n'], StringSplitOptions.RemoveEmptyEntries))
+        {
+            string part = raw.Trim().Replace('：', ':');
+            if (TimeOnly.TryParseExact(part, new[] { "H:mm", "HH:mm", "H" }, System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None, out var t))
+                result.Add(t);
+        }
+        return [.. result];
     }
 
     public bool IsDue(HydrationState state, DateTime now, DateTime activeSince, bool limitToDaytime)

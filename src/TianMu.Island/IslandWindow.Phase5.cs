@@ -30,7 +30,10 @@ public partial class IslandWindow
     /// <summary>決定要不要分出小圓（在 Refresh 時呼叫）。</summary>
     private void UpdateSatellite()
     {
-        var candidate = !IsExpanded && !_dragging && _ambient.Count >= 2 ? _ambient[^2] : null;
+        var current = CurrentAmbient;
+        var candidate = !IsExpanded && !_dragging && !_dormant && _ambient.Count >= 2
+            ? _ambient.LastOrDefault(a => !ReferenceEquals(a, current))
+            : null;
         if (candidate is not null)
         {
             _satelliteActivity = candidate;

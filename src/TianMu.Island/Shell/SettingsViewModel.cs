@@ -105,6 +105,32 @@ public sealed class SettingsViewModel : Observable
         set => Save(_store.Read(s => s.DayNightTint), value, s => s.DayNightTint = value);
     }
 
+    public bool SmartHide
+    {
+        get => _store.Read(s => s.SmartHide);
+        set => Save(_store.Read(s => s.SmartHide), value, s => s.SmartHide = value);
+    }
+
+    public bool SpringLively
+    {
+        get => _store.Read(s => s.SpringFeel) != SpringFeels.Crisp;
+        set { if (value) SetSpringFeel(SpringFeels.Lively); }
+    }
+
+    public bool SpringCrisp
+    {
+        get => _store.Read(s => s.SpringFeel) == SpringFeels.Crisp;
+        set { if (value) SetSpringFeel(SpringFeels.Crisp); }
+    }
+
+    private void SetSpringFeel(string feel)
+    {
+        if (_store.Read(s => s.SpringFeel) == feel) return;
+        _store.Update(s => s.SpringFeel = feel);
+        Raise(nameof(SpringLively));
+        Raise(nameof(SpringCrisp));
+    }
+
     public bool FocusBarrier
     {
         get => _store.Read(s => s.FocusBarrier);
@@ -141,7 +167,15 @@ public sealed class SettingsViewModel : Observable
             {
                 var ms = s.GetModule(m.Id);
                 ms.Enabled = m.Enabled;
-                foreach (var o in m.Options) ms.Options[o.Key] = o.Value;
+                foreach (var o in m.Options)
+                {
+                    switch (o)
+                    {
+                        case OptionRowViewModel b: ms.Options[b.Key] = b.Value; break;
+                        case ChoiceRowViewModel c: ms.Values[c.Key] = c.Value; break;
+                        case TextRowViewModel t: ms.Values[t.Key] = t.Value; break;
+                    }
+                }
             }
         });
     }
@@ -217,13 +251,23 @@ public sealed class ModuleRowViewModel : Observable
             if (saved is not null && saved.Options.TryGetValue(option.Key, out bool v)) value = v;
             Options.Add(new OptionRowViewModel(option, value, changed) { ParentEnabled = _enabled });
         }
+        foreach (var choice in d.Choices)
+        {
+            string value = saved is not null && saved.Values.TryGetValue(choice.Key, out var v) && v is not null ? v : choice.DefaultValue;
+            Options.Add(new ChoiceRowViewModel(choice, value, changed) { ParentEnabled = _enabled });
+        }
+        foreach (var text in d.Texts)
+        {
+            string value = saved is not null && saved.Values.TryGetValue(text.Key, out var v) && v is not null ? v : text.DefaultValue;
+            Options.Add(new TextRowViewModel(text, value, changed) { ParentEnabled = _enabled });
+        }
     }
 
     public string Id { get; }
     public string Title { get; }
     public string Description { get; }
     public bool EnabledAtStartup { get; }
-    public ObservableCollection<OptionRowViewModel> Options { get; } = [];
+    public ObservableCollection<OptionRowBase> Options { get; } = [];
 
     public bool Enabled
     {
@@ -237,15 +281,27 @@ public sealed class ModuleRowViewModel : Observable
     }
 }
 
-/// <summary>法器底下的一個選項。</summary>
-public sealed class OptionRowViewModel(ModuleOption option, bool initialValue, Action changed) : Observable
+/// <summary>法器底下的一個選項（開關、選擇題或文字）。</summary>
+public abstract class OptionRowBase : Observable
 {
-    private bool _value = initialValue;
     private bool _parentEnabled = true;
 
-    public string Key => option.Key;
-    public string Title => option.Title;
-    public string Description => option.Description;
+    public abstract string Key { get; }
+    public abstract string Title { get; }
+    public abstract string Description { get; }
+
+    /// <summary>法器本身被關閉時，選項跟著變灰。</summary>
+    public bool ParentEnabled { get => _parentEnabled; set => Set(ref _parentEnabled, value); }
+}
+
+/// <summary>開關選項。</summary>
+public sealed class OptionRowViewModel(ModuleOption option, bool initialValue, Action changed) : OptionRowBase
+{
+    private bool _value = initialValue;
+
+    public override string Key => option.Key;
+    public override string Title => option.Title;
+    public override string Description => option.Description;
 
     public bool Value
     {
@@ -255,7 +311,70 @@ public sealed class OptionRowViewModel(ModuleOption option, bool initialValue, A
             if (Set(ref _value, value)) changed();
         }
     }
+}
 
-    /// <summary>法器本身被關閉時，選項跟著變灰。</summary>
-    public bool ParentEnabled { get => _parentEnabled; set => Set(ref _parentEnabled, value); }
+/// <summary>選擇題選項：一排按鈕，選中的那一個亮起。</summary>
+public sealed class ChoiceRowViewModel : OptionRowBase
+{
+    private readonly ModuleChoice _choice;
+    private readonly Action _changed;
+    private string _value;
+
+    public ChoiceRowViewModel(ModuleChoice choice, string initialValue, Action changed)
+    {
+        _choice = choice;
+        _changed = changed;
+        _value = choice.Items.Any(i => i.Value == initialValue) ? initialValue : choice.DefaultValue;
+        Items = choice.Items.Select(i => new ChoiceItemViewModel(this, i)).ToList();
+    }
+
+    public override string Key => _choice.Key;
+    public override string Title => _choice.Title;
+    public override string Description => _choice.Description;
+    public IReadOnlyList<ChoiceItemViewModel> Items { get; }
+
+    public string Value
+    {
+        get => _value;
+        set
+        {
+            if (!Set(ref _value, value)) return;
+            foreach (var item in Items) item.Refresh();
+            _changed();
+        }
+    }
+}
+
+/// <summary>選擇題裡的一個按鈕。</summary>
+public sealed class ChoiceItemViewModel(ChoiceRowViewModel owner, ModuleChoiceItem item) : Observable
+{
+    public string Label => item.Label;
+
+    public bool IsSelected
+    {
+        get => owner.Value == item.Value;
+        set { if (value) owner.Value = item.Value; }
+    }
+
+    internal void Refresh() => Raise(nameof(IsSelected));
+}
+
+/// <summary>文字選項：離開輸入框時才存檔。</summary>
+public sealed class TextRowViewModel(ModuleText text, string initialValue, Action changed) : OptionRowBase
+{
+    private string _value = initialValue;
+
+    public override string Key => text.Key;
+    public override string Title => text.Title;
+    public override string Description => text.Description;
+    public string Placeholder => text.Placeholder;
+
+    public string Value
+    {
+        get => _value;
+        set
+        {
+            if (Set(ref _value, value ?? string.Empty)) changed();
+        }
+    }
 }

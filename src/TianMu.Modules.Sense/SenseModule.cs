@@ -19,6 +19,7 @@ public sealed class SenseModule : IIslandModule, IDescribedModule
     public const string VolumeOption = "volume";
     public const string BrightnessOption = "brightness";
     public const string PrivacyOption = "privacy";
+    public const string UsbOption = "usb";
 
     // Segoe Fluent Icons / MDL2 Assets
     private const string GlyphUsb = "";
@@ -38,6 +39,8 @@ public sealed class SenseModule : IIslandModule, IDescribedModule
     private VolumeWatcher? _volume;
     private BrightnessWatcher? _brightness;
     private PrivacyWatcher? _privacy;
+    private UsbDeviceWatcher? _usb;
+    private DateTime _lastDriveEvent = DateTime.MinValue;
     private HashSet<string> _micUsers = [];
     private HashSet<string> _camUsers = [];
 
@@ -57,7 +60,8 @@ public sealed class SenseModule : IIslandModule, IDescribedModule
         new(BluetoothOption, "藍牙裝置", "已配對的耳機、滑鼠等連上或斷線時提示。", true),
         new(VolumeOption, "音量", "調整音量或靜音時，天幕顯示音量刻度。", true),
         new(BrightnessOption, "螢幕亮度", "調整亮度時顯示刻度（僅筆電等內建螢幕）。", true),
-        new(PrivacyOption, "隱私燈", "有程式使用麥克風或相機時，天幕右上角亮起朱砂小燈。", true),
+        new(UsbOption, "其他 USB 裝置", "滑鼠、鍵盤、手機、耳機等 USB 裝置接上或移除時提示。", true),
+        new(PrivacyOption, "隱私燈", "有程式使用麥克風或相機時，膠囊下緣亮起朱砂小光點。", true),
     ];
 
     public async Task InitializeAsync(IIslandHost host, CancellationToken cancellationToken)
@@ -75,6 +79,10 @@ public sealed class SenseModule : IIslandModule, IDescribedModule
         _drives = new DriveWatcher();
         _drives.Arrived += d => OnUi(() => ShowDrive(d, arrived: true));
         _drives.Removed += d => OnUi(() => ShowDrive(d, arrived: false));
+
+        _usb = new UsbDeviceWatcher();
+        _usb.Changed += (name, plugged) => OnUi(() => ShowUsbLater(name, plugged));
+        _usb.Start();
 
         _bluetooth = new BluetoothWatcher();
         _bluetooth.ConnectionChanged += (name, connected) => OnUi(() => ShowBluetooth(name, connected));
@@ -129,8 +137,25 @@ public sealed class SenseModule : IIslandModule, IDescribedModule
 
     // ═══════════════════════ 裝置 ═══════════════════════
 
+    /// <summary>
+    /// USB 裝置稍等一下再顯示：如果其實是隨身碟，磁碟機的提示（含剩餘空間）會隨後出現，就不必再顯示一次。
+    /// </summary>
+    private void ShowUsbLater(string name, bool plugged)
+    {
+        if (!Enabled(UsbOption)) return;
+        var heardAt = DateTime.Now;
+        _ = Task.Delay(TimeSpan.FromSeconds(3)).ContinueWith(_ => OnUi(() =>
+        {
+            if ((_lastDriveEvent - heardAt).Duration() < TimeSpan.FromSeconds(4)) return;
+            ShowDevice(GlyphUsb, plugged ? $"{name} 已接上" : $"{name} 已移除",
+                plugged ? "USB 裝置 · 已接上" : "USB 裝置 · 已移除",
+                plugged ? "TianQingBrush" : "TextSecondaryBrush");
+        }), TaskScheduler.Default);
+    }
+
     private void ShowDrive(DriveSnapshot drive, bool arrived)
     {
+        _lastDriveEvent = DateTime.Now;
         if (!Enabled(DrivesOption)) return;
 
         string name = string.IsNullOrWhiteSpace(drive.Label) ? "隨身碟" : drive.Label;
@@ -214,6 +239,7 @@ public sealed class SenseModule : IIslandModule, IDescribedModule
         _volume?.Dispose();
         _brightness?.Dispose();
         _privacy?.Dispose();
+        _usb?.Dispose();
         return ValueTask.CompletedTask;
     }
 }

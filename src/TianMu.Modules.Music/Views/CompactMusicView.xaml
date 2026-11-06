@@ -2,7 +2,12 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:TianMu.Modules.Music.Views">
-    <!-- 收合態：左封面、中歌名、右迷你頻譜（靈動島經典佈局） -->
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </UserControl.Resources>
+
+    <!-- 收合態：左封面、中歌名、右迷你頻譜（靈動島經典佈局）；底部一條封面色的播放進度線 -->
+    <Grid>
     <Grid Margin="6,0,13,0">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
@@ -35,5 +40,16 @@
                             VerticalAlignment="Center"
                             BarCount="6"
                             Centered="True" />
+    </Grid>
+
+    <Grid VerticalAlignment="Bottom" Height="2" Margin="18,0,18,3" IsHitTestVisible="False"
+          Visibility="{Binding HasTimeline, Converter={StaticResource BoolToVis}}">
+        <Border CornerRadius="1" Background="#14ECE6D8" />
+        <Border CornerRadius="1" Background="{Binding Accent}" Opacity="0.9" RenderTransformOrigin="0,0.5">
+            <Border.RenderTransform>
+                <ScaleTransform ScaleX="{Binding Progress}" />
+            </Border.RenderTransform>
+        </Border>
+    </Grid>
     </Grid>
 </UserControl>

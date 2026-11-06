@@ -56,7 +56,7 @@ internal sealed class BluetoothWatcher : IDisposable
         var now = DateTime.Now;
         bool flapping = now - known.ChangedAt < Debounce;
         _devices[update.Id] = (known.Name, connected, now);
-        if (!flapping) ConnectionChanged?.Invoke(known.Name, connected);
+        if (!flapping && DeviceNames.IsMeaningful(known.Name)) ConnectionChanged?.Invoke(known.Name, connected);
     }
 
     public void Dispose()

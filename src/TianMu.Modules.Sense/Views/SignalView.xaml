@@ -13,7 +13,10 @@
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
-        <Grid Width="36" Height="36" VerticalAlignment="Center">
+        <Grid x:Name="Icon" Width="36" Height="36" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+            <Grid.RenderTransform>
+                <ScaleTransform />
+            </Grid.RenderTransform>
             <Ellipse Fill="{DynamicResource HoverFillBrush}" />
             <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
                        FontFamily="{DynamicResource IconFont}" FontSize="16"
@@ -22,7 +25,29 @@
 
         <StackPanel Grid.Column="1" Margin="14,0,12,0" VerticalAlignment="Center">
             <TextBlock FontFamily="{DynamicResource SerifFont}" FontWeight="Bold" FontSize="15"
-                       Foreground="{DynamicResource YueBaiBrush}" Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
+                       Foreground="{DynamicResource YueBaiBrush}" Text="{Binding Title, NotifyOnTargetUpdated=True}"
+                       TextTrimming="CharacterEllipsis">
+                <TextBlock.Triggers>
+                    <EventTrigger RoutedEvent="Binding.TargetUpdated">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <!-- 翻牌：圖示轉過來亮相 -->
+                                <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Icon"
+                                                               Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)">
+                                    <EasingDoubleKeyFrame KeyTime="0:0:0" Value="1" />
+                                    <EasingDoubleKeyFrame KeyTime="0:0:0.18" Value="0">
+                                        <EasingDoubleKeyFrame.EasingFunction><CubicEase EasingMode="EaseIn" /></EasingDoubleKeyFrame.EasingFunction>
+                                    </EasingDoubleKeyFrame>
+                                    <EasingDoubleKeyFrame KeyTime="0:0:0.38" Value="1.15">
+                                        <EasingDoubleKeyFrame.EasingFunction><BackEase EasingMode="EaseOut" Amplitude="0.5" /></EasingDoubleKeyFrame.EasingFunction>
+                                    </EasingDoubleKeyFrame>
+                                    <EasingDoubleKeyFrame KeyTime="0:0:0.5" Value="1" />
+                                </DoubleAnimationUsingKeyFrames>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </TextBlock.Triggers>
+            </TextBlock>
             <TextBlock Margin="0,3,0,0" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"
                        Text="{Binding Subtitle}" TextTrimming="CharacterEllipsis" />
 

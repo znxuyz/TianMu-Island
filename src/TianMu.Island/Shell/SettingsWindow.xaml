@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:theme="clr-namespace:TianMu.Island.Theme"
+        xmlns:shell="clr-namespace:TianMu.Island.Shell"
         Title="天幕島設定"
         Width="540" Height="720"
         MinHeight="480"
@@ -44,6 +45,65 @@
             <Setter Property="Padding" Value="0,14" />
             <Setter Property="BorderThickness" Value="0,0,0,1" />
             <Setter Property="BorderBrush" Value="{StaticResource HairlineBrush}" />
+        </Style>
+
+        <!-- 選擇題的按鈕：選中時描金 -->
+        <Style x:Key="ChoiceChip" TargetType="RadioButton">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0,0,6,6" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bg" CornerRadius="12" Padding="12,4" Background="{StaticResource HoverFillBrush}"
+                                BorderBrush="Transparent" BorderThickness="1">
+                            <TextBlock x:Name="Label" Text="{TemplateBinding Content}" FontSize="12"
+                                       Foreground="{StaticResource TextSecondaryBrush}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{StaticResource GoldFillBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{StaticResource GoldFillBrush}" />
+                                <Setter TargetName="Bg" Property="BorderBrush" Value="{StaticResource MiaoJinBrush}" />
+                                <Setter TargetName="Label" Property="Foreground" Value="{StaticResource MiaoJinBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 文字輸入框：玄漆底、聚焦時描金邊 -->
+        <Style x:Key="Field" TargetType="TextBox">
+            <Setter Property="Foreground" Value="{StaticResource YueBaiBrush}" />
+            <Setter Property="CaretBrush" Value="{StaticResource MiaoJinBrush}" />
+            <Setter Property="SelectionBrush" Value="{StaticResource MiaoJinBrush}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="Box" CornerRadius="8" Background="{StaticResource HoverFillBrush}"
+                                BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
+                                          VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Hidden" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource MiaoJinBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
 
@@ -211,6 +271,33 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
+                            <TextBlock Style="{StaticResource RowTitle}" Text="智慧隱藏" />
+                            <TextBlock Style="{StaticResource RowDescription}" Text="閒置時天幕縮成一條細線，幾乎不擋畫面；滑鼠碰到螢幕邊緣或移到它上面就變回來。" />
+                        </StackPanel>
+                        <CheckBox Grid.Column="1" Style="{StaticResource TianMu.Toggle}" VerticalAlignment="Center"
+                                  Margin="16,0,0,0" AutomationProperties.Name="智慧隱藏"
+                                  IsChecked="{Binding SmartHide, Mode=TwoWay}" />
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource Row}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource RowTitle}" Text="彈簧手感" />
+                        <TextBlock Style="{StaticResource RowDescription}" Text="天幕伸縮時的彈性：靈動會像果凍般多晃一下，俐落則乾脆停下。" />
+                        <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
+                            <RadioButton Style="{StaticResource ChoiceChip}" GroupName="SpringFeel" Content="靈動"
+                                         IsChecked="{Binding SpringLively, Mode=TwoWay}" />
+                            <RadioButton Style="{StaticResource ChoiceChip}" GroupName="SpringFeel" Content="俐落"
+                                         IsChecked="{Binding SpringCrisp, Mode=TwoWay}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Row}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
                             <TextBlock Style="{StaticResource RowTitle}" Text="專注結界" />
                             <TextBlock Style="{StaticResource RowDescription}" Text="番茄鐘專注時，螢幕邊緣亮起一圈緩緩呼吸的金光，提醒自己正在閉關。" />
                         </StackPanel>
@@ -243,8 +330,70 @@
 
                                     <!-- 法器底下的選項（縮排） -->
                                     <ItemsControl ItemsSource="{Binding Options}" Focusable="False" Margin="18,6,0,0">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
+                                        <ItemsControl.Resources>
+                                            <!-- 選擇題：一排小按鈕 -->
+                                            <DataTemplate DataType="{x:Type shell:ChoiceRowViewModel}">
+                                                <Grid Margin="0,8,0,0" IsEnabled="{Binding ParentEnabled}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="2" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Rectangle Fill="{StaticResource HairlineBrush}" />
+                                                    <StackPanel Grid.Column="1" Margin="14,0,0,0">
+                                                        <TextBlock Style="{StaticResource RowTitle}" FontSize="13" Text="{Binding Title}" />
+                                                        <TextBlock Style="{StaticResource RowDescription}" Text="{Binding Description}" />
+                                                        <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding Items}" Focusable="False">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <WrapPanel />
+                                                                </ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <RadioButton Style="{StaticResource ChoiceChip}" Content="{Binding Label}"
+                                                                                 IsChecked="{Binding IsSelected, Mode=TwoWay}" />
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </DataTemplate>
+
+                                            <!-- 文字選項 -->
+                                            <DataTemplate DataType="{x:Type shell:TextRowViewModel}">
+                                                <Grid Margin="0,8,0,0" IsEnabled="{Binding ParentEnabled}">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="2" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Rectangle Fill="{StaticResource HairlineBrush}" />
+                                                    <StackPanel Grid.Column="1" Margin="14,0,0,0">
+                                                        <TextBlock Style="{StaticResource RowTitle}" FontSize="13" Text="{Binding Title}" />
+                                                        <TextBlock Style="{StaticResource RowDescription}" Text="{Binding Description}" />
+                                                        <Grid Margin="0,8,0,0">
+                                                            <TextBox Style="{StaticResource Field}" AutomationProperties.Name="{Binding Title}"
+                                                                     Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                                            <TextBlock Margin="13,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                                                                       FontSize="13" Foreground="{StaticResource TextTertiaryBrush}"
+                                                                       Text="{Binding Placeholder}">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding Value}" Value="">
+                                                                                <Setter Property="Visibility" Value="Visible" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </Grid>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </DataTemplate>
+
+                                            <!-- 開關 -->
+                                            <DataTemplate DataType="{x:Type shell:OptionRowViewModel}">
                                                 <Grid Margin="0,8,0,0" IsEnabled="{Binding ParentEnabled}">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="2" />
@@ -261,7 +410,7 @@
                                                               IsChecked="{Binding Value, Mode=TwoWay}" />
                                                 </Grid>
                                             </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
+                                        </ItemsControl.Resources>
                                     </ItemsControl>
                                 </StackPanel>
                             </Border>

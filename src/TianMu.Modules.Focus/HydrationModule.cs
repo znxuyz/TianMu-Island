@@ -16,14 +16,17 @@ namespace TianMu.Modules.Focus;
 /// </summary>
 public sealed class HydrationModule : IIslandModule, IDescribedModule
 {
-    public const string DaytimeOption = "daytime";
     public const string RespectFocusOption = "respectFocus";
+    public const string IntervalChoice = "interval";
+    public const string HoursChoice = "hours";
+    public const string GoalChoice = "goal";
+    public const string TimesText = "times";
 
     private static readonly TimeSpan CheckInterval = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan AwayThreshold = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan ReminderVisibleFor = TimeSpan.FromSeconds(60);
 
-    private readonly HydrationPlanner _planner = HydrationPlanner.Default;
+    private HydrationPlanner _planner = HydrationPlanner.Default;
     private readonly DateTime _activeSince = DateTime.Now;
     private IIslandHost? _host;
     private HydrationState _state = new();
@@ -42,9 +45,41 @@ public sealed class HydrationModule : IIslandModule, IDescribedModule
 
     public IReadOnlyList<ModuleOption> Options { get; } =
     [
-        new(DaytimeOption, "只在白天提醒", "08:00 到 22:00 之外不打擾。", true),
         new(RespectFocusOption, "專注時不打擾", "番茄鐘進行時，延到調息再提醒。", true),
     ];
+
+    public IReadOnlyList<ModuleChoice> Choices { get; } =
+    [
+        new(IntervalChoice, "提醒間隔", "距離上次喝水多久提醒一次。",
+            [new("30", "30 分"), new("45", "45 分"), new("60", "1 小時"), new("90", "1.5 小時"), new("120", "2 小時")], "45"),
+        new(HoursChoice, "提醒時段", "這段時間之外不打擾。",
+            [new("08-22", "08–22 點"), new("09-18", "09–18 點"), new("07-23", "07–23 點"), new("all", "全天")], "08-22"),
+        new(GoalChoice, "每日目標", "一天喝幾盞；達成後今天就不再提醒。",
+            [new("6", "6 盞"), new("8", "8 盞"), new("10", "10 盞")], "8"),
+    ];
+
+    public IReadOnlyList<ModuleText> Texts { get; } =
+    [
+        new(TimesText, "指定時刻", "填了就改成只在這些時刻提醒，不再按間隔（以逗號分隔）。", "", "例如 10:00, 14:30, 16:00"),
+    ];
+
+    /// <summary>依使用者設定組出提醒規則。</summary>
+    private HydrationPlanner Planner()
+    {
+        var s = _host?.GetModuleSettings(Id);
+        int minutes = int.TryParse(s?.GetString(IntervalChoice, "45"), out int m) && m is >= 5 and <= 600 ? m : 45;
+        int goal = int.TryParse(s?.GetString(GoalChoice, "8"), out int g) && g is >= 1 and <= 30 ? g : 8;
+        var (start, end) = (s?.GetString(HoursChoice, "08-22") ?? "08-22") switch
+        {
+            "09-18" => (new TimeOnly(9, 0), new TimeOnly(18, 0)),
+            "07-23" => (new TimeOnly(7, 0), new TimeOnly(23, 0)),
+            "all" => (TimeOnly.MinValue, TimeOnly.MaxValue),
+            _ => (new TimeOnly(8, 0), new TimeOnly(22, 0)),
+        };
+        return new HydrationPlanner(TimeSpan.FromMinutes(minutes), goal, start, end);
+    }
+
+    private bool AllDay => _host?.GetModuleSettings(Id).GetString(HoursChoice, "08-22") == "all";
 
     public async Task InitializeAsync(IIslandHost host, CancellationToken cancellationToken)
     {
@@ -89,7 +124,12 @@ public sealed class HydrationModule : IIslandModule, IDescribedModule
         if (UserIdleTime() > AwayThreshold) return;
 
         var now = DateTime.Now;
-        if (!_planner.IsDue(_state, now, _activeSince, settings.GetBool(DaytimeOption, true))) return;
+        _planner = Planner();
+        var times = HydrationPlanner.ParseTimes(settings.GetString(TimesText, string.Empty));
+        bool due = times.Count > 0
+            ? _planner.IsDueAt(_state, now, times)
+            : _planner.IsDue(_state, now, _activeSince, limitToDaytime: !AllDay);
+        if (!due) return;
 
         ShowReminder(now);
     }
@@ -109,6 +149,9 @@ public sealed class HydrationModule : IIslandModule, IDescribedModule
             GlowKey = "TianQingBrush",
         });
         _showing = true;
+        _state.LastPrompted = now;
+        _state.SnoozedUntil = null; // 這次提醒已經跳出；之後按「稍後」會再設定
+        Save();
         _autoHide?.Stop();
         _autoHide?.Start();
     }

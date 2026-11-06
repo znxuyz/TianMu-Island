@@ -42,6 +42,13 @@ public sealed class ShelfViewModel : INotifyPropertyChanged
     /// <summary>「乾坤袋 · 3 件」。</summary>
     public string Title { get => _title; set { if (_title == value) return; _title = value; Raise(); } }
 
+    private int _count;
+
+    /// <summary>袋中件數（收合時的紅色角標）。</summary>
+    public int Count { get => _count; set { if (_count == value) return; _count = value; Raise(); Raise(nameof(CountText)); } }
+
+    public string CountText => _count > 99 ? "99+" : _count.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
     public ICommand ClearCommand { get; init; } = new RelayCommand(() => { });
 
     private void Raise([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

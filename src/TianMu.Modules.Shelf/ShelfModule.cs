@@ -20,6 +20,7 @@ public sealed class ShelfModule : IIslandModule, IDescribedModule
     private ShelfViewModel? _vm;
     private ShelfView? _view;
     private bool _pageShown;
+    private IslandActivity? _ambient;
 
     public string Id => "tianmu.shelf";
     public string DisplayName => "乾坤袋";
@@ -37,6 +38,14 @@ public sealed class ShelfModule : IIslandModule, IDescribedModule
         {
             _vm = new ShelfViewModel { ClearCommand = new RelayCommand(Clear) };
             _view = new ShelfView { DataContext = _vm };
+            // 背景常駐：膠囊沒別的事時顯示件數；有音樂等常駐時退居分身小圓
+            _ambient = new IslandActivity(Id, DisplayName, Priority: ActivityPriority.Ambient)
+            {
+                CompactView = new ShelfCompactView { DataContext = _vm },
+                BadgeView = new ShelfBadge { DataContext = _vm },
+                ExpandedView = _view,
+                IsBackground = true,
+            };
             Refresh();
         });
 
@@ -79,18 +88,17 @@ public sealed class ShelfModule : IIslandModule, IDescribedModule
         foreach (string path in _store.Paths)
             _vm.Items.Add(new ShelfItem(path, ShellIcons.For(path), Remove));
         _vm.Title = $"乾坤袋 · {_store.Paths.Count} 件";
+        _vm.Count = _store.Paths.Count;
 
         if (_store.Paths.Count > 0)
         {
-            _host.SetPage(new IslandActivity(Id, DisplayName)
-            {
-                ExpandedView = _view,
-            });
+            if (_pageShown) return; // 件數靠繫結更新
+            if (_ambient is not null) _host.Post(_ambient);
             _pageShown = true;
         }
         else if (_pageShown)
         {
-            _host.RemovePage(Id);
+            _host.Dismiss(Id);
             _pageShown = false;
         }
     }

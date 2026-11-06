@@ -34,6 +34,12 @@ public sealed class AppSettings
     /// <summary>漆面色溫隨時辰流轉。</summary>
     public bool DayNightTint { get; set; } = true;
 
+    /// <summary>智慧隱藏：閒置時天幕縮成一條細線，滑鼠碰到螢幕邊緣或移到它上面才變回來。</summary>
+    public bool SmartHide { get; set; }
+
+    /// <summary>彈簧手感：「靈動」晃動較多、「俐落」較快停下。</summary>
+    public string SpringFeel { get; set; } = SpringFeels.Lively;
+
     /// <summary>番茄鐘專注時，螢幕邊緣亮起一圈緩緩呼吸的金色結界。</summary>
     public bool FocusBarrier { get; set; } = true;
 
@@ -72,4 +78,14 @@ public sealed class ModuleSettings
     public bool Enabled { get; set; } = true;
 
     public Dictionary<string, bool> Options { get; set; } = [];
+
+    /// <summary>選擇題與文字選項。</summary>
+    public Dictionary<string, string> Values { get; set; } = [];
+}
+
+/// <summary>彈簧手感的選項。</summary>
+public static class SpringFeels
+{
+    public const string Lively = "lively";
+    public const string Crisp = "crisp";
 }

@@ -12,7 +12,11 @@ public sealed record ModuleDescriptor(
     string DisplayName,
     string Description,
     IReadOnlyList<ModuleOption> Options,
-    bool EnabledAtStartup);
+    bool EnabledAtStartup)
+{
+    public IReadOnlyList<ModuleChoice> Choices { get; init; } = [];
+    public IReadOnlyList<ModuleText> Texts { get; init; } = [];
+}
 
 /// <summary>
 /// 法器總管：負責發現、祭煉（初始化）與收功（釋放）所有法器模組。
@@ -88,7 +92,11 @@ internal sealed class ModuleManager(IIslandHost host, SettingsStore settings) : 
                 module.DisplayName,
                 described?.Description ?? string.Empty,
                 described?.Options ?? [],
-                enabled));
+                enabled)
+            {
+                Choices = described?.Choices ?? [],
+                Texts = described?.Texts ?? [],
+            });
 
             if (!enabled)
             {

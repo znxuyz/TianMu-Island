@@ -8,4 +8,7 @@ public interface IModuleSettings
 {
     /// <summary>讀取布林選項；使用者從未設定過時回傳 <paramref name="defaultValue"/>。</summary>
     bool GetBool(string key, bool defaultValue);
+
+    /// <summary>讀取選擇題或文字選項；使用者從未設定過時回傳 <paramref name="defaultValue"/>。</summary>
+    string GetString(string key, string defaultValue) => defaultValue;
 }

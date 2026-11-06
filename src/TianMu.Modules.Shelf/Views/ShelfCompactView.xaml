@@ -1,0 +1,15 @@
+<UserControl x:Class="TianMu.Modules.Shelf.Views.ShelfCompactView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:TianMu.Modules.Shelf.Views">
+    <!-- 收合態：袋中有東西時，左邊一疊檔案帶件數角標，右邊提示點開即可拖出 -->
+    <Grid Margin="12,0,16,0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <local:ShelfBadge VerticalAlignment="Center" />
+        <TextBlock Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="12"
+                   Foreground="{DynamicResource TextSecondaryBrush}" Text="乾坤袋 · 點開即可拖出" TextTrimming="CharacterEllipsis" />
+    </Grid>
+</UserControl>

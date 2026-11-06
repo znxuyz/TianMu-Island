@@ -18,6 +18,10 @@ public sealed class FocusModule : IIslandModule, IDescribedModule
 {
     public const string AutoBreakOption = "autoBreak";
     public const string TribulationOption = "tribulation";
+    public const string BellOption = "bell";
+    public const string DoubleClickOption = "doubleClick";
+    public const string FocusMinutesChoice = "focusMinutes";
+    public const string BreakMinutesChoice = "breakMinutes";
 
     private static readonly TimeSpan FlashDuration = TimeSpan.FromSeconds(6);
 
@@ -46,7 +50,29 @@ public sealed class FocusModule : IIslandModule, IDescribedModule
     [
         new(AutoBreakOption, "自動開始調息", "一回專注結束後，直接進入休息倒數。", true),
         new(TribulationOption, "渡劫特效", "突破境界時，天幕閃過雷光、金線繞行一圈。", true),
+        new(BellOption, "時辰已到・敲鐘", "專注結束時，螢幕四邊閃起金光，點一下才關，不怕錯過。", true),
+        new(DoubleClickOption, "雙擊天幕凝神", "在天幕上快速點兩下，開始專注；專注中再點兩下則散功。", true),
     ];
+
+    public IReadOnlyList<ModuleChoice> Choices { get; } =
+    [
+        new(FocusMinutesChoice, "專注時長", "每一回專注多久。", Minutes(15, 25, 30, 45, 50, 60), "25"),
+        new(BreakMinutesChoice, "調息時長", "每一回專注後休息多久（每四回會有一次三倍長的休息）。", Minutes(3, 5, 10, 15), "5"),
+    ];
+
+    private static IReadOnlyList<ModuleChoiceItem> Minutes(params int[] values) =>
+        values.Select(v => new ModuleChoiceItem(v.ToString(System.Globalization.CultureInfo.InvariantCulture), $"{v} 分")).ToList();
+
+    /// <summary>依使用者設定的時長組出番茄鐘設定。</summary>
+    internal static PomodoroConfig ConfigFrom(IModuleSettings settings)
+    {
+        static int Read(IModuleSettings s, string key, int fallback) =>
+            int.TryParse(s.GetString(key, string.Empty), out int v) && v is > 0 and <= 180 ? v : fallback;
+
+        int focus = Read(settings, FocusMinutesChoice, 25);
+        int rest = Read(settings, BreakMinutesChoice, 5);
+        return new PomodoroConfig(TimeSpan.FromMinutes(focus), TimeSpan.FromMinutes(rest), TimeSpan.FromMinutes(rest * 3), 4);
+    }
 
     public async Task InitializeAsync(IIslandHost host, CancellationToken cancellationToken)
     {
@@ -79,6 +105,18 @@ public sealed class FocusModule : IIslandModule, IDescribedModule
         });
 
         host.AddQuickAction(new QuickAction(Id, "凝神", StartFocus, Order: 0));
+
+        // 雙擊天幕：沒在專注就開始，專注中就散功
+        host.SetDoubleClickAction(Id, () =>
+        {
+            if (host.GetModuleSettings(Id).GetBool(DoubleClickOption, true) == false) return;
+            if (_timer.Phase == PomodoroPhase.Focus) Abandon();
+            else
+            {
+                if (_timer.IsBreak) SkipBreak();
+                StartFocus();
+            }
+        });
     }
 
     // ═══════════════════════ 操作 ═══════════════════════
@@ -88,6 +126,7 @@ public sealed class FocusModule : IIslandModule, IDescribedModule
         if (_host is null || _vm is null) return;
         if (_timer.Phase == PomodoroPhase.Focus) return;
 
+        _timer.Config = ConfigFrom(_host.GetModuleSettings(Id));
         _timer.StartFocus(DateTime.Now);
         _host.SetFocusMode(true);
         _flash = null;
@@ -151,6 +190,9 @@ public sealed class FocusModule : IIslandModule, IDescribedModule
 
         bool autoBreak = _host?.GetModuleSettings(Id).GetBool(AutoBreakOption, true) != false;
         if (!autoBreak) _timer.SkipBreak();
+
+        if (_host?.GetModuleSettings(Id).GetBool(BellOption, true) != false)
+            _host?.RingBell($"一回功成 · 修為 +{Realms.FormatDuration(minutes)}");
 
         _flash = $"一回功成 · 修為 +{Realms.FormatDuration(minutes)}";
         _flashUntil = DateTime.Now + FlashDuration;
