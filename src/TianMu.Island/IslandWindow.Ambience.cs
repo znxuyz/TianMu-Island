@@ -62,6 +62,7 @@ public partial class IslandWindow
         bool show = !_userHidden && !_fullscreenHidden;
         if (show && !IsVisible) Show();
         else if (!show && IsVisible) Hide();
+        UpdateBarrier();
     }
 
     private void OnSenseTick()
@@ -225,5 +226,6 @@ public partial class IslandWindow
         ApplyTint(force: true);
         if (!_settings.Read(s => s.FollowCursorScreen)) _followScreenName = null;
         CheckFullscreen();
+        UpdateBarrier();
     }
 }

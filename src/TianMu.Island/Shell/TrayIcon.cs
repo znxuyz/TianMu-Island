@@ -9,7 +9,7 @@ using Forms = System.Windows.Forms;
 namespace TianMu.Island.Shell;
 
 /// <summary>
-/// 系統匣圖示：左鍵開啟設定、右鍵叫出選單。
+/// 系統匣圖示：左鍵開啟設定（天幕隱藏時則是叫回天幕）、右鍵叫出選單。
 /// 圖示本體用 WinForms 的 NotifyIcon（最穩定，工作列重啟也會自動重建），
 /// 選單則用 WPF 自己畫，才能套用「玄漆描金」的樣式。
 /// </summary>
@@ -41,7 +41,11 @@ internal sealed class TrayIcon : IDisposable
 
     private void OnMouseUp(object? sender, Forms.MouseEventArgs e)
     {
-        if (e.Button == Forms.MouseButtons.Left) _app.ShowSettings();
+        if (e.Button == Forms.MouseButtons.Left)
+        {
+            if (_app.IsIslandVisible) _app.ShowSettings();
+            else _app.ToggleIsland();
+        }
         else if (e.Button == Forms.MouseButtons.Right) ShowMenu();
     }
 
@@ -80,6 +84,13 @@ internal sealed class TrayIcon : IDisposable
 
         _menu = menu;
         menu.IsOpen = true;
+    }
+
+    /// <summary>在系統匣跳出一則提示（例如告訴使用者天幕藏到哪了）。</summary>
+    public void ShowHint(string title, string text)
+    {
+        try { _icon.ShowBalloonTip(5000, title, text, Forms.ToolTipIcon.None); }
+        catch { /* 通知被關閉就算了 */ }
     }
 
     private MenuItem Item(string header, Action onClick, bool accent = false)

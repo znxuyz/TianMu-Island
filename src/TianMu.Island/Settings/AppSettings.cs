@@ -34,6 +34,9 @@ public sealed class AppSettings
     /// <summary>漆面色溫隨時辰流轉。</summary>
     public bool DayNightTint { get; set; } = true;
 
+    /// <summary>番茄鐘專注時，螢幕邊緣亮起一圈緩緩呼吸的金色結界。</summary>
+    public bool FocusBarrier { get; set; } = true;
+
     /// <summary>閒置時，膠囊兩端飄散靈氣粒子。</summary>
     public bool ShowParticles { get; set; } = true;
 

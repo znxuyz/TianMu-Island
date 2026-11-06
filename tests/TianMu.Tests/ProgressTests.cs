@@ -34,3 +34,30 @@ public class TaskbarProgressTests
     public void Cleans_taskbar_button_names(string raw, string expected) =>
         Assert.Equal(expected, TaskbarProgressReading.CleanName(raw));
 }
+
+public class SystemMathTests
+{
+    [Fact]
+    public void Cpu_load_uses_kernel_time_that_includes_idle()
+    {
+        // 這段時間：idle 600、kernel 800（含 idle）、user 200 → 忙碌 400 / 總共 1000
+        Assert.Equal(0.4, SystemMath.CpuLoad((1000, 2000, 500), (1600, 2800, 700)), 6);
+        Assert.Equal(0, SystemMath.CpuLoad((10, 10, 10), (10, 10, 10)));
+        Assert.Equal(0, SystemMath.CpuLoad((100, 100, 100), (50, 50, 50))); // 計數器重置
+    }
+
+    [Fact]
+    public void Network_rate_is_per_second_and_survives_counter_reset()
+    {
+        Assert.Equal(512, SystemMath.Rate(1000, 2024, 2));
+        Assert.Equal(0, SystemMath.Rate(5000, 10, 2));
+        Assert.Equal(0, SystemMath.Rate(0, 100, 0));
+    }
+
+    [Theory]
+    [InlineData(0, "0 B/s")]
+    [InlineData(2048, "2 KB/s")]
+    [InlineData(3_565_158, "3.4 MB/s")]
+    [InlineData(52_428_800, "50 MB/s")]
+    public void Speed_text(long bps, string expected) => Assert.Equal(expected, SystemMath.SpeedText(bps));
+}

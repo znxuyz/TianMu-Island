@@ -110,13 +110,28 @@ public partial class IslandWindow : Window, IIslandHost
         NativeMethods.ToggleExStyle(_hwnd, NativeMethods.WS_EX_NOACTIVATE, true);
 
         HwndSource.FromHwnd(_hwnd)?.AddHook(WndProc);
+
+        // Ctrl + Alt + 空白鍵：隨時隱藏／叫回天幕（被別的程式佔用就算了）
+        HotkeyRegistered = NativeMethods.RegisterHotKey(_hwnd, ToggleHotkeyId,
+            NativeMethods.MOD_CONTROL | NativeMethods.MOD_ALT | NativeMethods.MOD_NOREPEAT, NativeMethods.VK_SPACE);
     }
+
+    private const int ToggleHotkeyId = 0x7A11;
+
+    /// <summary>Ctrl + Alt + 空白鍵是否註冊成功。</summary>
+    public bool HotkeyRegistered { get; private set; }
 
     private nint WndProc(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
     {
         // 解析度或 DPI 改變時，重新回到螢幕頂部正中央
         if (msg is NativeMethods.WM_DISPLAYCHANGE or NativeMethods.WM_DPICHANGED)
             Dispatcher.InvokeAsync(PositionAtTopCenter, DispatcherPriority.Background);
+
+        if (msg == NativeMethods.WM_HOTKEY && wParam == ToggleHotkeyId)
+        {
+            Dispatcher.InvokeAsync(() => App.Current.ToggleIsland());
+            handled = true;
+        }
         return 0;
     }
 
@@ -138,6 +153,8 @@ public partial class IslandWindow : Window, IIslandHost
         _transientTimer.Stop();
         _autoCollapseTimer.Stop();
         StopAnimation();
+        if (HotkeyRegistered) NativeMethods.UnregisterHotKey(_hwnd, ToggleHotkeyId);
+        _barrier?.Close();
         base.OnClosed(e);
     }
 
@@ -214,7 +231,7 @@ public partial class IslandWindow : Window, IIslandHost
     }
 
     private void Settings_Click(object sender, RoutedEventArgs e) => App.Current.ShowSettings();
-    private void Hide_Click(object sender, RoutedEventArgs e) => SetUserHidden(true);
+    private void Hide_Click(object sender, RoutedEventArgs e) => App.Current.ToggleIsland();
     private void Exit_Click(object sender, RoutedEventArgs e) => App.Current.Quit();
 
     // ═══════════════════════ 法器宿主 IIslandHost ═══════════════════════

@@ -16,6 +16,20 @@ internal static class NativeMethods
     public const long WS_EX_NOACTIVATE = 0x08000000;    // 點擊時不搶走焦點
 
     public const int WM_DISPLAYCHANGE = 0x007E;
+    public const int WM_HOTKEY = 0x0312;
+    public const uint MOD_ALT = 0x0001;
+    public const uint MOD_CONTROL = 0x0002;
+    public const uint MOD_NOREPEAT = 0x4000;
+    public const uint VK_SPACE = 0x20;
+
+    /// <summary>註冊全域快捷鍵（被別的程式佔用時回傳 false）。</summary>
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool RegisterHotKey(nint hWnd, int id, uint fsModifiers, uint vk);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool UnregisterHotKey(nint hWnd, int id);
     public const int WM_DPICHANGED = 0x02E0;
 
     public static readonly nint HWND_TOPMOST = -1;

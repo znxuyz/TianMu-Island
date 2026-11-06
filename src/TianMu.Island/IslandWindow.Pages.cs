@@ -79,7 +79,7 @@ public partial class IslandWindow
         _pageKey = pages[next].Key;
 
         Refresh();
-        PlayPageReveal();
+        PlayPageReveal(delta);
     }
 
     private void PrevPage_Click(object sender, RoutedEventArgs e) => Navigate(-1);
@@ -92,15 +92,19 @@ public partial class IslandWindow
         e.Handled = true;
     }
 
-    /// <summary>換頁時內容以墨暈方式浮現。</summary>
-    private void PlayPageReveal()
+    private readonly TranslateTransform _pageSlide = new();
+
+    /// <summary>換頁時新內容從翻頁的方向滑入、以墨暈方式浮現（往下一頁從右邊來，往上一頁從左邊來）。</summary>
+    private void PlayPageReveal(int direction)
     {
         if (!SystemParameters.ClientAreaAnimation) return;
-        var fade = new DoubleAnimation(0.15, 1, TimeSpan.FromMilliseconds(260))
-        {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
-        };
-        PageContent.BeginAnimation(OpacityProperty, fade);
+        if (!ReferenceEquals(PageContent.RenderTransform, _pageSlide)) PageContent.RenderTransform = _pageSlide;
+
+        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+        var duration = TimeSpan.FromMilliseconds(320);
+        PageContent.BeginAnimation(OpacityProperty, new DoubleAnimation(0.1, 1, duration) { EasingFunction = ease });
+        _pageSlide.BeginAnimation(TranslateTransform.XProperty,
+            new DoubleAnimation(Math.Sign(direction) * 28, 0, duration) { EasingFunction = ease });
     }
 
     // ═══════════════════════ 畫面 ═══════════════════════

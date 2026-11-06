@@ -105,6 +105,12 @@ public sealed class SettingsViewModel : Observable
         set => Save(_store.Read(s => s.DayNightTint), value, s => s.DayNightTint = value);
     }
 
+    public bool FocusBarrier
+    {
+        get => _store.Read(s => s.FocusBarrier);
+        set => Save(_store.Read(s => s.FocusBarrier), value, s => s.FocusBarrier = value);
+    }
+
     private void Save(bool current, bool value, Action<AppSettings> write, [System.Runtime.CompilerServices.CallerMemberName] string? name = null)
     {
         if (current == value) return;

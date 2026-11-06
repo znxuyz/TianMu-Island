@@ -232,6 +232,7 @@ public partial class IslandWindow
     {
         if (_focusMode == enabled) return;
         _focusMode = enabled;
+        UpdateBarrier();
         FocusModeChanged?.Invoke(enabled);
     });
 

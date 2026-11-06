@@ -1,0 +1,8 @@
+<UserControl x:Class="TianMu.Modules.Sense.Views.SystemCompactView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- 收合態：「CPU 23% · 記憶體 61%」 -->
+    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12"
+               Typography.NumeralAlignment="Tabular"
+               Foreground="{DynamicResource TextSecondaryBrush}" Text="{Binding CompactText}" />
+</UserControl>

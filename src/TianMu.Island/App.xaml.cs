@@ -81,7 +81,22 @@ public partial class App : Application
 
     public void ToggleIsland()
     {
-        _island?.SetUserHidden(!_island.UserHidden);
+        if (_island is null) return;
+        bool hide = !_island.UserHidden;
+        _island.SetUserHidden(hide);
+
+        // 隱藏後告訴使用者怎麼叫回來
+        if (hide)
+            _tray?.ShowHint("天幕已隱藏",
+                _island.HotkeyRegistered
+                    ? "按 Ctrl + Alt + 空白鍵，或點一下系統匣的天幕島圖示，就能叫回來。"
+                    : "點一下系統匣（右下角時鐘旁，可能收在 ^ 裡）的天幕島圖示，就能叫回來。");
+    }
+
+    /// <summary>天幕被隱藏時叫回來。</summary>
+    public void ShowIsland()
+    {
+        if (_island is { UserHidden: true }) _island.SetUserHidden(false);
     }
 
     public void ShowSettings()
@@ -140,7 +155,12 @@ public partial class App : Application
         _showSettingsSignal = new EventWaitHandle(false, EventResetMode.AutoReset, ShowSettingsEventName);
         _showSettingsWait = ThreadPool.RegisterWaitForSingleObject(
             _showSettingsSignal,
-            (_, _) => Dispatcher.InvokeAsync(ShowSettings),
+            (_, _) => Dispatcher.InvokeAsync(() =>
+            {
+                // 再次開啟天幕島：天幕若被隱藏就叫回來，並打開設定
+                ShowIsland();
+                ShowSettings();
+            }),
             null,
             Timeout.Infinite,
             executeOnlyOnce: false);

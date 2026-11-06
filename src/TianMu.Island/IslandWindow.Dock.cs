@@ -65,6 +65,7 @@ public partial class IslandWindow
         }
 
         MoveWindow(origin, animate);
+        UpdateBarrier();    // 換了螢幕，結界跟著過去
         Refresh();          // 直式／橫式可能改變，重新決定收合內容與尺寸
         ApplyVisuals();
     }
