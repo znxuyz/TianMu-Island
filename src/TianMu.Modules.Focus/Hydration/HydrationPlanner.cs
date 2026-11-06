@@ -112,9 +112,14 @@ public sealed class HydrationPlanner(TimeSpan interval, int dailyGoal, TimeOnly 
         foreach (string raw in text.Split([',', '，', '、', ';', '；', ' ', '\n'], StringSplitOptions.RemoveEmptyEntries))
         {
             string part = raw.Trim().Replace('：', ':');
-            if (TimeOnly.TryParseExact(part, new[] { "H:mm", "HH:mm", "H" }, System.Globalization.CultureInfo.InvariantCulture,
-                    System.Globalization.DateTimeStyles.None, out var t))
-                result.Add(t);
+            // 「10」「10:00」「9:5」都接受；看不懂的略過
+            var hm = part.Split(':');
+            if (hm.Length is < 1 or > 2) continue;
+            if (!int.TryParse(hm[0], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out int h)) continue;
+            int m = 0;
+            if (hm.Length == 2 && !int.TryParse(hm[1], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out m)) continue;
+            if (h is < 0 or > 23 || m is < 0 or > 59) continue;
+            result.Add(new TimeOnly(h, m));
         }
         return [.. result];
     }
