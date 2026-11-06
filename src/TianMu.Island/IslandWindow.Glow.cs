@@ -25,7 +25,11 @@ public partial class IslandWindow
 
     private void PlayGlow(IslandActivity activity)
     {
-        if (GlowKeyFor(activity) is not { } key) return;
+        if (GlowKeyFor(activity) is { } key) PlayGlow(key);
+    }
+
+    private void PlayGlow(string key)
+    {
         if (!SystemParameters.ClientAreaAnimation) return; // 使用者關閉了動畫效果
         if (Capsule.Effect is not DropShadowEffect shadow || shadow.IsFrozen) return;
 

@@ -1,0 +1,24 @@
+<UserControl x:Class="TianMu.Modules.Sense.Views.ProgressCompactView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:TianMu.Modules.Sense.Views">
+    <!-- 收合態：左小圓環、中程式名稱、右百分比 -->
+    <Grid Margin="10,0,16,0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <local:ProgressRing Width="18" Height="18" Thickness="3" VerticalAlignment="Center"
+                            Progress="{Binding Progress}" RingBrush="{DynamicResource TianQingBrush}" />
+
+        <TextBlock Grid.Column="1" Margin="9,0,8,0" VerticalAlignment="Center" FontSize="12"
+                   Foreground="{DynamicResource TextSecondaryBrush}" Text="{Binding App}" TextTrimming="CharacterEllipsis" />
+
+        <TextBlock Grid.Column="2" VerticalAlignment="Center"
+                   FontFamily="{DynamicResource SerifMediumFont}" FontSize="14"
+                   Typography.NumeralAlignment="Tabular"
+                   Foreground="{DynamicResource YueBaiBrush}" Text="{Binding PercentText}" />
+    </Grid>
+</UserControl>

@@ -101,11 +101,49 @@
                             VerticalAlignment="Bottom" Margin="0,0,0,3" Panel.ZIndex="12" />
 
                 <!-- 拖放提示：把檔案拖到天幕上時出現 -->
-                <Border x:Name="DropHint" Visibility="Collapsed" Panel.ZIndex="18" Background="#E60E0C0A"
+                <!-- 拖放提示：袋口張開，金色漩渦把檔案吸進去 -->
+                <Border x:Name="DropHint" Visibility="Collapsed" Panel.ZIndex="18" Background="#F20E0C0A"
                         IsHitTestVisible="False">
-                    <TextBlock x:Name="DropHintText" HorizontalAlignment="Center" VerticalAlignment="Center"
-                               FontFamily="{StaticResource SerifFont}" FontWeight="Bold" FontSize="13"
-                               Foreground="{StaticResource MiaoJinBrush}" />
+                    <StackPanel x:Name="DropHintContent" Orientation="Horizontal"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Grid x:Name="Vortex" Width="68" Height="68" RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform x:Name="VortexScale" ScaleX="0" ScaleY="0" />
+                                    <RotateTransform x:Name="VortexSpin" />
+                                </TransformGroup>
+                            </Grid.RenderTransform>
+                            <Ellipse>
+                                <Ellipse.Fill>
+                                    <RadialGradientBrush>
+                                        <GradientStop Color="#55C8A869" Offset="0" />
+                                        <GradientStop Color="#00C8A869" Offset="1" />
+                                    </RadialGradientBrush>
+                                </Ellipse.Fill>
+                            </Ellipse>
+                            <Path x:Name="VortexArms" StrokeThickness="2.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round">
+                                <Path.Stroke>
+                                    <RadialGradientBrush>
+                                        <GradientStop Color="#FFF0DCA8" Offset="0" />
+                                        <GradientStop Color="#CCC8A869" Offset="0.55" />
+                                        <GradientStop Color="#00C8A869" Offset="1" />
+                                    </RadialGradientBrush>
+                                </Path.Stroke>
+                            </Path>
+                            <Ellipse Width="7" Height="7" Fill="#FFF4EEE2">
+                                <Ellipse.Effect>
+                                    <DropShadowEffect BlurRadius="12" ShadowDepth="0" Color="#E6CF98" Opacity="1" />
+                                </Ellipse.Effect>
+                            </Ellipse>
+                        </Grid>
+                        <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
+                            <TextBlock x:Name="DropHintText"
+                                       FontFamily="{StaticResource SerifFont}" FontWeight="Bold" FontSize="17"
+                                       Foreground="{StaticResource MiaoJinBrush}" />
+                            <TextBlock Margin="0,4,0,0" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                                       Text="放開即收入 · 只記位置，不搬動檔案" />
+                        </StackPanel>
+                    </StackPanel>
                 </Border>
 
                 <!-- 渡劫雷光 -->

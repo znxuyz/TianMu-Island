@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using TianMu.Core;
 using TianMu.Island.Physics;
 using TianMu.Island.Shell;
@@ -142,11 +143,14 @@ public partial class IslandWindow
     private void Capsule_DragEnter(object sender, DragEventArgs e)
     {
         e.Effects = CanAcceptFiles(e) ? DragDropEffects.Copy : DragDropEffects.None;
-        if (e.Effects != DragDropEffects.None)
+        if (e.Effects != DragDropEffects.None && !_dropping)
         {
             DropHintText.Text = _dropHandlers[^1].Hint;
             DropHint.Visibility = Visibility.Visible;
+            DropHintContent.Opacity = 1;
             _hovering = true;
+            _dropping = true; // 天幕撐到中形，讓漩渦有地方轉
+            OpenVortex();
             UpdateTargets();
         }
         e.Handled = true;
@@ -168,17 +172,93 @@ public partial class IslandWindow
 
     private void Capsule_Drop(object sender, DragEventArgs e)
     {
-        EndDragHint();
-        if (!CanAcceptFiles(e) || e.Data.GetData(DataFormats.FileDrop) is not string[] files || files.Length == 0) return;
-        _dropHandlers[^1].OnDrop(files);
+        if (!CanAcceptFiles(e) || e.Data.GetData(DataFormats.FileDrop) is not string[] files || files.Length == 0)
+        {
+            EndDragHint();
+            return;
+        }
+
+        // 漩渦一收、金光一閃，檔案就進了袋子
+        var handler = _dropHandlers[^1];
+        SwallowVortex(() =>
+        {
+            EndDragHint();
+            handler.OnDrop(files);
+        });
+        PlayGlow("MiaoJinBrush");
         e.Handled = true;
     }
 
     private void EndDragHint()
     {
         DropHint.Visibility = Visibility.Collapsed;
+        VortexSpin.BeginAnimation(RotateTransform.AngleProperty, null);
         _hovering = false;
+        _dropping = false;
         UpdateTargets();
+    }
+
+    // ═══════════════════════ 乾坤袋漩渦 ═══════════════════════
+
+    private bool _dropping;
+
+    /// <summary>袋口張開：漩渦從無到有彈開，並持續向內旋轉。</summary>
+    private void OpenVortex()
+    {
+        VortexArms.Data ??= VortexGeometry(Vortex.Width / 2, arms: 3);
+
+        var pop = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(420))
+        {
+            EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.45 },
+        };
+        VortexScale.BeginAnimation(ScaleTransform.ScaleXProperty, pop);
+        VortexScale.BeginAnimation(ScaleTransform.ScaleYProperty, pop);
+
+        // 逆時針旋轉：手臂由外往內捲，看起來像在把東西吸進中心
+        VortexSpin.BeginAnimation(RotateTransform.AngleProperty,
+            new DoubleAnimation(0, -360, TimeSpan.FromSeconds(2.4)) { RepeatBehavior = RepeatBehavior.Forever });
+    }
+
+    /// <summary>吸入：漩渦加速旋轉並縮進中心，文字同時淡去。</summary>
+    private void SwallowVortex(Action completed)
+    {
+        var duration = TimeSpan.FromMilliseconds(360);
+        var ease = new CubicEase { EasingMode = EasingMode.EaseIn };
+
+        var shrink = new DoubleAnimation(0, duration) { EasingFunction = ease };
+        shrink.Completed += (_, _) => completed();
+        VortexScale.BeginAnimation(ScaleTransform.ScaleXProperty, shrink);
+        VortexScale.BeginAnimation(ScaleTransform.ScaleYProperty, new DoubleAnimation(0, duration) { EasingFunction = ease });
+
+        double angle = VortexSpin.Angle;
+        VortexSpin.BeginAnimation(RotateTransform.AngleProperty, new DoubleAnimation(angle, angle - 300, duration) { EasingFunction = ease });
+        DropHintContent.BeginAnimation(OpacityProperty, new DoubleAnimation(1, 0.2, duration) { FillBehavior = FillBehavior.Stop });
+    }
+
+    /// <summary>漩渦的手臂：數條由外緣捲向中心的螺旋線。</summary>
+    private static Geometry VortexGeometry(double radius, int arms)
+    {
+        const int steps = 48;
+        const double turns = 0.85; // 每條手臂繞多少圈
+        var g = new StreamGeometry();
+        using (var ctx = g.Open())
+        {
+            for (int a = 0; a < arms; a++)
+            {
+                double phase = a * 2 * Math.PI / arms;
+                for (int i = 0; i <= steps; i++)
+                {
+                    double t = (double)i / steps;                    // 0 = 外緣、1 = 中心
+                    double r = radius * Math.Pow(1 - t, 0.85) * 0.94 + 2;
+                    double theta = phase + t * turns * 2 * Math.PI;
+                    var p = new Point(radius + r * Math.Cos(theta), radius + r * Math.Sin(theta));
+                    if (i == 0) ctx.BeginFigure(p, isFilled: false, isClosed: false);
+                    else ctx.LineTo(p, isStroked: true, isSmoothJoin: true);
+                }
+            }
+        }
+        g.Freeze();
+        return g;
     }
 
     // ═══════════════════════ 狀態燈 ═══════════════════════

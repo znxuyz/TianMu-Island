@@ -275,7 +275,7 @@ public partial class IslandWindow : Window, IIslandHost
     /// <summary>目前該用哪一種大小：使用者點開一律是大；只是跳出提示是中；其餘是小。</summary>
     private SizeClass CurrentSizeClass =>
         _userExpanded ? SizeClass.Large
-        : _transient is not null ? SizeClass.Medium
+        : _transient is not null || _dropping ? SizeClass.Medium
         : SizeClass.Small;
 
     private IslandActivity? CurrentAmbient => _ambient.Count > 0 ? _ambient[^1] : null;
