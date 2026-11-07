@@ -1,4 +1,6 @@
-using System.IO;
+using File = System.IO.File;
+using Directory = System.IO.Directory;
+using IOPath = System.IO.Path;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -204,8 +206,8 @@ internal sealed class RadialMenuWindow : Window
             if (_clickMode && !_done && !_suspendCapture) Finish(null);
         };
 
-        DragEnter += (_, e) => { _dragAwayTimer.Stop(); OnDragOver(e); };
-        DragOver += (_, e) => OnDragOver(e);
+        DragEnter += (_, e) => { _dragAwayTimer.Stop(); HandleDragOver(e); };
+        DragOver += (_, e) => HandleDragOver(e);
         DragLeave += (_, _) => { if (_stage == Stage.Menu) _dragAwayTimer.Start(); };
         Drop += OnDrop;
     }
@@ -318,7 +320,7 @@ internal sealed class RadialMenuWindow : Window
 
     // ═══════════════════════ 拖著檔案 ═══════════════════════
 
-    private void OnDragOver(DragEventArgs e)
+    private void HandleDragOver(DragEventArgs e)
     {
         e.Handled = true;
         if (_stage != Stage.Menu || !e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -443,7 +445,7 @@ internal sealed class RadialMenuWindow : Window
         _stage = Stage.Formats;
         _items = _options.Select(o => new RadialItem(o.Label, o.Caption, () => { }, ToneFromKey(o.ToneKey))).ToList();
         BuildRing(_options.Select(o => (o.Label, o.Caption, ToneFromKey(o.ToneKey))).ToList());
-        string name = Path.GetFileName(_sources[0]);
+        string name = IOPath.GetFileName(_sources[0]);
         SetHubIdle(name, _sources.Count > 1 ? $"等 {_sources.Count} 個 · 選擇格式" : "選擇格式");
         _hubRing.Stroke = new SolidColorBrush(Color.FromArgb(0x8C, Gold.R, Gold.G, Gold.B));
         if (!_clickMode) EnterClickMode();
@@ -526,7 +528,7 @@ internal sealed class RadialMenuWindow : Window
         {
             var placed = furnace.PlaceBesideSources(_sources, _outputs);
             if (placed.Count > 0)
-                _ctx.Notify("成品已放在原檔旁", placed.Count > 1 ? $"{Path.GetFileName(placed[0])} 等 {placed.Count} 個" : Path.GetFileName(placed[0]));
+                _ctx.Notify("成品已放在原檔旁", placed.Count > 1 ? $"{IOPath.GetFileName(placed[0])} 等 {placed.Count} 個" : IOPath.GetFileName(placed[0]));
         }
 
         Close();
@@ -674,7 +676,7 @@ internal sealed class RadialMenuWindow : Window
 
     private void ShowFile(string path)
     {
-        string ext = Path.GetExtension(path).TrimStart('.').ToUpperInvariant();
+        string ext = IOPath.GetExtension(path).TrimStart('.').ToUpperInvariant();
         _fileExt.Text = ext.Length is > 0 and <= 4 ? ext : Directory.Exists(path) ? "夾" : "檔";
         _fileIcon.Visibility = Visibility.Visible;
     }
