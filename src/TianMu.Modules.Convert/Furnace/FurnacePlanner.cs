@@ -110,12 +110,15 @@ public static class FurnacePlanner
         // 同格式互轉沒有意義（例如 PNG 轉 PNG），但「縮小」「灰階」保留
         if (kind is FileKind.Image or FileKind.Audio)
         {
-            var exts = files.Select(f => Path.GetExtension(f).TrimStart('.').ToLowerInvariant()).Distinct().ToList();
-            if (exts.Count == 1)
+            // .jpeg、.jfif 與 .jpg 是同一種格式
+            var exts = files.Select(f => Path.GetExtension(f).TrimStart('.').ToLowerInvariant() switch
             {
-                string same = exts[0] == "jpeg" ? "jpg" : exts[0];
-                list.RemoveAll(o => o.Id.EndsWith(":" + same, StringComparison.Ordinal));
-            }
+                "jpeg" or "jfif" => "jpg",
+                "tif" => "tiff",
+                var e => e,
+            }).Distinct().ToList();
+            if (exts.Count == 1)
+                list.RemoveAll(o => o.Id.EndsWith(":" + exts[0], StringComparison.Ordinal));
         }
         return list.Take(8).ToList();
     }
