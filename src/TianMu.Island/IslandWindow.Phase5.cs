@@ -145,8 +145,14 @@ public partial class IslandWindow
 
     private void Capsule_DragEnter(object sender, DragEventArgs e)
     {
+        // 拖著檔案停半秒：展開法陣盤（化形爐、乾坤袋）
+        if (e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            _dropping = true;
+            StartDragHover();
+        }
         e.Effects = CanAcceptFiles(e) ? DragDropEffects.Copy : DragDropEffects.None;
-        if (e.Effects != DragDropEffects.None && !_dropping)
+        if (e.Effects != DragDropEffects.None && DropHint.Visibility != Visibility.Visible)
         {
             DropHintText.Text = _dropHandlers[^1].Hint;
             DropHint.Visibility = Visibility.Visible;
@@ -194,6 +200,7 @@ public partial class IslandWindow
 
     private void EndDragHint()
     {
+        CancelDragHover();
         DropHint.Visibility = Visibility.Collapsed;
         VortexSpin.BeginAnimation(RotateTransform.AngleProperty, null);
         _hovering = false;

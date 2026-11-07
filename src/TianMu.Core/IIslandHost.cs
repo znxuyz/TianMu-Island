@@ -74,6 +74,11 @@ public interface IIslandHost
     /// <summary>在法陣盤（長按天幕展開的圓形功能選單）加入一個扇區。同一法器同名的只保留最新的。</summary>
     void AddRadialAction(RadialAction action);
 
+    /// <summary>
+    /// 註冊轉檔引擎：法陣盤的「化形爐」扇區會接受檔案，放進去後整盤換成可轉的格式。同時只有一個。
+    /// </summary>
+    void SetFurnace(IFileFurnace furnace);
+
     /// <summary>展開天幕並切到某法器的頁面（常駐頁或常駐異象）；沒有這一頁時什麼都不做，回傳 false。</summary>
     bool ShowPage(string moduleId);
 

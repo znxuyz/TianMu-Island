@@ -18,6 +18,7 @@ public partial class IslandWindow
     private const string FurnaceLabel = "化形爐";
 
     private readonly List<RadialAction> _radialActions = [];
+    private IFileFurnace? _furnace;
     private DispatcherTimer? _longPress;
     private RadialMenuWindow? _radial;
     private bool _radialFromPress;
@@ -27,6 +28,8 @@ public partial class IslandWindow
         _radialActions.RemoveAll(a => a.ModuleId == action.ModuleId && a.Label == action.Label);
         _radialActions.Add(action);
     });
+
+    public void SetFurnace(IFileFurnace furnace) => Dispatcher.InvokeAsync(() => _furnace = furnace);
 
     public bool ShowPage(string moduleId)
     {
@@ -63,12 +66,19 @@ public partial class IslandWindow
 
     private void OpenRadial()
     {
+        CancelDragHover();
         NativeMethods.GetCursorPos(out var cursor);
         var screen = Forms.Screen.FromPoint(new System.Drawing.Point(cursor.X, cursor.Y));
         var dpi = VisualTreeHelper.GetDpi(this);
         var center = new Point(cursor.X / dpi.DpiScaleX, cursor.Y / dpi.DpiScaleY);
 
-        _radial = new RadialMenuWindow(RadialItems());
+        var context = new RadialContext(_furnace,
+            (title, subtitle) => Post(new IslandActivity("tianmu.convert", title, subtitle, ActivityPriority.Normal, TimeSpan.FromSeconds(4))
+            {
+                GlowKey = title.Contains("失敗", StringComparison.Ordinal) ? "ZhuShaBrush" : "TianQingBrush",
+            }),
+            PickFiles);
+        _radial = new RadialMenuWindow(RadialItems(), context);
         _radial.Closed += (_, _) =>
         {
             _radial = null;
@@ -103,19 +113,52 @@ public partial class IslandWindow
     {
         var actions = _radialActions.OrderBy(a => a.Order).ToList();
 
-        // 化形爐（轉檔）還沒煉成時先佔位
+        // 化形爐：有轉檔引擎時收檔案（點它則先選檔案）；沒有時（法器被關閉）提示一下
         if (actions.All(a => a.Label != FurnaceLabel))
             actions.Add(new RadialAction("tianmu.island", FurnaceLabel, "轉檔", () =>
-                Post(new IslandActivity("tianmu.island", "化形爐即將開爐", "轉檔功能下一版推出",
+                Post(new IslandActivity("tianmu.island", "化形爐已關閉", "到設定 → 法器打開「化形爐」",
                     ActivityPriority.Normal, TimeSpan.FromSeconds(3))), 50, "ZhuShaBrush"));
 
         actions.Add(new RadialAction("tianmu.island", "隱藏", "天幕", () => App.Current.ToggleIsland(), 90));
         actions.Add(new RadialAction("tianmu.island", "設定", "洞府", () => App.Current.ShowSettings(), 100));
 
         return actions.OrderBy(a => a.Order).Take(10)
-            .Select(a => new RadialItem(a.Label, a.Caption, a.Invoke, ToneFor(a.ToneKey)))
+            .Select(a => new RadialItem(a.Label, a.Caption, a.Invoke, ToneFor(a.ToneKey), a.OnFiles,
+                IsFurnace: a.Label == FurnaceLabel && _furnace is not null))
             .ToList();
     }
+
+    /// <summary>沒拖檔案就點化形爐：開檔案選擇視窗。</summary>
+    private static IReadOnlyList<string>? PickFiles()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "放進化形爐的檔案",
+            Multiselect = true,
+            CheckFileExists = true,
+        };
+        return dialog.ShowDialog() == true ? dialog.FileNames : null;
+    }
+
+    // ═══════════════════════ 拖著檔案停在天幕上 ═══════════════════════
+
+    private DispatcherTimer? _dragHover;
+
+    /// <summary>檔案拖進天幕時開始計時；停半秒就展開法陣盤（可以放進化形爐或乾坤袋）。</summary>
+    private void StartDragHover()
+    {
+        if (_radial is not null) return;
+        _dragHover ??= new DispatcherTimer(LongPressDelay, DispatcherPriority.Input, (_, _) =>
+        {
+            _dragHover!.Stop();
+            if (!_dropping || _radial is not null) return;
+            EndDragHint();       // 收起乾坤袋的漩渦提示，改由法陣盤接手
+            OpenRadial();
+        }, Dispatcher);
+        if (!_dragHover.IsEnabled) _dragHover.Start();
+    }
+
+    private void CancelDragHover() => _dragHover?.Stop();
 
     /// <summary>扇區文字顏色：朱砂與天青在玄漆上提亮一些，才讀得清楚。</summary>
     private Color? ToneFor(string? key) => key switch

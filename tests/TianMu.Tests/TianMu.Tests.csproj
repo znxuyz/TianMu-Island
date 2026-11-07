@@ -28,6 +28,7 @@
     <ProjectReference Include="..\..\src\TianMu.Modules.Notify\TianMu.Modules.Notify.csproj" />
     <ProjectReference Include="..\..\src\TianMu.Modules.Shelf\TianMu.Modules.Shelf.csproj" />
     <ProjectReference Include="..\..\src\TianMu.Modules.Todo\TianMu.Modules.Todo.csproj" />
+    <ProjectReference Include="..\..\src\TianMu.Modules.Convert\TianMu.Modules.Convert.csproj" />
   </ItemGroup>
 
 </Project>

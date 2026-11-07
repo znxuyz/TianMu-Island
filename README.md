@@ -9,7 +9,7 @@
 ![platform](https://img.shields.io/badge/平台-Windows%2010%2F11-0a0a0f?style=flat-square)
 ![dotnet](https://img.shields.io/badge/.NET-10-E8C872?style=flat-square)
 ![ui](https://img.shields.io/badge/UI-WPF-0a0a0f?style=flat-square)
-![stage](https://img.shields.io/badge/版本-v0.13-C8A869?style=flat-square)
+![stage](https://img.shields.io/badge/版本-v0.14-C8A869?style=flat-square)
 
 </div>
 
@@ -45,6 +45,7 @@
 | 化神 | **乾坤袋** | 把檔案拖到天幕上暫存（袋口張開金色漩渦吸入），需要時再拖出去 | ✅ |
 | 化神 | **煉化進度** | 下載、複製大檔、安裝程式時，工作列上的進度直接顯示在天幕上，完成時提示 | ✅ |
 | 化神 | **法陣盤** | 在天幕上長按半秒，游標處展開圓形功能選單（金線輪轉）：凝神、清泉、記一筆、乾坤袋、化形爐、周天、隱藏、設定 | ✅ |
+| 化神 | **化形爐** | 把檔案放進法陣盤的化形爐，整盤化為可轉的格式；圖片、PDF、影音、字幕、文字、ZIP，成品留在陣眼任你拖放，全程不上傳 | ✅ |
 | 化神 | **智慧隱藏** | 閒置時天幕縮成一條細線，滑鼠碰到螢幕邊緣或靠近時才變回來 | ✅ |
 | 化神 | **時辰已到** | 番茄鐘結束時螢幕四邊閃起金光並寫明成果，點一下才關；雙擊天幕即可凝神或散功 | ✅ |
 | 化神 | **自訂時長** | 專注／調息時長、喝水間隔、時段、目標盞數與指定時刻都能在設定裡調 | ✅ |
@@ -169,3 +170,10 @@ TianMu-Island/
 ---
 
 <div align="center"><sub>天幕之下，皆為道場。</sub></div>
+
+## 第三方元件
+
+- [ImageMagick / Magick.NET](https://github.com/dlemstra/Magick.NET)（Apache-2.0）：化形爐的圖片轉換
+- [PDFsharp](https://github.com/empira/PDFsharp)（MIT）：PDF 合併與拆頁
+- [FFmpeg](https://ffmpeg.org/)（GPL-3.0，gyan.dev 的 Windows 版）：影音轉換；不隨程式附帶，第一次使用時下載並比對 SHA-256，以獨立程式執行
+- [NAudio](https://github.com/naudio/NAudio)（MIT）、[思源宋體 Noto Serif TC](https://fonts.google.com/noto/specimen/Noto+Serif+TC)（OFL）

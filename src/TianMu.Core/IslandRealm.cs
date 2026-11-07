@@ -35,4 +35,6 @@ public sealed record QuickAction(string ModuleId, string Label, Action Invoke, i
 /// <param name="Invoke">選中時要做的事（UI 執行緒）。</param>
 /// <param name="Order">排列順序，從正上方開始順時針，小的在前。</param>
 /// <param name="ToneKey">文字顏色（主題色鍵）；null 為月白。</param>
-public sealed record RadialAction(string ModuleId, string Label, string Caption, Action Invoke, int Order = 0, string? ToneKey = null);
+/// <param name="OnFiles">拖著檔案放到這一格時要做的事（例如乾坤袋收下檔案）；null 表示這一格不收檔案。</param>
+public sealed record RadialAction(string ModuleId, string Label, string Caption, Action Invoke, int Order = 0, string? ToneKey = null,
+    Action<IReadOnlyList<string>>? OnFiles = null);
