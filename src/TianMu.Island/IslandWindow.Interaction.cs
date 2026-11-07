@@ -111,8 +111,44 @@ public partial class IslandWindow
         _bell.Closed += (_, _) => _bell = null;
         _bell.Cover(ToDip(screen.Bounds));
         _bell.Show();
-        if (_hwnd != 0) NativeMethods.ReassertTopmost(_hwnd);
+        ReassertTopmost();
     });
+
+    // ═══════════════════════ 圖層順序 ═══════════════════════
+    //
+    // 固定的上下順序（由上到下）：右鍵選單 ＞ 天幕 ＞ 敲鐘與結界光框 ＞ 其他視窗。
+    // 天幕定時重新宣告置頂時，若有任何選單開著就先讓步，並把選單再拉到最上層。
+
+    private static readonly HashSet<System.Windows.Controls.ContextMenu> _openMenus = [];
+
+    /// <summary>App 啟動時呼叫一次：所有右鍵選單（天幕、系統匣）開啟時都會被拉到最上層。</summary>
+    internal static void RegisterMenuLayering()
+    {
+        EventManager.RegisterClassHandler(typeof(System.Windows.Controls.ContextMenu),
+            System.Windows.Controls.ContextMenu.OpenedEvent, new RoutedEventHandler((sender, _) =>
+            {
+                if (sender is System.Windows.Controls.ContextMenu menu)
+                    _openMenus.Add(menu);
+                if (sender is System.Windows.Controls.ContextMenu m)
+                    m.Dispatcher.InvokeAsync(() =>
+                    {
+                        if (PresentationSource.FromVisual(m) is System.Windows.Interop.HwndSource source)
+                            NativeMethods.ReassertTopmost(source.Handle);
+                    }, System.Windows.Threading.DispatcherPriority.Loaded);
+            }));
+        EventManager.RegisterClassHandler(typeof(System.Windows.Controls.ContextMenu),
+            System.Windows.Controls.ContextMenu.ClosedEvent, new RoutedEventHandler((sender, _) =>
+            {
+                if (sender is System.Windows.Controls.ContextMenu menu) _openMenus.Remove(menu);
+            }));
+    }
+
+    private void ReassertTopmost()
+    {
+        _openMenus.RemoveWhere(m => !m.IsOpen); // 保險：沒收到關閉通知的也清掉
+        if (_hwnd == 0 || _openMenus.Count > 0) return;
+        NativeMethods.ReassertTopmost(_hwnd);
+    }
 
     // ═══════════════════════ 彈簧手感 ═══════════════════════
 

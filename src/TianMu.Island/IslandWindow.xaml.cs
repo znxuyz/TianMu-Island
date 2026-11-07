@@ -70,8 +70,9 @@ public partial class IslandWindow : Window, IIslandHost
         _clockTimer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background,
             (_, _) => UpdateClock(), Dispatcher);
 
+        // 每 3 秒重新宣告置頂（有些程式會把天幕擠下去）；但選單開著時不搶，免得天幕蓋住選單
         _topmostTimer = new DispatcherTimer(TimeSpan.FromSeconds(3), DispatcherPriority.Background,
-            (_, _) => { if (_hwnd != 0) NativeMethods.ReassertTopmost(_hwnd); }, Dispatcher);
+            (_, _) => ReassertTopmost(), Dispatcher);
 
         _transientTimer = new DispatcherTimer(DispatcherPriority.Normal, Dispatcher);
         _transientTimer.Tick += (_, _) =>

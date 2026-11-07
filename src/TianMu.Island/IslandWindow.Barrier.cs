@@ -28,6 +28,6 @@ public partial class IslandWindow
         _barrier ??= new FocusBarrierWindow();
         _barrier.Cover(ToDip(screen.Bounds));
         if (!_barrier.IsVisible) _barrier.Show();
-        if (_hwnd != 0) Interop.NativeMethods.ReassertTopmost(_hwnd); // 天幕要壓在結界之上
+        ReassertTopmost(); // 天幕要壓在結界之上
     }
 }

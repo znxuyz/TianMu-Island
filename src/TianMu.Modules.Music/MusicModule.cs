@@ -21,6 +21,7 @@ public sealed class MusicModule : IIslandModule, IDescribedModule
 {
     /// <summary>選項：是否向 LRCLIB 查詢歌詞。</summary>
     public const string LyricsOption = "lyrics";
+    public const string PopupOption = "popup";
 
     private const int FftSize = 2048;
     private const int BandCount = 40;
@@ -60,6 +61,7 @@ public sealed class MusicModule : IIslandModule, IDescribedModule
     public IReadOnlyList<ModuleOption> Options { get; } =
     [
         new(LyricsOption, "同步歌詞", "向 LRCLIB 歌詞庫查詢歌詞，只會送出歌名與歌手。", true),
+        new(PopupOption, "換歌時彈開", "每換一首歌，天幕展開幾秒顯示歌名（預設關閉：收合的膠囊直接換成新歌）。", false),
     ];
 
     public async Task InitializeAsync(IIslandHost host, CancellationToken cancellationToken)
@@ -168,8 +170,8 @@ public sealed class MusicModule : IIslandModule, IDescribedModule
             _posted = true;
         }
 
-        // 換歌時自動彈開幾秒，像靈動島一樣
-        if (popup)
+        // 換歌時預設維持原狀，只更新膠囊裡的封面與歌名；使用者打開選項才彈開幾秒
+        if (popup && _host.GetModuleSettings(Id).GetBool(PopupOption, false))
             _host.Post(CreateActivity(ActivityPriority.Normal, NewTrackPopup) with { GlowKey = string.Empty }); // 換歌不閃
     }
 

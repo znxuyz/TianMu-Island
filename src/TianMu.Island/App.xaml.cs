@@ -47,6 +47,7 @@ public partial class App : Application
         }
 
         UpdateService.CleanupLeftovers();
+        IslandWindow.RegisterMenuLayering();
 
         Settings = new SettingsStore();
         SyncAutoStart();
