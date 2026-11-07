@@ -126,7 +126,7 @@ public sealed class OcrModule : IIslandModule, IDescribedModule
         }
 
         var encoder = new PngBitmapEncoder();
-        encoder.Frames.Add(BitmapFrame.Create(input));
+        encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(input));
         using var png = new MemoryStream();
         encoder.Save(png);
 
