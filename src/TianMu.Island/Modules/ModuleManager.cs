@@ -40,6 +40,7 @@ internal sealed class ModuleManager(IIslandHost host, SettingsStore settings) : 
         typeof(TianMu.Modules.Shelf.ShelfModule).Assembly,    // 乾坤袋
         typeof(TianMu.Modules.Todo.TodoModule).Assembly,      // 天機簿
         typeof(TianMu.Modules.Convert.ConvertModule).Assembly, // 化形爐
+        typeof(TianMu.Modules.Office.ClipboardModule).Assembly, // 萬象簿、照妖鏡
     ];
 
     private readonly List<IIslandModule> _modules = [];

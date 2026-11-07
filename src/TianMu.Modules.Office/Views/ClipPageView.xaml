@@ -1,0 +1,96 @@
+<UserControl x:Class="TianMu.Modules.Office.Views.ClipPageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <Style x:Key="RowButton" TargetType="Button">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="Transparent" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource HoverFillBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="Tiny" TargetType="Button" BasedOn="{StaticResource RowButton}">
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="FontFamily" Value="{DynamicResource IconFont}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+        </Style>
+    </UserControl.Resources>
+
+    <!-- 萬象簿：最近複製過的十筆，點一下就再複製一次 -->
+    <Grid Margin="14,10,14,8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid>
+            <TextBlock FontFamily="{DynamicResource SerifFont}" FontWeight="Bold" FontSize="15"
+                       Foreground="{DynamicResource YueBaiBrush}" Text="{Binding Title}" VerticalAlignment="Center" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <TextBlock VerticalAlignment="Center" Margin="0,0,10,0" FontSize="11"
+                           Foreground="{DynamicResource TextTertiaryBrush}" Text="點一下再複製 · 只存在這台電腦" />
+                <Button Style="{DynamicResource TianMu.Button.Ghost}" MinHeight="24" Padding="10,0" FontSize="12"
+                        Content="清空" ToolTip="釘選的會留著" Command="{Binding ClearCommand}" Focusable="False" />
+            </StackPanel>
+        </Grid>
+
+        <TextBlock Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12"
+                   Foreground="{DynamicResource TextTertiaryBrush}" Text="複製文字、圖片或檔案後，就會出現在這裡"
+                   Visibility="{Binding Empty, Converter={StaticResource BoolToVis}}" />
+
+        <ScrollViewer Grid.Row="1" Margin="0,6,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+            <ItemsControl ItemsSource="{Binding Rows}" Focusable="False">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="0,0,0,2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Button Style="{StaticResource RowButton}" Padding="6,3" Command="{Binding CopyCommand}" ToolTip="再複製一次">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid Width="26" Height="22">
+                                        <Border CornerRadius="5" Background="{DynamicResource GoldFillBrush}" />
+                                        <TextBlock Text="{Binding Badge}" FontFamily="{DynamicResource SerifFont}" FontSize="11" FontWeight="Bold"
+                                                   Foreground="{DynamicResource MiaoJinBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"
+                                               Visibility="{Binding HasThumbnail, Converter={StaticResource BoolToVis}}">
+                                            <Image.Clip>
+                                                <RectangleGeometry Rect="0,0,26,22" RadiusX="5" RadiusY="5" />
+                                            </Image.Clip>
+                                        </Image>
+                                    </Grid>
+                                    <TextBlock Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center" FontSize="13"
+                                               Foreground="{DynamicResource YueBaiBrush}" Text="{Binding Preview}" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="11"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" Text="{Binding When}" />
+                                </Grid>
+                            </Button>
+                            <Button Grid.Column="1" Style="{StaticResource Tiny}" Content="{Binding PinGlyph}" ToolTip="{Binding PinTip}" Command="{Binding PinCommand}" />
+                            <Button Grid.Column="2" Style="{StaticResource Tiny}" Content="&#xE711;" ToolTip="刪除這一筆" Command="{Binding RemoveCommand}" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

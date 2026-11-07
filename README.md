@@ -9,7 +9,7 @@
 ![platform](https://img.shields.io/badge/平台-Windows%2010%2F11-0a0a0f?style=flat-square)
 ![dotnet](https://img.shields.io/badge/.NET-10-E8C872?style=flat-square)
 ![ui](https://img.shields.io/badge/UI-WPF-0a0a0f?style=flat-square)
-![stage](https://img.shields.io/badge/版本-v0.14-C8A869?style=flat-square)
+![stage](https://img.shields.io/badge/版本-v0.15-C8A869?style=flat-square)
 
 </div>
 
@@ -45,6 +45,8 @@
 | 化神 | **乾坤袋** | 把檔案拖到天幕上暫存（袋口張開金色漩渦吸入），需要時再拖出去 | ✅ |
 | 化神 | **煉化進度** | 下載、複製大檔、安裝程式時，工作列上的進度直接顯示在天幕上，完成時提示 | ✅ |
 | 化神 | **法陣盤** | 在天幕上長按半秒，游標處展開圓形功能選單（金線輪轉）：凝神、清泉、記一筆、乾坤袋、化形爐、周天、隱藏、設定 | ✅ |
+| 化神 | **萬象簿** | 剪貼簿歷史：最近十筆文字、圖片、檔案，點一下再複製；可釘選，只存在記憶體 | ✅ |
+| 化神 | **照妖鏡** | 截圖取字：Ctrl + Alt + O 框選螢幕，文字辨識後自動複製（Windows 內建辨識，不上傳） | ✅ |
 | 化神 | **化形爐** | 把檔案放進法陣盤的化形爐，整盤化為可轉的格式；圖片、PDF、影音、字幕、文字、ZIP，成品留在陣眼任你拖放，全程不上傳 | ✅ |
 | 化神 | **智慧隱藏** | 閒置時天幕縮成一條細線，滑鼠碰到螢幕邊緣或靠近時才變回來 | ✅ |
 | 化神 | **時辰已到** | 番茄鐘結束時螢幕四邊閃起金光並寫明成果，點一下才關；雙擊天幕即可凝神或散功 | ✅ |
