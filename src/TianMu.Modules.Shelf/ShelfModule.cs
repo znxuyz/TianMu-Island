@@ -50,6 +50,12 @@ public sealed class ShelfModule : IIslandModule, IDescribedModule
         });
 
         host.AddFileDropHandler(Id, "放入乾坤袋", OnDrop);
+        host.AddRadialAction(new RadialAction(Id, "乾坤袋", "暫存", () =>
+        {
+            if (!host.ShowPage(Id))
+                host.Post(new IslandActivity(Id, "乾坤袋是空的", "把檔案拖到天幕上就能收進來",
+                    ActivityPriority.Normal, TimeSpan.FromSeconds(3)));
+        }, Order: 40));
     }
 
     private void OnDrop(IReadOnlyList<string> paths)

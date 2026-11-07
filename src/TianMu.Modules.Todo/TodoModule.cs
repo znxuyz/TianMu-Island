@@ -68,6 +68,7 @@ public sealed class TodoModule : IIslandModule, IDescribedModule
         });
 
         host.AddQuickAction(new QuickAction(Id, "記一筆", () => host.InvokeAsync(OpenEditor), Order: 30));
+        host.AddRadialAction(new RadialAction(Id, "記一筆", "待辦", OpenEditor, Order: 30));
     }
 
     // ═══════════════════════ 新增 ═══════════════════════

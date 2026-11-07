@@ -45,6 +45,7 @@ public sealed class SystemMonitorModule : IIslandModule, IDescribedModule
                 ExpandedView = page,
             };
             host.SetPage(new IslandActivity(Id, DisplayName) { ExpandedView = page });
+            host.AddRadialAction(new RadialAction(Id, "周天", "系統", () => host.ShowPage(Id), Order: 60, ToneKey: "TianQingBrush"));
 
             _timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = Interval };
             _timer.Tick += (_, _) => Tick();

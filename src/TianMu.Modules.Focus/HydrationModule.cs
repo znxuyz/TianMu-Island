@@ -113,6 +113,7 @@ public sealed class HydrationModule : IIslandModule, IDescribedModule
         });
 
         host.AddQuickAction(new QuickAction(Id, "飲水", Drink, Order: 10));
+        host.AddRadialAction(new RadialAction(Id, "清泉", "飲一盞", Drink, Order: 20, ToneKey: "TianQingBrush"));
     }
 
     private void Check()

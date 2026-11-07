@@ -71,6 +71,12 @@ public interface IIslandHost
     /// <summary>在展開的預設面板加入捷徑按鈕。</summary>
     void AddQuickAction(QuickAction action);
 
+    /// <summary>在法陣盤（長按天幕展開的圓形功能選單）加入一個扇區。同一法器同名的只保留最新的。</summary>
+    void AddRadialAction(RadialAction action);
+
+    /// <summary>展開天幕並切到某法器的頁面（常駐頁或常駐異象）；沒有這一頁時什麼都不做，回傳 false。</summary>
+    bool ShowPage(string moduleId);
+
     /// <summary>
     /// 設定預設面板捷徑列左側的一行狀態文字（例如「築基 · 中期 · 今日 50 分」）。傳 null 清除。
     /// </summary>

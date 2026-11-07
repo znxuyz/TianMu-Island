@@ -25,3 +25,14 @@ public enum IslandRealm
 /// <param name="Invoke">按下時執行（在 UI 執行緒）。</param>
 /// <param name="Order">排序，數字小的在左。</param>
 public sealed record QuickAction(string ModuleId, string Label, Action Invoke, int Order = 0);
+
+/// <summary>
+/// 法陣盤（長按天幕展開的圓形功能選單）上的一個扇區。
+/// </summary>
+/// <param name="ModuleId">提供它的法器。</param>
+/// <param name="Label">扇區上的大字，兩三個字最好，例如「凝神」。</param>
+/// <param name="Caption">大字下方的小字，例如「專注」。</param>
+/// <param name="Invoke">選中時要做的事（UI 執行緒）。</param>
+/// <param name="Order">排列順序，從正上方開始順時針，小的在前。</param>
+/// <param name="ToneKey">文字顏色（主題色鍵）；null 為月白。</param>
+public sealed record RadialAction(string ModuleId, string Label, string Caption, Action Invoke, int Order = 0, string? ToneKey = null);

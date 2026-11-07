@@ -105,6 +105,11 @@ public sealed class FocusModule : IIslandModule, IDescribedModule
         });
 
         host.AddQuickAction(new QuickAction(Id, "凝神", StartFocus, Order: 0));
+        host.AddRadialAction(new RadialAction(Id, "凝神", "專注", () =>
+        {
+            if (_timer.Phase == PomodoroPhase.Focus) host.ShowPage(Id); // 已在專注：打開看進度
+            else StartFocus();
+        }, Order: 10));
 
         // 雙擊天幕：沒在專注就開始，專注中就散功
         host.SetDoubleClickAction(Id, () =>

@@ -197,6 +197,7 @@ public partial class IslandWindow : Window, IIslandHost
 
         _pressed = true;
         BeginPress();
+        StartLongPress();
         Capsule.CaptureMouse();
         UpdateTargets();
         e.Handled = true;
@@ -207,6 +208,15 @@ public partial class IslandWindow : Window, IIslandHost
         bool wasPressed = _pressed;
         _pressed = false;
         Capsule.ReleaseMouseCapture();
+
+        CancelLongPress();
+        if (ReleaseRadial())
+        {
+            // 長按叫出了法陣盤：這次放開由它處理，不算點擊
+            Refresh();
+            e.Handled = true;
+            return;
+        }
 
         if (_swallowNextUp)
         {

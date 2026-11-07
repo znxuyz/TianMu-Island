@@ -136,6 +136,7 @@ public partial class IslandWindow
 
     private void Capsule_MouseMove(object sender, MouseEventArgs e)
     {
+        if (TrackRadial()) return; // 法陣盤開著：游標交給它
         if (!_pressed || e.LeftButton != MouseButtonState.Pressed) return;
 
         NativeMethods.GetCursorPos(out var now);
@@ -146,6 +147,7 @@ public partial class IslandWindow
             if (Math.Abs(dx) < DragThresholdPx && Math.Abs(dy) < DragThresholdPx) return;
 
             // 開始拖曳：收起天幕，變成浮動膠囊跟著游標走
+            CancelLongPress();
             _dragging = true;
             _userExpanded = false;
             _transient = null;

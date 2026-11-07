@@ -146,7 +146,7 @@ public partial class IslandWindow
     private void ReassertTopmost()
     {
         _openMenus.RemoveWhere(m => !m.IsOpen); // 保險：沒收到關閉通知的也清掉
-        if (_hwnd == 0 || _openMenus.Count > 0) return;
+        if (_hwnd == 0 || _openMenus.Count > 0 || _radial is not null) return;
         NativeMethods.ReassertTopmost(_hwnd);
     }
 
