@@ -61,6 +61,9 @@ public sealed class AppSettings
     /// </summary>
     public List<string>? RadialSlots { get; set; }
 
+    /// <summary>法陣盤大小：標準、大、特大（見 <see cref="RadialSizes"/>）。</summary>
+    public string RadialSize { get; set; } = RadialSizes.Large;
+
     /// <summary>各法器的開關與選項，以法器 Id 為鍵。</summary>
     public Dictionary<string, ModuleSettings> Modules { get; set; } = [];
 
@@ -87,6 +90,21 @@ public sealed class ModuleSettings
 
     /// <summary>選擇題與文字選項。</summary>
     public Dictionary<string, string> Values { get; set; } = [];
+}
+
+/// <summary>法陣盤大小的選項與對應的縮放。</summary>
+public static class RadialSizes
+{
+    public const string Standard = "standard";
+    public const string Large = "large";
+    public const string Huge = "huge";
+
+    public static double Scale(string? size) => size switch
+    {
+        Standard => 1.0,
+        Huge => 1.5,
+        _ => 1.25,
+    };
 }
 
 /// <summary>彈簧手感的選項。</summary>

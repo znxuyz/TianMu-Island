@@ -35,6 +35,22 @@ public sealed class RadialSlotsViewModel : Observable
 
     public ICommand ResetCommand { get; }
 
+    // 盤面大小（三選一）
+    public bool SizeStandard { get => IsSize(RadialSizes.Standard); set { if (value) SetSize(RadialSizes.Standard); } }
+    public bool SizeLarge { get => IsSize(RadialSizes.Large); set { if (value) SetSize(RadialSizes.Large); } }
+    public bool SizeHuge { get => IsSize(RadialSizes.Huge); set { if (value) SetSize(RadialSizes.Huge); } }
+
+    private bool IsSize(string size) => (_store.Read(s => s.RadialSize) ?? RadialSizes.Large) == size;
+
+    private void SetSize(string size)
+    {
+        if (IsSize(size)) return;
+        _store.Update(s => s.RadialSize = size);
+        Raise(nameof(SizeStandard));
+        Raise(nameof(SizeLarge));
+        Raise(nameof(SizeHuge));
+    }
+
     private void Load(IReadOnlyList<string>? saved)
     {
         Rows.Clear();

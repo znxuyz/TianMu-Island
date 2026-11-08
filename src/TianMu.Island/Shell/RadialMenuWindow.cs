@@ -6,7 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
-using System.Windows.Media.Effects;
+using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using TianMu.Core;
@@ -26,13 +26,13 @@ internal sealed record RadialContext(IFileFurnace? Furnace, Action<string, strin
 /// <summary>
 /// 法陣盤：長按天幕（或拖著檔案停在天幕上半秒）後，在游標處展開的圓形功能選單。
 ///
-///   · 功能盤：按住拖到扇區放開即執行；長按後原地放開則改用點選；點盤外或右鍵關閉
+///   · 功能盤：按住拖到扇區放開即執行；長按後原地放開則改用點選；點陣眼、點盤外或按右鍵關閉
 ///   · 入爐化形：把檔案放進「化形爐」，化形爐連同檔案縮進陣眼，整盤換成這些檔案能轉的格式
 ///   · 煉化：選一個格式，陣眼外圍燒成金色進度環
 ///   · 出爐：成品留在陣眼，拖到任何地方都行；沒拖走就放回原檔旁邊
 ///
 /// 所有展開都用「金線輪轉」：金線從第一格左緣順時針畫一圈，掃到哪裡扇區就長到哪裡（見 <see cref="RadialGeometry"/>）。
-/// 透明、置頂、不搶焦點。
+/// 透明、置頂、不搶焦點。透明視窗是 CPU 繪製，所以不用模糊特效（陰影、光暈都用漸層畫好），動畫才會順。
 /// </summary>
 internal sealed class RadialMenuWindow : Window
 {
@@ -53,6 +53,7 @@ internal sealed class RadialMenuWindow : Window
     private static readonly Brush EdgeHot = Frozen(Gold);
 
     private readonly RadialContext _ctx;
+    private readonly double _scale;
     private readonly Point _c = new(Side / 2, Side / 2);
     private readonly Canvas _root;
     private readonly Canvas _ringLayer = new() { Width = Side, Height = Side };
@@ -92,12 +93,20 @@ internal sealed class RadialMenuWindow : Window
     private Point _fileFrom;
 
     private sealed record SliceVisual(Canvas Group, Path Shape, StackPanel Labels, TextBlock Label, double A0, double A1, double Mid,
-        ScaleTransform Scale, TranslateTransform Move);
+        ScaleTransform Scale, TranslateTransform Move, Brush LabelBrush);
 
-    public RadialMenuWindow(IReadOnlyList<RadialItem> items, RadialContext ctx)
+    private static readonly Brush GoldHiBrush = Frozen(GoldHi);
+    private static readonly Brush CinnabarBrush = Frozen(Cinnabar);
+    private static readonly Brush HubRingBrush = Frozen(Color.FromArgb(0x8C, 0xC8, 0xA8, 0x69));
+    private static readonly Duration HoverTime = new(TimeSpan.FromMilliseconds(130));
+    private static readonly IEasingFunction HoverEase = new CubicEase { EasingMode = EasingMode.EaseOut };
+
+    /// <param name="scale">盤面大小（1 = 標準；設定 → 法陣盤 → 大小）。</param>
+    public RadialMenuWindow(IReadOnlyList<RadialItem> items, RadialContext ctx, double scale = 1)
     {
         _items = items;
         _ctx = ctx;
+        _scale = Math.Clamp(scale, 0.8, 2);
         WindowStyle = WindowStyle.None;
         AllowsTransparency = true;
         Background = Brushes.Transparent;
@@ -105,11 +114,30 @@ internal sealed class RadialMenuWindow : Window
         ShowInTaskbar = false;
         ShowActivated = false;
         ResizeMode = ResizeMode.NoResize;
-        Width = Height = Side;
+        Width = Height = Side * _scale;
         AllowDrop = true;
         Title = "天幕島 · 法陣盤";
 
-        _root = new Canvas { Width = Side, Height = Side };
+        _root = new Canvas { Width = Side, Height = Side, LayoutTransform = new ScaleTransform(_scale, _scale) };
+
+        // 底下一圈柔和的影子（漸層畫好，不用 DropShadowEffect）
+        double shadowR = RadialGeometry.OuterRadius + 46;
+        var shadow = new Ellipse
+        {
+            Width = shadowR * 2, Height = shadowR * 2, IsHitTestVisible = false,
+            Fill = Frozen(new RadialGradientBrush
+            {
+                GradientStops =
+                {
+                    new GradientStop(Color.FromArgb(0x8C, 0, 0, 0), 0.62),
+                    new GradientStop(Color.FromArgb(0x40, 0, 0, 0), 0.8),
+                    new GradientStop(Color.FromArgb(0x00, 0, 0, 0), 1),
+                },
+            }),
+        };
+        Canvas.SetLeft(shadow, _c.X - shadowR);
+        Canvas.SetTop(shadow, _c.Y - shadowR);
+        _root.Children.Add(shadow);
 
         // 幾乎透明的底盤：扇區之間的縫也接得到滑鼠與拖放
         var catcher = new Ellipse { Width = (RadialGeometry.OuterRadius + 34) * 2, Height = (RadialGeometry.OuterRadius + 34) * 2, Fill = Frozen(Color.FromArgb(1, 0, 0, 0)) };
@@ -121,13 +149,21 @@ internal sealed class RadialMenuWindow : Window
         _outline = new Path
         {
             Stroke = new SolidColorBrush(Gold),
-            StrokeThickness = 1.2,
+            StrokeThickness = 1.6,
             StrokeDashArray = new DoubleCollection { 0, 9999 },
-            Effect = new DropShadowEffect { BlurRadius = 8, ShadowDepth = 0, Color = Gold, Opacity = 0.8 },
             IsHitTestVisible = false,
         };
-        _tip = new Ellipse { Width = 6.4, Height = 6.4, Fill = new SolidColorBrush(GoldHi), IsHitTestVisible = false, Opacity = 0,
-            Effect = new DropShadowEffect { BlurRadius = 10, ShadowDepth = 0, Color = GoldHi, Opacity = 1 } };
+        // 筆尖：亮點＋光暈（漸層）
+        _tip = new Ellipse { Width = 18, Height = 18, IsHitTestVisible = false, Opacity = 0,
+            Fill = Frozen(new RadialGradientBrush
+            {
+                GradientStops =
+                {
+                    new GradientStop(GoldHi, 0.18),
+                    new GradientStop(Color.FromArgb(0x80, GoldHi.R, GoldHi.G, GoldHi.B), 0.3),
+                    new GradientStop(Color.FromArgb(0x00, GoldHi.R, GoldHi.G, GoldHi.B), 1),
+                },
+            }) };
         _root.Children.Add(_outline);
         _root.Children.Add(_ringLayer);
         _root.Children.Add(_tip);
@@ -145,8 +181,8 @@ internal sealed class RadialMenuWindow : Window
         };
         _hubCaption = new TextBlock
         {
-            FontSize = 9.5,
-            Foreground = new SolidColorBrush(Color.FromArgb(0x73, Moon.R, Moon.G, Moon.B)),
+            FontSize = 10.5,
+            Foreground = new SolidColorBrush(Color.FromArgb(0x99, Moon.R, Moon.G, Moon.B)),
             HorizontalAlignment = HorizontalAlignment.Center,
             TextAlignment = TextAlignment.Center,
             TextWrapping = TextWrapping.Wrap,
@@ -171,14 +207,13 @@ internal sealed class RadialMenuWindow : Window
         _root.Children.Add(_hub);
 
         _progress = new Path { Stroke = new SolidColorBrush(GoldHi), StrokeThickness = 3, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round,
-            IsHitTestVisible = false, Effect = new DropShadowEffect { BlurRadius = 8, ShadowDepth = 0, Color = Gold, Opacity = 0.9 } };
+            IsHitTestVisible = false };
         _root.Children.Add(_progress);
 
-        _root.Effect = new DropShadowEffect { BlurRadius = 30, ShadowDepth = 0, Color = Colors.Black, Opacity = 0.55, RenderingBias = RenderingBias.Performance };
         Content = _root;
 
         BuildRing(items.Select(i => (i.Label, i.Caption, i.Tone)).ToList());
-        SetHubIdle("天幕", "移回取消");
+        SetHubIdle("天幕", "移回中間取消");
 
         _dragAwayTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(450), DispatcherPriority.Input, (_, _) =>
         {
@@ -196,9 +231,9 @@ internal sealed class RadialMenuWindow : Window
         Loaded += (_, _) => PlayWeave(null);
         Closed += (_, _) => { CompositionTarget.Rendering -= OnRendering; _dragAwayTimer.Stop(); };
 
-        MouseMove += (_, e) => { if (_clickMode) Hover(e.GetPosition(this)); };
+        MouseMove += (_, e) => { if (_clickMode) Hover(e.GetPosition(_root)); };
         MouseLeftButtonDown += OnMouseDown;
-        MouseLeftButtonUp += (_, e) => { if (_clickMode) Click(e.GetPosition(this)); };
+        MouseLeftButtonUp += (_, e) => { if (_clickMode) Click(e.GetPosition(_root)); };
         MouseRightButtonUp += (_, _) => Finish(null);
         LostMouseCapture += (_, _) =>
         {
@@ -215,9 +250,9 @@ internal sealed class RadialMenuWindow : Window
     /// <summary>以某個螢幕點（DIP）為中心顯示，並避開螢幕邊緣。</summary>
     public void ShowAt(Point centerDip, Rect workAreaDip)
     {
-        double half = Side / 2;
-        Left = Math.Clamp(centerDip.X - half, workAreaDip.Left - 40, workAreaDip.Right - Side + 40);
-        Top = Math.Clamp(centerDip.Y - half, workAreaDip.Top - 40, workAreaDip.Bottom - Side + 40);
+        double side = Side * _scale, half = side / 2, edge = 40 * _scale;
+        Left = Math.Clamp(centerDip.X - half, workAreaDip.Left - edge, workAreaDip.Right - side + edge);
+        Top = Math.Clamp(centerDip.Y - half, workAreaDip.Top - edge, workAreaDip.Bottom - side + edge);
         Show();
         if (PresentationSource.FromVisual(this) is HwndSource source) NativeMethods.ReassertTopmost(source.Handle);
     }
@@ -225,12 +260,15 @@ internal sealed class RadialMenuWindow : Window
     // ═══════════════════════ 按住拖曳（天幕轉送滑鼠） ═══════════════════════
 
     /// <summary>天幕仍抓著滑鼠時，轉送游標位置（實際像素）。</summary>
-    public void Track(Point screenPx) => Hover(PointFromScreen(screenPx));
+    public void Track(Point screenPx) => Hover(FromScreen(screenPx));
+
+    /// <summary>螢幕像素 → 盤面座標（已扣掉縮放）。</summary>
+    private Point FromScreen(Point screenPx) => TranslatePoint(PointFromScreen(screenPx), _root);
 
     /// <summary>在天幕上放開滑鼠：落在扇區上就執行；剛展開還沒離開陣眼就改用點選；其餘取消。</summary>
     public void Release(Point screenPx)
     {
-        var p = PointFromScreen(screenPx);
+        var p = FromScreen(screenPx);
         int hit = RadialGeometry.HitTest(p, _c, _items.Count);
         if (hit >= 0)
         {
@@ -252,14 +290,14 @@ internal sealed class RadialMenuWindow : Window
     private void EnterClickMode()
     {
         _clickMode = true;
-        if (_stage == Stage.Menu) _hubCaption.Text = _hubIdleCaption = "點選，盤外取消";
+        if (_stage == Stage.Menu) _hubCaption.Text = _hubIdleCaption = "點一格執行\n點這裡關閉";
         Mouse.Capture(this, CaptureMode.SubTree);
     }
 
     private void OnMouseDown(object sender, MouseButtonEventArgs e)
     {
         // 出爐：在陣眼按下就開始拖成品
-        if (_stage == Stage.Result && RadialGeometry.HitTest(e.GetPosition(this), _c, Math.Max(1, _items.Count)) == -1)
+        if (_stage == Stage.Result && RadialGeometry.HitTest(e.GetPosition(_root), _c, Math.Max(1, _items.Count)) == -1)
         {
             e.Handled = true;
             DragOutputs();
@@ -274,7 +312,7 @@ internal sealed class RadialMenuWindow : Window
             case Stage.Menu:
             case Stage.Formats:
                 if (hit >= 0) Activate(hit);
-                else if (hit == -2) Finish(null);
+                else Finish(null); // 點陣眼或盤外：關閉
                 break;
             case Stage.Result:
             case Stage.Failed:
@@ -301,10 +339,11 @@ internal sealed class RadialMenuWindow : Window
             bool hot = i == hit;
             bool target = hot && dragTarget;
             s.Shape.Fill = target ? FaceTarget : hot ? FaceHot : Face;
-            s.Shape.Stroke = target ? new SolidColorBrush(Cinnabar) : hot ? EdgeHot : Edge;
-            s.Move.X = hot ? Math.Cos(s.Mid) * HoverPush : 0;
-            s.Move.Y = hot ? Math.Sin(s.Mid) * HoverPush : 0;
-            s.Label.Foreground = new SolidColorBrush(hot ? GoldHi : ToneOf(i) ?? Moon);
+            s.Shape.Stroke = target ? CinnabarBrush : hot ? EdgeHot : Edge;
+            // 選中的格子滑出去一點（短動畫，不是瞬間跳）
+            Slide(s.Move, TranslateTransform.XProperty, hot ? Math.Cos(s.Mid) * HoverPush : 0);
+            Slide(s.Move, TranslateTransform.YProperty, hot ? Math.Sin(s.Mid) * HoverPush : 0);
+            s.Label.Foreground = hot ? GoldHiBrush : s.LabelBrush;
         }
         if (hit >= 0)
         {
@@ -328,7 +367,7 @@ internal sealed class RadialMenuWindow : Window
             e.Effects = DragDropEffects.None;
             return;
         }
-        int hit = RadialGeometry.HitTest(e.GetPosition(this), _c, _items.Count);
+        int hit = RadialGeometry.HitTest(e.GetPosition(_root), _c, _items.Count);
         bool accepts = hit >= 0 && (_items[hit].IsFurnace || _items[hit].OnFiles is not null);
         e.Effects = accepts ? DragDropEffects.Copy : DragDropEffects.None;
         SetHot(hit, dragTarget: accepts);
@@ -340,13 +379,13 @@ internal sealed class RadialMenuWindow : Window
     {
         e.Handled = true;
         if (_stage != Stage.Menu || e.Data.GetData(DataFormats.FileDrop) is not string[] files || files.Length == 0) return;
-        int hit = RadialGeometry.HitTest(e.GetPosition(this), _c, _items.Count);
+        int hit = RadialGeometry.HitTest(e.GetPosition(_root), _c, _items.Count);
         if (hit < 0) { Finish(null); return; } // 放在陣眼或盤外：取消
         var item = _items[hit];
         if (item.IsFurnace)
         {
             e.Effects = DragDropEffects.Copy; // 永遠回報「複製」，檔案總管就不會刪掉原檔
-            Absorb(files, e.GetPosition(this));
+            Absorb(files, e.GetPosition(_root));
         }
         else if (item.OnFiles is { } onFiles)
         {
@@ -403,6 +442,7 @@ internal sealed class RadialMenuWindow : Window
         _fileFrom = from;
         int furnaceIndex = _items.ToList().FindIndex(i => i.IsFurnace);
         SetHot(-1, dragTarget: false);
+        foreach (var s in _slices) StopSlide(s.Move);   // 入爐由每一幀直接擺位置
         ShowFile(files[0]);
         _hubTitle.Text = "化形爐";
         _hubCaption.Text = "煉化中";
@@ -429,7 +469,7 @@ internal sealed class RadialMenuWindow : Window
                 }
             }
             _outline.Opacity = 0.9 * (1 - p);
-            _hubRing.Stroke = new SolidColorBrush(p > 0.5 ? Cinnabar : Color.FromArgb(0x8C, Gold.R, Gold.G, Gold.B));
+            _hubRing.Stroke = p > 0.5 ? CinnabarBrush : HubRingBrush;
             // 檔案圖示從放下的位置飛進陣眼
             var t = new TranslateTransform((_fileFrom.X - _c.X) * (1 - p), (_fileFrom.Y - _c.Y) * (1 - p) - 28 * (1 - p));
             _fileIcon.RenderTransform = new TransformGroup { Children = { new ScaleTransform(1.3 - 0.3 * p, 1.3 - 0.3 * p), t } };
@@ -447,7 +487,7 @@ internal sealed class RadialMenuWindow : Window
         BuildRing(_options.Select(o => (o.Label, o.Caption, ToneFromKey(o.ToneKey))).ToList());
         string name = IOPath.GetFileName(_sources[0]);
         SetHubIdle(name, _sources.Count > 1 ? $"等 {_sources.Count} 個 · 選擇格式" : "選擇格式");
-        _hubRing.Stroke = new SolidColorBrush(Color.FromArgb(0x8C, Gold.R, Gold.G, Gold.B));
+        _hubRing.Stroke = HubRingBrush;
         if (!_clickMode) EnterClickMode();
         PlayWeave(null);
     }
@@ -556,7 +596,7 @@ internal sealed class RadialMenuWindow : Window
                 FontFamily = latin ? (FontFamily)Application.Current.FindResource("SansFont") : (FontFamily)Application.Current.FindResource("SerifFont"),
                 FontWeight = latin ? FontWeights.SemiBold : FontWeights.Bold,
                 FontSize = latin ? 14 : 15,
-                Foreground = new SolidColorBrush(entries[i].Tone ?? Moon),
+                Foreground = Frozen(entries[i].Tone ?? Moon),
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
             var caption = new TextBlock
@@ -583,7 +623,7 @@ internal sealed class RadialMenuWindow : Window
             group.Children.Add(shape);
             group.Children.Add(labels);
             _ringLayer.Children.Add(group);
-            _slices.Add(new SliceVisual(group, shape, labels, label, a0, a1, mid, scale, move));
+            _slices.Add(new SliceVisual(group, shape, labels, label, a0, a1, mid, scale, move, label.Foreground));
         }
         _outline.Data = CircleFrom(RadialGeometry.StartAngle(n), RadialGeometry.OuterRadius + 6);
         _outline.Opacity = 0.9;
@@ -711,6 +751,21 @@ internal sealed class RadialMenuWindow : Window
     }
 
     /// <summary>從某個角度開始順時針的一整圈（讓金線從第一格的左緣開始畫）。</summary>
+    /// <summary>位移的短動畫：從目前位置滑到目標，結束後停在目標值（基底值已先設好）。</summary>
+    private static void Slide(TranslateTransform t, DependencyProperty p, double to)
+    {
+        double from = (double)t.GetValue(p);
+        if (Math.Abs(from - to) < 0.01) return;
+        t.SetValue(p, to);
+        t.BeginAnimation(p, new DoubleAnimation(from, to, HoverTime) { EasingFunction = HoverEase, FillBehavior = FillBehavior.Stop });
+    }
+
+    private static void StopSlide(TranslateTransform t)
+    {
+        t.BeginAnimation(TranslateTransform.XProperty, null);
+        t.BeginAnimation(TranslateTransform.YProperty, null);
+    }
+
     private Geometry CircleFrom(double angle, double r)
     {
         var start = new Point(_c.X + r * Math.Cos(angle), _c.Y + r * Math.Sin(angle));
@@ -724,6 +779,12 @@ internal sealed class RadialMenuWindow : Window
         }
         g.Freeze();
         return g;
+    }
+
+    private static T Frozen<T>(T f) where T : Freezable
+    {
+        f.Freeze();
+        return f;
     }
 
     private static SolidColorBrush Frozen(Color c)

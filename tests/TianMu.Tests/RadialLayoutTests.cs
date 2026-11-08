@@ -58,6 +58,16 @@ public class RadialLayoutTests
         Assert.Equal(10, ten.Count);
     }
 
+    [Fact]
+    public void Dial_size_defaults_to_large()
+    {
+        Assert.Equal(1.0, TianMu.Island.Settings.RadialSizes.Scale("standard"));
+        Assert.Equal(1.25, TianMu.Island.Settings.RadialSizes.Scale(null));
+        Assert.Equal(1.25, TianMu.Island.Settings.RadialSizes.Scale("large"));
+        Assert.Equal(1.5, TianMu.Island.Settings.RadialSizes.Scale("huge"));
+        Assert.Equal("large", new TianMu.Island.Settings.AppSettings().RadialSize);
+    }
+
     // ── 金線輪轉：4 到 10 格都要正常 ──
 
     [Theory]

@@ -78,7 +78,7 @@ public partial class IslandWindow
                 GlowKey = title.Contains("失敗", StringComparison.Ordinal) ? "ZhuShaBrush" : "TianQingBrush",
             }),
             PickFiles);
-        _radial = new RadialMenuWindow(RadialItems(), context);
+        _radial = new RadialMenuWindow(RadialItems(), context, RadialSizes.Scale(_settings.Read(s => s.RadialSize)));
         _radial.Closed += (_, _) =>
         {
             _radial = null;

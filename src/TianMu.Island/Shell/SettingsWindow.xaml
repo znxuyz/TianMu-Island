@@ -313,7 +313,7 @@
                     <StackPanel>
                         <TextBlock Style="{StaticResource RowTitle}" Text="盤上的功能" />
                         <TextBlock Style="{StaticResource RowDescription}"
-                                   Text="長按天幕展開的圓盤。打開 4 到 10 個放上去，用箭頭調整順序（從正上方順時針排）；格數一變，扇區大小與金線輪轉的節奏會自動重新分配。" />
+                                   Text="長按天幕展開的圓盤。打開 4 到 10 個放上去，用箭頭調整順序（從正上方順時針排）；格數一變，扇區大小與金線輪轉的節奏會自動重新分配。關閉：點中間的陣眼、點盤外，或按右鍵。" />
                         <Grid Margin="0,14,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -324,7 +324,15 @@
                                                      AutomationProperties.Name="法陣盤預覽" />
                                 <TextBlock Margin="0,8,0,0" HorizontalAlignment="Center" FontSize="12"
                                            Foreground="{StaticResource MiaoJinBrush}" Text="{Binding CountText}" />
-                                <Button Margin="0,10,0,0" HorizontalAlignment="Center" Style="{StaticResource TianMu.Button.Ghost}"
+                                <StackPanel Margin="0,10,0,0" HorizontalAlignment="Center" Orientation="Horizontal">
+                                    <RadioButton Style="{StaticResource ChoiceChip}" GroupName="RadialSize" Content="標準"
+                                                 IsChecked="{Binding SizeStandard, Mode=TwoWay}" />
+                                    <RadioButton Style="{StaticResource ChoiceChip}" GroupName="RadialSize" Content="大"
+                                                 IsChecked="{Binding SizeLarge, Mode=TwoWay}" />
+                                    <RadioButton Style="{StaticResource ChoiceChip}" GroupName="RadialSize" Content="特大"
+                                                 IsChecked="{Binding SizeHuge, Mode=TwoWay}" />
+                                </StackPanel>
+                                <Button Margin="0,4,0,0" HorizontalAlignment="Center" Style="{StaticResource TianMu.Button.Ghost}"
                                         Content="恢復預設" Command="{Binding ResetCommand}" />
                             </StackPanel>
                             <ItemsControl Grid.Column="1" Margin="16,0,0,0" ItemsSource="{Binding Rows}" Focusable="False">
