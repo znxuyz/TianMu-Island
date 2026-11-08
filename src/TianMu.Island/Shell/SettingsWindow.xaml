@@ -4,7 +4,7 @@
         xmlns:theme="clr-namespace:TianMu.Island.Theme"
         xmlns:shell="clr-namespace:TianMu.Island.Shell"
         Title="天幕島設定"
-        Width="600" Height="760"
+        Width="860" Height="800"
         MinWidth="480" MinHeight="480"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
@@ -316,7 +316,23 @@
                 <!-- ═══ 外觀與手感 ═══ -->
                 <StackPanel x:Name="PageLook" Visibility="Collapsed">
                     <TextBlock Style="{StaticResource PageTitle}" theme:Typo.SpacedText="外觀與手感" />
-                    <TextBlock Style="{StaticResource PageDescription}" Text="天幕的光影、粒子與伸縮的彈性。" />
+                    <TextBlock Style="{StaticResource PageDescription}" Text="天幕的光影、粒子與伸縮的彈性，以及這個設定畫面的字體大小。" />
+                <Border Style="{StaticResource Row}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource RowTitle}" Text="設定畫面字體大小" />
+                        <TextBlock Style="{StaticResource RowDescription}" Text="整個設定畫面（文字、按鈕、法陣盤預覽）一起等比放大，立即生效。" />
+                        <WrapPanel Margin="0,8,0,0">
+                            <RadioButton Style="{StaticResource ChoiceChip}" GroupName="UiScale" Content="標準"
+                                         IsChecked="{Binding UiScaleNormal, Mode=TwoWay}" />
+                            <RadioButton Style="{StaticResource ChoiceChip}" GroupName="UiScale" Content="大"
+                                         IsChecked="{Binding UiScaleLarge, Mode=TwoWay}" />
+                            <RadioButton Style="{StaticResource ChoiceChip}" GroupName="UiScale" Content="特大"
+                                         IsChecked="{Binding UiScaleLarger, Mode=TwoWay}" />
+                            <RadioButton Style="{StaticResource ChoiceChip}" GroupName="UiScale" Content="超大"
+                                         IsChecked="{Binding UiScaleHuge, Mode=TwoWay}" />
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
                 <Border Style="{StaticResource Row}">
                     <Grid>
                         <Grid.ColumnDefinitions>

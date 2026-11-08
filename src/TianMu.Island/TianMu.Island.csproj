@@ -50,6 +50,7 @@
     <ProjectReference Include="..\TianMu.Modules.Todo\TianMu.Modules.Todo.csproj" />
     <ProjectReference Include="..\TianMu.Modules.Convert\TianMu.Modules.Convert.csproj" />
     <ProjectReference Include="..\TianMu.Modules.Office\TianMu.Modules.Office.csproj" />
+    <ProjectReference Include="..\TianMu.Modules.Cleanse\TianMu.Modules.Cleanse.csproj" />
   </ItemGroup>
 
 </Project>

@@ -47,6 +47,7 @@
 | 化神 | **法陣盤** | 在天幕上長按半秒，游標處展開圓形功能選單（金線輪轉）。可在設定 → 法陣盤自訂 4～10 格、調整順序，候選有凝神、傳音、清泉、琴音、換曲、記一筆、天機簿、萬象簿、乾坤袋、照妖鏡、化形爐、周天、靈石、隱藏、設定 | ✅ |
 | 化神 | **萬象簿** | 剪貼簿歷史：最近十筆文字、圖片、檔案，點一下再複製；可釘選，只存在記憶體 | ✅ |
 | 化神 | **照妖鏡** | 截圖取字：Ctrl + Alt + O 框選螢幕，文字辨識後自動複製（Windows 內建辨識，不上傳） | ✅ |
+| 化神 | **洗髓** | 磁碟守護：系統碟低於門檻時提醒；找出瀏覽器、開發工具、暫存等可重建的快取，以及你的大檔案與資源回收筒，分「可清／你決定／不動」逐項說明，勾選確認後才清，你的檔案先進回收筒 | ✅ |
 | 化神 | **化形爐** | 把檔案放進法陣盤的化形爐，整盤化為可轉的格式；圖片、PDF、影音、字幕、文字、ZIP，成品留在陣眼任你拖放，全程不上傳 | ✅ |
 | 化神 | **智慧隱藏** | 閒置時天幕縮成一條細線，滑鼠碰到螢幕邊緣或靠近時才變回來 | ✅ |
 | 化神 | **時辰已到** | 番茄鐘結束時螢幕四邊閃起金光並寫明成果，點一下才關；雙擊天幕即可凝神或散功 | ✅ |
@@ -178,4 +179,5 @@ TianMu-Island/
 - [ImageMagick / Magick.NET](https://github.com/dlemstra/Magick.NET)（Apache-2.0）：化形爐的圖片轉換
 - [PDFsharp](https://github.com/empira/PDFsharp)（MIT）：PDF 合併與拆頁
 - [FFmpeg](https://ffmpeg.org/)（GPL-3.0，gyan.dev 的 Windows 版）：影音轉換；不隨程式附帶，第一次使用時下載並比對 SHA-256，以獨立程式執行
+- 洗髓的功能構想參考 [RabbittuX/purrge](https://github.com/RabbittuX/purrge)（PolyForm Noncommercial 1.0.0）；天幕島沒有使用它的程式碼或規則檔，全部自行撰寫
 - [NAudio](https://github.com/naudio/NAudio)（MIT）、[思源宋體 Noto Serif TC](https://fonts.google.com/noto/specimen/Noto+Serif+TC)（OFL）

@@ -2,7 +2,9 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Animation;
+using System.Windows.Media;
 using System.Windows.Media.Effects;
+using System.Windows.Shell;
 using TianMu.Island.Interop;
 
 namespace TianMu.Island.Shell;
@@ -42,6 +44,7 @@ public partial class SettingsWindow : Window
     /// <summary>依狀態切換按鈕與提示的顯示。</summary>
     private void RefreshDynamicParts()
     {
+        ApplyScale();
         RestartBanner.Visibility = _vm.NeedsRestart ? Visibility.Visible : Visibility.Collapsed;
         InstallButton.Visibility = _vm.CanInstall ? Visibility.Visible : Visibility.Collapsed;
         AvailableLinks.Visibility = _vm.CanInstall ? Visibility.Visible : Visibility.Collapsed;
@@ -81,13 +84,26 @@ public partial class SettingsWindow : Window
         ContentScroll.ScrollToTop();
     }
 
+    private double _scale = 1;
+
+    /// <summary>字體大小：整個畫面（含標頭）等比縮放；可拖曳的標頭高度跟著放大。</summary>
+    private void ApplyScale()
+    {
+        double s = _vm.UiScale;
+        if (Math.Abs(s - _scale) < 0.001 && Root.LayoutTransform is ScaleTransform) return;
+        _scale = s;
+        Root.LayoutTransform = new ScaleTransform(s, s);
+        WindowChrome.GetWindowChrome(this).CaptionHeight = 72 * s;
+        ApplyLayout();
+    }
+
     private const double NarrowWindow = 720;   // 比這窄：分類改排在上方
     private const double WideContent = 720;    // 內容比這寬：法陣盤預覽放左邊、清單放右邊
 
     /// <summary>依視窗寬度重排：寬時分類在左、法陣盤左右並排；窄時分類在上、法陣盤上下排。</summary>
     private void ApplyLayout()
     {
-        bool narrow = ActualWidth < NarrowWindow;
+        bool narrow = ActualWidth / _scale < NarrowWindow;
         NavColumn.Width = narrow ? new GridLength(0) : new GridLength(200);
         NavPanel.Orientation = narrow ? System.Windows.Controls.Orientation.Horizontal : System.Windows.Controls.Orientation.Vertical;
         NavPanel.Margin = narrow ? new Thickness(24, 4, 24, 8) : new Thickness(20, 12, 8, 20);

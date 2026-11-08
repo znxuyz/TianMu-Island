@@ -11,6 +11,7 @@
     <Project Path="src/TianMu.Modules.Todo/TianMu.Modules.Todo.csproj" />
     <Project Path="src/TianMu.Modules.Convert/TianMu.Modules.Convert.csproj" />
     <Project Path="src/TianMu.Modules.Office/TianMu.Modules.Office.csproj" />
+    <Project Path="src/TianMu.Modules.Cleanse/TianMu.Modules.Cleanse.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/TianMu.Tests/TianMu.Tests.csproj" />

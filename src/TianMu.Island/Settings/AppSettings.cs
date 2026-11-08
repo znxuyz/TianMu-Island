@@ -61,6 +61,9 @@ public sealed class AppSettings
     /// </summary>
     public List<string>? RadialSlots { get; set; }
 
+    /// <summary>設定畫面的字體大小（整個畫面等比縮放，見 <see cref="UiScales"/>）。</summary>
+    public string SettingsScale { get; set; } = UiScales.Large;
+
     /// <summary>法陣盤大小：標準、大、特大（見 <see cref="RadialSizes"/>）。</summary>
     public string RadialSize { get; set; } = RadialSizes.Large;
 
@@ -90,6 +93,23 @@ public sealed class ModuleSettings
 
     /// <summary>選擇題與文字選項。</summary>
     public Dictionary<string, string> Values { get; set; } = [];
+}
+
+/// <summary>設定畫面字體大小的選項與對應的縮放。</summary>
+public static class UiScales
+{
+    public const string Normal = "normal";
+    public const string Large = "large";
+    public const string Larger = "larger";
+    public const string Huge = "huge";
+
+    public static double Scale(string? size) => size switch
+    {
+        Normal => 1.0,
+        Larger => 1.3,
+        Huge => 1.5,
+        _ => 1.15,
+    };
 }
 
 /// <summary>法陣盤大小的選項與對應的縮放。</summary>

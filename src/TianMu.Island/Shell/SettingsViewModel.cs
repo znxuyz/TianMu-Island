@@ -136,6 +136,28 @@ public sealed class SettingsViewModel : Observable
         Raise(nameof(SpringCrisp));
     }
 
+    // ── 設定畫面字體大小 ──
+    public bool UiScaleNormal { get => IsUiScale(UiScales.Normal); set { if (value) SetUiScale(UiScales.Normal); } }
+    public bool UiScaleLarge { get => IsUiScale(UiScales.Large); set { if (value) SetUiScale(UiScales.Large); } }
+    public bool UiScaleLarger { get => IsUiScale(UiScales.Larger); set { if (value) SetUiScale(UiScales.Larger); } }
+    public bool UiScaleHuge { get => IsUiScale(UiScales.Huge); set { if (value) SetUiScale(UiScales.Huge); } }
+
+    /// <summary>目前的縮放倍率（設定視窗據此縮放整個畫面）。</summary>
+    public double UiScale => UiScales.Scale(_store.Read(s => s.SettingsScale));
+
+    private bool IsUiScale(string size) => (_store.Read(s => s.SettingsScale) ?? UiScales.Large) == size;
+
+    private void SetUiScale(string size)
+    {
+        if (IsUiScale(size)) return;
+        _store.Update(s => s.SettingsScale = size);
+        Raise(nameof(UiScaleNormal));
+        Raise(nameof(UiScaleLarge));
+        Raise(nameof(UiScaleLarger));
+        Raise(nameof(UiScaleHuge));
+        Raise(nameof(UiScale));
+    }
+
     public bool FocusBarrier
     {
         get => _store.Read(s => s.FocusBarrier);

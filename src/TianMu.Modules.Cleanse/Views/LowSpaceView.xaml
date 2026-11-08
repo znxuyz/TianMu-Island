@@ -1,0 +1,35 @@
+<UserControl x:Class="TianMu.Modules.Cleanse.Views.LowSpaceView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- 靈台將滿：左邊剩餘空間的朱砂環，中間說明，右邊「幫我看看／先不用」 -->
+    <Grid Margin="22,0,20,0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <Grid Width="46" Height="46" VerticalAlignment="Center">
+            <Ellipse Stroke="{DynamicResource TrackBrush}" StrokeThickness="4" />
+            <Ellipse Stroke="{DynamicResource ZhuShaBrush}" StrokeThickness="4" StrokeDashArray="{Binding Dash}" RenderTransformOrigin="0.5,0.5">
+                <Ellipse.RenderTransform>
+                    <RotateTransform Angle="-90" />
+                </Ellipse.RenderTransform>
+            </Ellipse>
+            <TextBlock Text="洗" FontFamily="{DynamicResource SerifFont}" FontWeight="Bold" FontSize="16"
+                       Foreground="{DynamicResource ZhuShaBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Grid>
+        <StackPanel Grid.Column="1" Margin="16,0,12,0" VerticalAlignment="Center">
+            <TextBlock FontSize="11" Foreground="{DynamicResource ZhuShaBrush}" Text="靈台將滿" />
+            <TextBlock Margin="0,3,0,0" FontFamily="{DynamicResource SerifFont}" FontWeight="Bold" FontSize="17"
+                       Foreground="{DynamicResource YueBaiBrush}" Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
+            <TextBlock Margin="0,3,0,0" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Text="{Binding Subtitle}"
+                       TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+            <Button Style="{DynamicResource TianMu.Button.Primary}" MinHeight="28" Padding="14,0"
+                    Content="幫我看看" Command="{Binding OpenCommand}" Focusable="False" />
+            <Button Style="{DynamicResource TianMu.Button.Ghost}" MinHeight="28" Padding="12,0" Margin="0,6,0,0"
+                    Content="先不用" Command="{Binding LaterCommand}" Focusable="False" />
+        </StackPanel>
+    </Grid>
+</UserControl>
