@@ -4,11 +4,11 @@
         xmlns:theme="clr-namespace:TianMu.Island.Theme"
         xmlns:shell="clr-namespace:TianMu.Island.Shell"
         Title="天幕島設定"
-        Width="540" Height="720"
-        MinHeight="480"
+        Width="600" Height="760"
+        MinWidth="480" MinHeight="480"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
-        ResizeMode="CanMinimize"
+        ResizeMode="CanResize"
         Background="{StaticResource XuanQiBrush}"
         Foreground="{StaticResource YueBaiBrush}"
         FontFamily="{StaticResource SansFont}"
@@ -17,7 +17,7 @@
         SnapsToDevicePixels="True">
 
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="72" ResizeBorderThickness="0" GlassFrameThickness="0,0,0,1"
+        <WindowChrome CaptionHeight="72" ResizeBorderThickness="6" GlassFrameThickness="0,0,0,1"
                       CornerRadius="0" UseAeroCaptionButtons="False" />
     </WindowChrome.WindowChrome>
 
@@ -144,6 +144,9 @@
                 <Button Style="{StaticResource TianMu.Button.Icon}" Content="&#xE921;" ToolTip="最小化"
                         AutomationProperties.Name="最小化" WindowChrome.IsHitTestVisibleInChrome="True"
                         Click="Minimize_Click" />
+                <Button x:Name="MaximizeButton" Style="{StaticResource TianMu.Button.Icon}" Content="&#xE922;" ToolTip="放大"
+                        AutomationProperties.Name="放大" WindowChrome.IsHitTestVisibleInChrome="True"
+                        Click="Maximize_Click" />
                 <Button Style="{StaticResource TianMu.Button.Icon}" Content="&#xE8BB;" ToolTip="關閉"
                         AutomationProperties.Name="關閉" WindowChrome.IsHitTestVisibleInChrome="True"
                         Click="Close_Click" />
@@ -153,7 +156,7 @@
         <!-- ═══ 內容 ═══ -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                       Focusable="False">
-            <StackPanel Margin="32,0,32,32">
+            <StackPanel Margin="32,0,32,32" MaxWidth="820">
 
                 <!-- 需要重新啟動的提示 -->
                 <Border x:Name="RestartBanner" Visibility="Collapsed" Margin="0,16,0,0" Padding="16,12"
@@ -314,28 +317,33 @@
                         <TextBlock Style="{StaticResource RowTitle}" Text="盤上的功能" />
                         <TextBlock Style="{StaticResource RowDescription}"
                                    Text="長按天幕展開的圓盤。打開 4 到 10 個放上去，用箭頭調整順序（從正上方順時針排）；格數一變，扇區大小與金線輪轉的節奏會自動重新分配。關閉：點中間的陣眼、點盤外，或按右鍵。" />
+                        <!-- 上：預覽與大小；下：可選的扇區清單（上下排，不會互相擠壓） -->
                         <Grid Margin="0,14,0,0">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="188" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel VerticalAlignment="Top">
-                                <shell:RadialPreview Width="176" Height="176" Labels="{Binding Chosen}"
-                                                     AutomationProperties.Name="法陣盤預覽" />
-                                <TextBlock Margin="0,8,0,0" HorizontalAlignment="Center" FontSize="12"
-                                           Foreground="{StaticResource MiaoJinBrush}" Text="{Binding CountText}" />
-                                <StackPanel Margin="0,10,0,0" HorizontalAlignment="Center" Orientation="Horizontal">
+                            <shell:RadialPreview Width="176" Height="176" HorizontalAlignment="Left"
+                                                 Labels="{Binding Chosen}" AutomationProperties.Name="法陣盤預覽" />
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock FontSize="13" Foreground="{StaticResource MiaoJinBrush}" Text="{Binding CountText}"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Margin="0,14,0,6" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Text="盤面大小" />
+                                <WrapPanel>
                                     <RadioButton Style="{StaticResource ChoiceChip}" GroupName="RadialSize" Content="標準"
                                                  IsChecked="{Binding SizeStandard, Mode=TwoWay}" />
                                     <RadioButton Style="{StaticResource ChoiceChip}" GroupName="RadialSize" Content="大"
                                                  IsChecked="{Binding SizeLarge, Mode=TwoWay}" />
                                     <RadioButton Style="{StaticResource ChoiceChip}" GroupName="RadialSize" Content="特大"
                                                  IsChecked="{Binding SizeHuge, Mode=TwoWay}" />
-                                </StackPanel>
-                                <Button Margin="0,4,0,0" HorizontalAlignment="Center" Style="{StaticResource TianMu.Button.Ghost}"
+                                </WrapPanel>
+                                <Button Margin="0,8,0,0" HorizontalAlignment="Left" Style="{StaticResource TianMu.Button.Ghost}"
                                         Content="恢復預設" Command="{Binding ResetCommand}" />
+                                <TextBlock Margin="0,8,0,0" FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                           TextWrapping="Wrap" Text="點左邊的小盤可重播展開動畫" />
                             </StackPanel>
-                            <ItemsControl Grid.Column="1" Margin="16,0,0,0" ItemsSource="{Binding Rows}" Focusable="False">
+                        </Grid>
+                            <ItemsControl Margin="0,16,0,0" ItemsSource="{Binding Rows}" Focusable="False">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Grid Margin="0,0,0,2" MinHeight="34">
@@ -398,7 +406,6 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                        </Grid>
                     </StackPanel>
                 </Border>
 

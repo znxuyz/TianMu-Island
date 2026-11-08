@@ -128,6 +128,13 @@ public partial class IslandWindow : Window, IIslandHost
         if (msg is NativeMethods.WM_DISPLAYCHANGE or NativeMethods.WM_DPICHANGED)
             Dispatcher.InvokeAsync(PositionAtTopCenter, DispatcherPriority.Background);
 
+        // 滾輪（直向）與觸控板左右滑（橫向）：在天幕上換頁
+        if (msg is 0x020A or 0x020E)
+        {
+            int delta = (short)((wParam.ToInt64() >> 16) & 0xFFFF);
+            if (HandleWheel(msg == 0x020E ? -delta : delta)) { handled = true; return 0; }
+        }
+
         if (msg == NativeMethods.WM_HOTKEY && wParam == ToggleHotkeyId)
         {
             Dispatcher.InvokeAsync(() => App.Current.ToggleIsland());

@@ -58,6 +58,39 @@ public class RadialLayoutTests
         Assert.Equal(10, ten.Count);
     }
 
+    // ── 展開位置：避開天幕、留在螢幕內 ──
+
+    private static readonly Rect Work = new(0, 0, 1920, 1040);
+
+    [Fact]
+    public void Dial_opened_on_a_top_island_moves_below_it()
+    {
+        var island = new Rect(750, 0, 420, 108);          // 頂端正中、展開成中形
+        var c = RadialGeometry.PlaceCenter(new Point(960, 40), 200, island, Work);
+        Assert.False(RadialGeometry.Overlaps(c, 200, island));
+        Assert.Equal(960, c.X, 6);                         // 只往下移，不左右亂跑
+        Assert.Equal(108 + 10 + 200, c.Y, 6);
+    }
+
+    [Fact]
+    public void Dial_beside_a_right_docked_island_moves_left()
+    {
+        var island = new Rect(1886, 400, 34, 240);         // 右側直式
+        var c = RadialGeometry.PlaceCenter(new Point(1900, 520), 200, island, Work);
+        Assert.False(RadialGeometry.Overlaps(c, 200, island));
+        Assert.True(c.X + 200 <= island.Left);
+        Assert.Equal(520, c.Y, 6);
+    }
+
+    [Fact]
+    public void Dial_far_from_the_island_stays_at_the_cursor_and_inside_the_screen()
+    {
+        var island = new Rect(840, 0, 240, 34);
+        Assert.Equal(new Point(500, 600), RadialGeometry.PlaceCenter(new Point(500, 600), 200, island, Work));
+        var edge = RadialGeometry.PlaceCenter(new Point(10, 1030), 200, island, Work);
+        Assert.Equal(new Point(200, 840), edge);
+    }
+
     [Fact]
     public void Dial_size_defaults_to_large()
     {

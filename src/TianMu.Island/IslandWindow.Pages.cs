@@ -4,6 +4,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using TianMu.Core;
+using TianMu.Island.Interop;
 
 namespace TianMu.Island;
 
@@ -85,11 +86,41 @@ public partial class IslandWindow
     private void PrevPage_Click(object sender, RoutedEventArgs e) => Navigate(-1);
     private void NextPage_Click(object sender, RoutedEventArgs e) => Navigate(1);
 
-    private void Capsule_MouseWheel(object sender, MouseWheelEventArgs e)
+    // ── 滾輪換頁 ──
+    // 天幕不搶焦點，WPF 的 MouseWheel 不一定收得到，所以直接在 WndProc 處理 WM_MOUSEWHEEL。
+    // 觸控板會送很多小量的滾動：累積滿一格（120）才翻頁，兩次翻頁至少間隔 220 毫秒。
+
+    private const int WheelNotch = 120;
+    private static readonly TimeSpan WheelCooldown = TimeSpan.FromMilliseconds(220);
+    private int _wheelAccum;
+    private DateTime _lastWheelPage;
+
+    /// <summary>滾輪（往下 = 下一頁）。回傳 true 表示天幕已處理，不再交給 WPF。</summary>
+    private bool HandleWheel(int delta)
     {
-        if (!PagerVisible) return;
-        Navigate(e.Delta < 0 ? 1 : -1);
-        e.Handled = true;
+        if (!PagerVisible) return false;
+        NativeMethods.GetCursorPos(out var cursor);
+        var p = Capsule.PointFromScreen(new Point(cursor.X, cursor.Y));
+        if (p.X < 0 || p.Y < 0 || p.X > Capsule.ActualWidth || p.Y > Capsule.ActualHeight) return false;
+
+        // 游標下是還能捲動的清單（例如萬象簿）：讓清單自己捲
+        if (Capsule.InputHitTest(p) is DependencyObject hit && InScrollableList(hit)) return false;
+
+        _wheelAccum += delta;
+        if (Math.Abs(_wheelAccum) < WheelNotch) return true;
+        int direction = _wheelAccum < 0 ? 1 : -1;
+        _wheelAccum = 0;
+        if (DateTime.Now - _lastWheelPage < WheelCooldown) return true;
+        _lastWheelPage = DateTime.Now;
+        Navigate(direction);
+        return true;
+    }
+
+    private bool InScrollableList(DependencyObject d)
+    {
+        for (var x = d; x is not null && !ReferenceEquals(x, Capsule); x = x is Visual ? VisualTreeHelper.GetParent(x) : LogicalTreeHelper.GetParent(x))
+            if (x is ScrollViewer { ScrollableHeight: > 0 }) return true;
+        return false;
     }
 
     private readonly TranslateTransform _pageSlide = new();

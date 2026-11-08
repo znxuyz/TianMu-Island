@@ -52,7 +52,6 @@
                 DragOver="Capsule_DragOver"
                 DragLeave="Capsule_DragLeave"
                 Drop="Capsule_Drop"
-                MouseWheel="Capsule_MouseWheel"
                 MouseEnter="Capsule_MouseEnter"
                 MouseLeave="Capsule_MouseLeave"
                 MouseLeftButtonDown="Capsule_MouseLeftButtonDown"

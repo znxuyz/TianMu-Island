@@ -65,7 +65,7 @@ public partial class IslandWindow
         OpenRadial();
     }
 
-    private void OpenRadial()
+    private void OpenRadial(bool fromDrag = false)
     {
         CancelDragHover();
         NativeMethods.GetCursorPos(out var cursor);
@@ -86,7 +86,8 @@ public partial class IslandWindow
             _radialFromPress = false;
             ReassertTopmost();
         };
-        _radial.ShowAt(center, ToDip(screen.WorkingArea));
+        _radial.ShowAt(center, ToDip(screen.WorkingArea), IslandRectDip());
+        if (fromDrag) _radial.ExpectDrag();
     }
 
     /// <summary>按住拖曳時，把游標位置轉給法陣盤。回傳是否由法陣盤處理。</summary>
@@ -141,6 +142,16 @@ public partial class IslandWindow
             .ToList();
     }
 
+    /// <summary>天幕本體此刻在螢幕上的範圍（DIP），法陣盤要避開它。直式停靠時已含旋轉。</summary>
+    private Rect IslandRectDip()
+    {
+        if (!Capsule.IsVisible || Capsule.ActualWidth <= 0) return Rect.Empty;
+        var dpi = VisualTreeHelper.GetDpi(this);
+        var a = Capsule.PointToScreen(new Point(0, 0));
+        var b = Capsule.PointToScreen(new Point(Capsule.ActualWidth, Capsule.ActualHeight));
+        return new Rect(new Point(a.X / dpi.DpiScaleX, a.Y / dpi.DpiScaleY), new Point(b.X / dpi.DpiScaleX, b.Y / dpi.DpiScaleY));
+    }
+
     /// <summary>沒拖檔案就點化形爐：開檔案選擇視窗。</summary>
     private static IReadOnlyList<string>? PickFiles()
     {
@@ -168,7 +179,7 @@ public partial class IslandWindow
             _dragHover!.Stop();
             if (!_dropping || _radial is not null) return;
             EndDragHint();       // 收起乾坤袋的漩渦提示，改由法陣盤接手
-            OpenRadial();
+            OpenRadial(fromDrag: true);
         }, Dispatcher);
         if (!_dragHover.IsEnabled) _dragHover.Start();
     }

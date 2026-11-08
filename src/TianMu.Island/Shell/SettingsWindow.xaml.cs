@@ -27,6 +27,7 @@ public partial class SettingsWindow : Window
 
         SourceInitialized += (_, _) => NativeMethods.ApplyModernFrame(new WindowInteropHelper(this).Handle);
         Loaded += (_, _) => PlayInkReveal();
+        StateChanged += (_, _) => OnStateChanged();
         Closed += (_, _) =>
         {
             _vm.PropertyChanged -= OnViewModelChanged;
@@ -63,6 +64,19 @@ public partial class SettingsWindow : Window
     }
 
     private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+    private void Maximize_Click(object sender, RoutedEventArgs e) =>
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+
+    /// <summary>放大時：無框視窗會超出螢幕邊緣一點，內縮回來；按鈕換成「還原」。</summary>
+    private void OnStateChanged()
+    {
+        bool max = WindowState == WindowState.Maximized;
+        Root.Margin = max ? new Thickness(7) : new Thickness(0);
+        MaximizeButton.Content = max ? "\uE923" : "\uE922";
+        MaximizeButton.ToolTip = max ? "還原" : "放大";
+        System.Windows.Automation.AutomationProperties.SetName(MaximizeButton, max ? "還原" : "放大");
+    }
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
     private void Restart_Click(object sender, RoutedEventArgs e) => _app.Restart();
     private async void Check_Click(object sender, RoutedEventArgs e) => await _vm.CheckUpdatesAsync();

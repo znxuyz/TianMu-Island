@@ -40,7 +40,6 @@ internal sealed class RadialMenuWindow : Window
 
     private const double Side = 420;
     private const double HoverPush = 7;
-    private static readonly TimeSpan StickyWithin = TimeSpan.FromMilliseconds(700);
 
     private static readonly Color Gold = Color.FromRgb(0xC8, 0xA8, 0x69);
     private static readonly Color GoldHi = Color.FromRgb(0xF0, 0xDC, 0xA8);
@@ -66,7 +65,6 @@ internal sealed class RadialMenuWindow : Window
     private readonly Path _progress;
     private readonly Grid _fileIcon;
     private readonly TextBlock _fileExt;
-    private readonly DateTime _openedAt = DateTime.Now;
     private readonly bool _animate = SystemParameters.ClientAreaAnimation;
     private readonly DispatcherTimer _dragAwayTimer;
 
@@ -240,23 +238,33 @@ internal sealed class RadialMenuWindow : Window
             if (_clickMode && !_done && !_suspendCapture) Finish(null);
         };
 
-        DragEnter += (_, e) => { _dragAwayTimer.Stop(); HandleDragOver(e); };
+        DragEnter += (_, e) => { _dragAwayTimer.Stop(); _dragAwayTimer.Interval = TimeSpan.FromMilliseconds(450); HandleDragOver(e); };
         DragOver += (_, e) => HandleDragOver(e);
         DragLeave += (_, _) => { if (_stage == Stage.Menu) _dragAwayTimer.Start(); };
         Drop += OnDrop;
     }
 
-    /// <summary>以某個螢幕點（DIP）為中心顯示，並避開螢幕邊緣。</summary>
-    public void ShowAt(Point centerDip, Rect workAreaDip)
+    /// <summary>在游標附近顯示（螢幕 DIP）：整個圓留在工作區內，並避開天幕本體。</summary>
+    public void ShowAt(Point cursorDip, Rect workAreaDip, Rect avoidDip)
     {
-        double side = Side * _scale, half = side / 2, edge = 40 * _scale;
-        Left = Math.Clamp(centerDip.X - half, workAreaDip.Left - edge, workAreaDip.Right - side + edge);
-        Top = Math.Clamp(centerDip.Y - half, workAreaDip.Top - edge, workAreaDip.Bottom - side + edge);
+        double side = Side * _scale, r = (RadialGeometry.OuterRadius + 8) * _scale;
+        var c = RadialGeometry.PlaceCenter(cursorDip, r, avoidDip, workAreaDip);
+        Left = c.X - side / 2;
+        Top = c.Y - side / 2;
         Show();
         if (PresentationSource.FromVisual(this) is HwndSource source) NativeMethods.ReassertTopmost(source.Handle);
     }
 
     // ═══════════════════════ 按住拖曳（天幕轉送滑鼠） ═══════════════════════
+
+    /// <summary>
+    /// 拖著檔案展開時：盤不在游標下，若檔案一直沒拖進盤裡（放到別處或取消），稍後自動收起。
+    /// </summary>
+    public void ExpectDrag()
+    {
+        _dragAwayTimer.Interval = TimeSpan.FromMilliseconds(2500);
+        _dragAwayTimer.Start();
+    }
 
     /// <summary>天幕仍抓著滑鼠時，轉送游標位置（實際像素）。</summary>
     public void Track(Point screenPx) => Hover(FromScreen(screenPx));
@@ -274,7 +282,8 @@ internal sealed class RadialMenuWindow : Window
             Activate(hit);
             return;
         }
-        if (hit == -1 && !_leftHub && DateTime.Now - _openedAt < StickyWithin + RadialGeometry.OpenDuration)
+        // 還沒經過任何一格就放開（盤可能為了避開天幕而不在游標下）：改用點選
+        if (!_leftHub)
         {
             EnterClickMode();
             return;
@@ -324,7 +333,7 @@ internal sealed class RadialMenuWindow : Window
     {
         if (_stage is not (Stage.Menu or Stage.Formats)) return;
         int hit = RadialGeometry.HitTest(p, _c, _items.Count);
-        if (hit != -1) _leftHub = true;
+        if (hit >= 0) _leftHub = true;
         SetHot(hit, dragTarget: false);
     }
 

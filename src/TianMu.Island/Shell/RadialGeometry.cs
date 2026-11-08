@@ -40,6 +40,46 @@ public static class RadialGeometry
         return Math.Min(n - 1, (int)(a / step));
     }
 
+    /// <summary>
+    /// 法陣盤的中心該放哪裡（螢幕 DIP）：盡量在游標處，但整個圓（半徑 r）要在工作區內，
+    /// 而且不能壓到天幕（avoid，外擴 gap）。壓到時往上下左右四個方向找最近、又放得下的位置。
+    /// </summary>
+    public static Point PlaceCenter(Point cursor, double r, Rect avoid, Rect work, double gap = 10)
+    {
+        Point Fit(Point p) => new(
+            Math.Clamp(p.X, work.Left + r, Math.Max(work.Left + r, work.Right - r)),
+            Math.Clamp(p.Y, work.Top + r, Math.Max(work.Top + r, work.Bottom - r)));
+
+        var c = Fit(cursor);
+        if (avoid.IsEmpty) return c;
+        var a = avoid;
+        a.Inflate(gap, gap);
+        if (!Overlaps(c, r, a)) return c;
+
+        Point[] options =
+        [
+            new(c.X, a.Bottom + r), new(c.X, a.Top - r),
+            new(a.Left - r, c.Y), new(a.Right + r, c.Y),
+        ];
+        Point? best = null;
+        double bestDist = double.MaxValue;
+        foreach (var o in options.Select(Fit))
+        {
+            if (Overlaps(o, r, a)) continue;
+            double d = (o - c).Length;
+            if (d < bestDist) { best = o; bestDist = d; }
+        }
+        return best ?? c;
+    }
+
+    /// <summary>圓（中心 c、半徑 r）是否碰到矩形。</summary>
+    public static bool Overlaps(Point c, double r, Rect rect)
+    {
+        double qx = Math.Clamp(c.X, rect.Left, rect.Right), qy = Math.Clamp(c.Y, rect.Top, rect.Bottom);
+        double dx = c.X - qx, dy = c.Y - qy;
+        return dx * dx + dy * dy < r * r;
+    }
+
     /// <summary>一個扇區（環形的一段）的外形。</summary>
     public static Geometry SlicePath(Point c, double a0, double a1, double r1, double r2)
     {
