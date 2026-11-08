@@ -73,7 +73,10 @@ public sealed class RadialPreview : FrameworkElement
         _hooked = false;
     }
 
-    protected override Size MeasureOverride(Size available) => new(220, 220);
+    // 不要求超過版面給的空間：要求得比給的大時，WPF 會照要求的大小畫、再把超出的部分裁掉（之前小盤被切一半就是這樣）
+    protected override Size MeasureOverride(Size available) =>
+        new(double.IsInfinity(available.Width) ? 220 : Math.Min(220, available.Width),
+            double.IsInfinity(available.Height) ? 220 : Math.Min(220, available.Height));
 
     protected override void OnRender(DrawingContext dc)
     {

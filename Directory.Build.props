@@ -10,6 +10,6 @@
     <Product>TianMu-Island 天幕島</Product>
     <Company>TianMu-Island</Company>
     <!-- 發佈新版：只要改這個版本號並推上 main，GitHub Actions 就會自動出爐並建立 Release -->
-    <Version>0.16.2</Version>
+    <Version>0.17.0</Version>
   </PropertyGroup>
 </Project>

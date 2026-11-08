@@ -105,6 +105,55 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <!-- 分頁標題 -->
+        <Style x:Key="PageTitle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource SerifFont}" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="Foreground" Value="{StaticResource MiaoJinBrush}" />
+            <Setter Property="Margin" Value="0,16,0,4" />
+        </Style>
+        <Style x:Key="PageDescription" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{StaticResource TextTertiaryBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="LineHeight" Value="18" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+
+        <!-- 左側分類：選中時左緣一道描金、字變金 -->
+        <Style x:Key="NavItem" TargetType="RadioButton">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Margin" Value="0,0,6,4" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bg" CornerRadius="10" Padding="14,9" Background="Transparent">
+                            <Grid>
+                                <Border x:Name="Bar" Width="3" CornerRadius="1.5" HorizontalAlignment="Left" Margin="-10,2,0,2"
+                                        Background="{StaticResource MiaoJinBrush}" Visibility="Hidden" />
+                                <TextBlock x:Name="Label" Text="{TemplateBinding Content}" FontFamily="{StaticResource SerifFont}"
+                                           FontWeight="Bold" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}" />
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{StaticResource HoverFillBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{StaticResource HoverFillBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{StaticResource GoldFillBrush}" />
+                                <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Label" Property="Foreground" Value="{StaticResource MiaoJinBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid x:Name="Root" Background="{StaticResource LacquerBrush}">
@@ -153,10 +202,35 @@
             </StackPanel>
         </Grid>
 
-        <!-- ═══ 內容 ═══ -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
-                      Focusable="False">
-            <StackPanel Margin="32,0,32,32" MaxWidth="820">
+        <!-- ═══ 內容：左邊分類、右邊該類設定（視窗窄時分類改排在上方，見 ApplyLayout） ═══ -->
+        <Grid x:Name="Body" Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="NavColumn" Width="200" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <WrapPanel x:Name="NavPanel" Grid.RowSpan="2" Margin="20,12,8,20" Orientation="Vertical">
+                <RadioButton x:Name="NavGeneral" Style="{StaticResource NavItem}" GroupName="SettingsNav" Tag="一般"
+                             Content="一般" IsChecked="True" Checked="Nav_Checked" AutomationProperties.Name="一般" />
+                <RadioButton x:Name="NavLook" Style="{StaticResource NavItem}" GroupName="SettingsNav" Tag="外觀與手感"
+                             Content="外觀與手感" IsChecked="False" Checked="Nav_Checked" AutomationProperties.Name="外觀與手感" />
+                <RadioButton x:Name="NavRadial" Style="{StaticResource NavItem}" GroupName="SettingsNav" Tag="法陣盤"
+                             Content="法陣盤" IsChecked="False" Checked="Nav_Checked" AutomationProperties.Name="法陣盤" />
+                <RadioButton x:Name="NavModules" Style="{StaticResource NavItem}" GroupName="SettingsNav" Tag="法器"
+                             Content="法器" IsChecked="False" Checked="Nav_Checked" AutomationProperties.Name="法器" />
+                <RadioButton x:Name="NavUpdate" Style="{StaticResource NavItem}" GroupName="SettingsNav" Tag="更新"
+                             Content="更新" IsChecked="False" Checked="Nav_Checked" AutomationProperties.Name="更新" />
+                <RadioButton x:Name="NavAbout" Style="{StaticResource NavItem}" GroupName="SettingsNav" Tag="關於"
+                             Content="關於" IsChecked="False" Checked="Nav_Checked" AutomationProperties.Name="關於" />
+            </WrapPanel>
+
+            <ScrollViewer x:Name="ContentScroll" Grid.Column="1" Grid.RowSpan="2" VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled" Focusable="False">
+                <StackPanel x:Name="ContentPanel" Margin="16,0,32,32" MaxWidth="900">
 
                 <!-- 需要重新啟動的提示 -->
                 <Border x:Name="RestartBanner" Visibility="Collapsed" Margin="0,16,0,0" Padding="16,12"
@@ -175,7 +249,9 @@
                 </Border>
 
                 <!-- ═══ 一般 ═══ -->
-                <TextBlock Style="{StaticResource SectionTitle}" theme:Typo.SpacedText="一般" />
+                <StackPanel x:Name="PageGeneral">
+                    <TextBlock Style="{StaticResource PageTitle}" theme:Typo.SpacedText="一般" />
+                    <TextBlock Style="{StaticResource PageDescription}" Text="開機、隱藏與多螢幕。" />
                 <Border Style="{StaticResource Row}">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -198,43 +274,12 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Style="{StaticResource RowTitle}" Text="靈氣粒子" />
-                            <TextBlock Style="{StaticResource RowDescription}" Text="閒置一分鐘後，金塵自膠囊兩端緩緩飄散；境界越高越多。" />
-                        </StackPanel>
-                        <CheckBox Grid.Column="1" Style="{StaticResource TianMu.Toggle}" VerticalAlignment="Center"
-                                  Margin="16,0,0,0" AutomationProperties.Name="靈氣粒子"
-                                  IsChecked="{Binding ShowParticles, Mode=TwoWay}" />
-                    </Grid>
-                </Border>
-
-                <Border Style="{StaticResource Row}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel>
                             <TextBlock Style="{StaticResource RowTitle}" Text="全螢幕時自動隱藏" />
                             <TextBlock Style="{StaticResource RowDescription}" Text="看影片、玩遊戲或簡報時天幕自動退下，結束後回來。" />
                         </StackPanel>
                         <CheckBox Grid.Column="1" Style="{StaticResource TianMu.Toggle}" VerticalAlignment="Center"
                                   Margin="16,0,0,0" AutomationProperties.Name="全螢幕時自動隱藏"
                                   IsChecked="{Binding AutoHideFullscreen, Mode=TwoWay}" />
-                    </Grid>
-                </Border>
-                <Border Style="{StaticResource Row}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel>
-                            <TextBlock Style="{StaticResource RowTitle}" Text="磁吸" />
-                            <TextBlock Style="{StaticResource RowDescription}" Text="滑鼠靠近時，天幕微微朝游標偏移，像被吸過去。" />
-                        </StackPanel>
-                        <CheckBox Grid.Column="1" Style="{StaticResource TianMu.Toggle}" VerticalAlignment="Center"
-                                  Margin="16,0,0,0" AutomationProperties.Name="磁吸"
-                                  IsChecked="{Binding Magnetic, Mode=TwoWay}" />
                     </Grid>
                 </Border>
                 <Border Style="{StaticResource Row}">
@@ -259,6 +304,41 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
+                            <TextBlock Style="{StaticResource RowTitle}" Text="智慧隱藏" />
+                            <TextBlock Style="{StaticResource RowDescription}" Text="閒置時天幕縮成一條細線，幾乎不擋畫面；滑鼠碰到螢幕邊緣或移到它上面就變回來。" />
+                        </StackPanel>
+                        <CheckBox Grid.Column="1" Style="{StaticResource TianMu.Toggle}" VerticalAlignment="Center"
+                                  Margin="16,0,0,0" AutomationProperties.Name="智慧隱藏"
+                                  IsChecked="{Binding SmartHide, Mode=TwoWay}" />
+                    </Grid>
+                </Border>
+                </StackPanel>
+                <!-- ═══ 外觀與手感 ═══ -->
+                <StackPanel x:Name="PageLook" Visibility="Collapsed">
+                    <TextBlock Style="{StaticResource PageTitle}" theme:Typo.SpacedText="外觀與手感" />
+                    <TextBlock Style="{StaticResource PageDescription}" Text="天幕的光影、粒子與伸縮的彈性。" />
+                <Border Style="{StaticResource Row}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource RowTitle}" Text="磁吸" />
+                            <TextBlock Style="{StaticResource RowDescription}" Text="滑鼠靠近時，天幕微微朝游標偏移，像被吸過去。" />
+                        </StackPanel>
+                        <CheckBox Grid.Column="1" Style="{StaticResource TianMu.Toggle}" VerticalAlignment="Center"
+                                  Margin="16,0,0,0" AutomationProperties.Name="磁吸"
+                                  IsChecked="{Binding Magnetic, Mode=TwoWay}" />
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource Row}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
                             <TextBlock Style="{StaticResource RowTitle}" Text="晝夜變色" />
                             <TextBlock Style="{StaticResource RowDescription}" Text="漆面色溫隨時辰流轉：子夜偏墨藍、午時偏暖、黃昏帶赭。" />
                         </StackPanel>
@@ -274,12 +354,12 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Style="{StaticResource RowTitle}" Text="智慧隱藏" />
-                            <TextBlock Style="{StaticResource RowDescription}" Text="閒置時天幕縮成一條細線，幾乎不擋畫面；滑鼠碰到螢幕邊緣或移到它上面就變回來。" />
+                            <TextBlock Style="{StaticResource RowTitle}" Text="靈氣粒子" />
+                            <TextBlock Style="{StaticResource RowDescription}" Text="閒置一分鐘後，金塵自膠囊兩端緩緩飄散；境界越高越多。" />
                         </StackPanel>
                         <CheckBox Grid.Column="1" Style="{StaticResource TianMu.Toggle}" VerticalAlignment="Center"
-                                  Margin="16,0,0,0" AutomationProperties.Name="智慧隱藏"
-                                  IsChecked="{Binding SmartHide, Mode=TwoWay}" />
+                                  Margin="16,0,0,0" AutomationProperties.Name="靈氣粒子"
+                                  IsChecked="{Binding ShowParticles, Mode=TwoWay}" />
                     </Grid>
                 </Border>
                 <Border Style="{StaticResource Row}">
@@ -309,41 +389,48 @@
                                   IsChecked="{Binding FocusBarrier, Mode=TwoWay}" />
                     </Grid>
                 </Border>
-
+                </StackPanel>
                 <!-- ═══ 法陣盤 ═══ -->
-                <TextBlock Style="{StaticResource SectionTitle}" theme:Typo.SpacedText="法陣盤" />
-                <Border Style="{StaticResource Row}" DataContext="{Binding Radial}">
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource RowTitle}" Text="盤上的功能" />
-                        <TextBlock Style="{StaticResource RowDescription}"
-                                   Text="長按天幕展開的圓盤。打開 4 到 10 個放上去，用箭頭調整順序（從正上方順時針排）；格數一變，扇區大小與金線輪轉的節奏會自動重新分配。關閉：點中間的陣眼、點盤外，或按右鍵。" />
-                        <!-- 上：預覽與大小；下：可選的扇區清單（上下排，不會互相擠壓） -->
-                        <Grid Margin="0,14,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="188" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <shell:RadialPreview Width="176" Height="176" HorizontalAlignment="Left"
+                <StackPanel x:Name="PageRadial" Visibility="Collapsed">
+                    <TextBlock Style="{StaticResource PageTitle}" theme:Typo.SpacedText="法陣盤" />
+                    <TextBlock Style="{StaticResource PageDescription}" Text="長按天幕展開的圓盤。打開 4 到 10 個放上去，用箭頭調整順序（從正上方順時針排）；格數一變，扇區大小與金線輪轉的節奏會自動重新分配。關閉：點中間的陣眼、點盤外，或按右鍵。" />
+                <Grid x:Name="RadialGrid" DataContext="{Binding Radial}" Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- 預覽：自己一塊，不跟清單擠 -->
+                    <Border x:Name="RadialPreviewCard" Grid.ColumnSpan="2" CornerRadius="16" Padding="20" VerticalAlignment="Top"
+                            Background="{StaticResource HoverFillBrush}" BorderThickness="1" BorderBrush="{StaticResource HairlineBrush}">
+                        <StackPanel>
+                            <shell:RadialPreview Width="250" Height="250" HorizontalAlignment="Center"
                                                  Labels="{Binding Chosen}" AutomationProperties.Name="法陣盤預覽" />
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock FontSize="13" Foreground="{StaticResource MiaoJinBrush}" Text="{Binding CountText}"
-                                           TextWrapping="Wrap" />
-                                <TextBlock Margin="0,14,0,6" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Text="盤面大小" />
-                                <WrapPanel>
-                                    <RadioButton Style="{StaticResource ChoiceChip}" GroupName="RadialSize" Content="標準"
-                                                 IsChecked="{Binding SizeStandard, Mode=TwoWay}" />
-                                    <RadioButton Style="{StaticResource ChoiceChip}" GroupName="RadialSize" Content="大"
-                                                 IsChecked="{Binding SizeLarge, Mode=TwoWay}" />
-                                    <RadioButton Style="{StaticResource ChoiceChip}" GroupName="RadialSize" Content="特大"
-                                                 IsChecked="{Binding SizeHuge, Mode=TwoWay}" />
-                                </WrapPanel>
-                                <Button Margin="0,8,0,0" HorizontalAlignment="Left" Style="{StaticResource TianMu.Button.Ghost}"
-                                        Content="恢復預設" Command="{Binding ResetCommand}" />
-                                <TextBlock Margin="0,8,0,0" FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
-                                           TextWrapping="Wrap" Text="點左邊的小盤可重播展開動畫" />
+                            <TextBlock Margin="0,10,0,0" HorizontalAlignment="Center" FontSize="13"
+                                       Foreground="{StaticResource MiaoJinBrush}" Text="{Binding CountText}" />
+                            <TextBlock Margin="0,2,0,0" HorizontalAlignment="Center" FontSize="11"
+                                       Foreground="{StaticResource TextTertiaryBrush}" Text="點小盤可重播展開動畫" />
+                            <TextBlock Margin="0,16,0,6" HorizontalAlignment="Center" FontSize="12"
+                                       Foreground="{StaticResource TextSecondaryBrush}" Text="盤面大小" />
+                            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                                <RadioButton Style="{StaticResource ChoiceChip}" GroupName="RadialSize" Content="標準"
+                                             IsChecked="{Binding SizeStandard, Mode=TwoWay}" />
+                                <RadioButton Style="{StaticResource ChoiceChip}" GroupName="RadialSize" Content="大"
+                                             IsChecked="{Binding SizeLarge, Mode=TwoWay}" />
+                                <RadioButton Style="{StaticResource ChoiceChip}" GroupName="RadialSize" Content="特大"
+                                             IsChecked="{Binding SizeHuge, Mode=TwoWay}" />
                             </StackPanel>
-                        </Grid>
-                            <ItemsControl Margin="0,16,0,0" ItemsSource="{Binding Rows}" Focusable="False">
+                            <Button Margin="0,8,0,0" HorizontalAlignment="Center" Style="{StaticResource TianMu.Button.Ghost}"
+                                    Content="恢復預設" Command="{Binding ResetCommand}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 清單：寬時在預覽右邊，窄時在預覽下面（見 SettingsWindow.ApplyLayout） -->
+                            <ItemsControl x:Name="RadialList" Grid.Row="1" Grid.ColumnSpan="2" Margin="0,16,0,0" ItemsSource="{Binding Rows}" Focusable="False">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Grid Margin="0,0,0,2" MinHeight="34">
@@ -406,11 +493,13 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                    </StackPanel>
-                </Border>
-
+                </Grid>
+                </StackPanel>
                 <!-- ═══ 法器 ═══ -->
-                <TextBlock Style="{StaticResource SectionTitle}" theme:Typo.SpacedText="法器" />
+                <StackPanel x:Name="PageModules" Visibility="Collapsed">
+                    <TextBlock Style="{StaticResource PageTitle}" theme:Typo.SpacedText="法器" />
+                    <TextBlock Style="{StaticResource PageDescription}" Text="每個法器都可以單獨關掉；關掉的功能不會載入。" />
+
                 <ItemsControl ItemsSource="{Binding Modules}" Focusable="False">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -519,9 +608,12 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-
+                </StackPanel>
                 <!-- ═══ 更新 ═══ -->
-                <TextBlock Style="{StaticResource SectionTitle}" theme:Typo.SpacedText="更新" />
+                <StackPanel x:Name="PageUpdate" Visibility="Collapsed">
+                    <TextBlock Style="{StaticResource PageTitle}" theme:Typo.SpacedText="更新" />
+                    <TextBlock Style="{StaticResource PageDescription}" Text="天幕島會從 GitHub 檢查新版。" />
+
                 <Border Style="{StaticResource Row}">
                     <StackPanel>
                         <Grid>
@@ -574,9 +666,12 @@
                                   IsChecked="{Binding AutoCheckUpdates, Mode=TwoWay}" />
                     </Grid>
                 </Border>
-
+                </StackPanel>
                 <!-- ═══ 關於 ═══ -->
-                <TextBlock Style="{StaticResource SectionTitle}" theme:Typo.SpacedText="關於" />
+                <StackPanel x:Name="PageAbout" Visibility="Collapsed">
+                    <TextBlock Style="{StaticResource PageTitle}" theme:Typo.SpacedText="關於" />
+                    <TextBlock Style="{StaticResource PageDescription}" Text="原始碼、設定檔與這個小島的來歷。" />
+
                 <Border Style="{StaticResource Row}">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -605,13 +700,15 @@
                                 Style="{StaticResource TianMu.Button.Ghost}" Content="開啟資料夾" Click="Folder_Click" />
                     </Grid>
                 </Border>
+                </StackPanel>
 
                 <TextBlock x:Name="NoticeText" Margin="0,12,0,0" FontSize="12" Foreground="{StaticResource MiaoJinBrush}"
                            TextWrapping="Wrap" Text="{Binding Notice}" />
 
                 <TextBlock Margin="0,28,0,0" HorizontalAlignment="Center" FontSize="11"
                            Foreground="{StaticResource TextTertiaryBrush}" theme:Typo.SpacedText="天幕之下，皆為道場" />
-            </StackPanel>
-        </ScrollViewer>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
     </Grid>
 </Window>

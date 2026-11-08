@@ -28,6 +28,8 @@ public partial class SettingsWindow : Window
         SourceInitialized += (_, _) => NativeMethods.ApplyModernFrame(new WindowInteropHelper(this).Handle);
         Loaded += (_, _) => PlayInkReveal();
         StateChanged += (_, _) => OnStateChanged();
+        SizeChanged += (_, _) => ApplyLayout();
+        ContentPanel.SizeChanged += (_, _) => ApplyLayout();
         Closed += (_, _) =>
         {
             _vm.PropertyChanged -= OnViewModelChanged;
@@ -61,6 +63,49 @@ public partial class SettingsWindow : Window
 
         Root.BeginAnimation(OpacityProperty, fade);
         blur.BeginAnimation(BlurEffect.RadiusProperty, sharpen);
+    }
+
+    // ═══════════════════════ 分類與版面 ═══════════════════════
+
+    /// <summary>左邊（或上方）的分類：只顯示選中的那一類設定。</summary>
+    private void Nav_Checked(object sender, RoutedEventArgs e)
+    {
+        if (PageGeneral is null) return;   // InitializeComponent 途中預設選中「一般」時，頁面還沒建立
+        (System.Windows.Controls.RadioButton Nav, FrameworkElement Page)[] map =
+        [
+            (NavGeneral, PageGeneral), (NavLook, PageLook), (NavRadial, PageRadial),
+            (NavModules, PageModules), (NavUpdate, PageUpdate), (NavAbout, PageAbout),
+        ];
+        foreach (var (nav, page) in map)
+            page.Visibility = nav.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        ContentScroll.ScrollToTop();
+    }
+
+    private const double NarrowWindow = 720;   // 比這窄：分類改排在上方
+    private const double WideContent = 720;    // 內容比這寬：法陣盤預覽放左邊、清單放右邊
+
+    /// <summary>依視窗寬度重排：寬時分類在左、法陣盤左右並排；窄時分類在上、法陣盤上下排。</summary>
+    private void ApplyLayout()
+    {
+        bool narrow = ActualWidth < NarrowWindow;
+        NavColumn.Width = narrow ? new GridLength(0) : new GridLength(200);
+        NavPanel.Orientation = narrow ? System.Windows.Controls.Orientation.Horizontal : System.Windows.Controls.Orientation.Vertical;
+        NavPanel.Margin = narrow ? new Thickness(24, 4, 24, 8) : new Thickness(20, 12, 8, 20);
+        System.Windows.Controls.Grid.SetRow(NavPanel, 0);
+        System.Windows.Controls.Grid.SetRowSpan(NavPanel, narrow ? 1 : 2);
+        System.Windows.Controls.Grid.SetColumnSpan(NavPanel, narrow ? 2 : 1);
+        System.Windows.Controls.Grid.SetRow(ContentScroll, narrow ? 1 : 0);
+        System.Windows.Controls.Grid.SetRowSpan(ContentScroll, narrow ? 1 : 2);
+        System.Windows.Controls.Grid.SetColumn(ContentScroll, narrow ? 0 : 1);
+        System.Windows.Controls.Grid.SetColumnSpan(ContentScroll, narrow ? 2 : 1);
+        ContentPanel.Margin = narrow ? new Thickness(24, 0, 24, 24) : new Thickness(16, 0, 32, 32);
+
+        bool wide = ContentPanel.ActualWidth >= WideContent;
+        System.Windows.Controls.Grid.SetColumnSpan(RadialPreviewCard, wide ? 1 : 2);
+        System.Windows.Controls.Grid.SetRow(RadialList, wide ? 0 : 1);
+        System.Windows.Controls.Grid.SetColumn(RadialList, wide ? 1 : 0);
+        System.Windows.Controls.Grid.SetColumnSpan(RadialList, wide ? 1 : 2);
+        RadialList.Margin = wide ? new Thickness(28, 0, 0, 0) : new Thickness(0, 16, 0, 0);
     }
 
     private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
