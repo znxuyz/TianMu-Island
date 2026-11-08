@@ -67,6 +67,11 @@ public sealed class AiQuotaModule : IIslandModule, IDescribedModule
         {
             ExpandedView = _view,
         });
+        host.AddRadialAction(new RadialAction(Id, "靈石", "AI 額度", () =>
+        {
+            host.ShowPage(Id);
+            _ = RefreshAsync();
+        }, Order: 65, DefaultVisible: false));
 
         await host.InvokeAsync(() => _ = RefreshAsync());
     }

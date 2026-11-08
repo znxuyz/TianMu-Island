@@ -89,6 +89,7 @@ public sealed class NotifyModule : IIslandModule, IDescribedModule
         {
             ExpandedView = _inboxView,
         });
+        host.AddRadialAction(new RadialAction(Id, "傳音", "通知", () => host.ShowPage(Id), Order: 15, ToneKey: "TianQingBrush", DefaultVisible: false));
 
         // 優先用 Windows 官方的通知接口（可以接管、刪掉重複的系統通知）；拿不到就讀通知資料庫
         _official = await NotificationListenerSource.TryCreateAsync();

@@ -307,6 +307,93 @@
                     </Grid>
                 </Border>
 
+                <!-- ═══ 法陣盤 ═══ -->
+                <TextBlock Style="{StaticResource SectionTitle}" theme:Typo.SpacedText="法陣盤" />
+                <Border Style="{StaticResource Row}" DataContext="{Binding Radial}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource RowTitle}" Text="盤上的功能" />
+                        <TextBlock Style="{StaticResource RowDescription}"
+                                   Text="長按天幕展開的圓盤。打開 4 到 10 個放上去，用箭頭調整順序（從正上方順時針排）；格數一變，扇區大小與金線輪轉的節奏會自動重新分配。" />
+                        <Grid Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Top">
+                                <shell:RadialPreview Width="176" Height="176" Labels="{Binding Chosen}"
+                                                     AutomationProperties.Name="法陣盤預覽" />
+                                <TextBlock Margin="0,8,0,0" HorizontalAlignment="Center" FontSize="12"
+                                           Foreground="{StaticResource MiaoJinBrush}" Text="{Binding CountText}" />
+                                <Button Margin="0,10,0,0" HorizontalAlignment="Center" Style="{StaticResource TianMu.Button.Ghost}"
+                                        Content="恢復預設" Command="{Binding ResetCommand}" />
+                            </StackPanel>
+                            <ItemsControl Grid.Column="1" Margin="16,0,0,0" ItemsSource="{Binding Rows}" Focusable="False">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,2" MinHeight="34">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="20" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock VerticalAlignment="Center" FontSize="11" Text="{Binding Position}"
+                                                       Foreground="{StaticResource MiaoJinBrush}" />
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal">
+                                                <TextBlock FontFamily="{StaticResource SerifFont}" FontWeight="Bold" FontSize="14"
+                                                           Text="{Binding Label}">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="{StaticResource YueBaiBrush}" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsOn}" Value="False">
+                                                                    <Setter Property="Foreground" Value="{StaticResource TextTertiaryBrush}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="11"
+                                                           Foreground="{StaticResource TextTertiaryBrush}" Text="{Binding Caption}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                                <StackPanel.Style>
+                                                    <Style TargetType="StackPanel">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsOn}" Value="False">
+                                                                <Setter Property="Visibility" Value="Hidden" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </StackPanel.Style>
+                                                <StackPanel.Resources>
+                                                    <Style TargetType="Button" BasedOn="{StaticResource TianMu.Button.Icon}">
+                                                        <Setter Property="Width" Value="28" />
+                                                        <Setter Property="Height" Value="28" />
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsEnabled" Value="False">
+                                                                <Setter Property="Opacity" Value="0.25" />
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </StackPanel.Resources>
+                                                <Button Content="&#xE70E;" ToolTip="往前移（逆時針）" Command="{Binding MoveUp}"
+                                                        AutomationProperties.Name="{Binding Label, StringFormat={}{0} 往前移}" />
+                                                <Button Content="&#xE70D;" ToolTip="往後移（順時針）" Command="{Binding MoveDown}"
+                                                        AutomationProperties.Name="{Binding Label, StringFormat={}{0} 往後移}" />
+                                            </StackPanel>
+                                            <CheckBox Grid.Column="3" Margin="10,0,0,0" VerticalAlignment="Center"
+                                                      Style="{StaticResource TianMu.Toggle}"
+                                                      IsChecked="{Binding IsOn, Mode=TwoWay}" IsEnabled="{Binding CanToggle}"
+                                                      AutomationProperties.Name="{Binding Label, StringFormat={}放上法陣盤：{0}}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
                 <!-- ═══ 法器 ═══ -->
                 <TextBlock Style="{StaticResource SectionTitle}" theme:Typo.SpacedText="法器" />
                 <ItemsControl ItemsSource="{Binding Modules}" Focusable="False">

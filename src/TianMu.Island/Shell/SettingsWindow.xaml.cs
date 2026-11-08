@@ -19,7 +19,7 @@ public partial class SettingsWindow : Window
     {
         InitializeComponent();
         _app = app;
-        _vm = new SettingsViewModel(app.Settings, app.Updates, app.ModuleCatalog);
+        _vm = new SettingsViewModel(app.Settings, app.Updates, app.ModuleCatalog, app.RadialCatalog);
         DataContext = _vm;
 
         _vm.PropertyChanged += OnViewModelChanged;

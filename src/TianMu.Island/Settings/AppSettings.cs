@@ -55,6 +55,12 @@ public sealed class AppSettings
     /// <summary>使用者選擇略過的版本（不再提醒）。</summary>
     public string? SkippedVersion { get; set; }
 
+    /// <summary>
+    /// 法陣盤上的扇區（以扇區大字為鍵，依序從正上方順時針排）；null 表示用預設。
+    /// 至少 4 個、最多 10 個，見 <see cref="RadialLayout"/>。
+    /// </summary>
+    public List<string>? RadialSlots { get; set; }
+
     /// <summary>各法器的開關與選項，以法器 Id 為鍵。</summary>
     public Dictionary<string, ModuleSettings> Modules { get; set; } = [];
 

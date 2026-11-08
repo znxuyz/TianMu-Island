@@ -37,8 +37,10 @@ public sealed class SettingsViewModel : Observable
     private bool _needsRestart;
     private string? _notice;
 
-    public SettingsViewModel(SettingsStore store, UpdateCoordinator updates, IReadOnlyList<ModuleDescriptor> catalog)
+    public SettingsViewModel(SettingsStore store, UpdateCoordinator updates, IReadOnlyList<ModuleDescriptor> catalog,
+        IReadOnlyList<RadialAction> radialCatalog)
     {
+        Radial = new RadialSlotsViewModel(store, radialCatalog);
         _store = store;
         _updates = updates;
 
@@ -57,6 +59,9 @@ public sealed class SettingsViewModel : Observable
     }
 
     public ObservableCollection<ModuleRowViewModel> Modules { get; } = [];
+
+    /// <summary>法陣盤要放哪些扇區。</summary>
+    public RadialSlotsViewModel Radial { get; }
 
     public string VersionText => UpdateCoordinator.CurrentVersionText;
 

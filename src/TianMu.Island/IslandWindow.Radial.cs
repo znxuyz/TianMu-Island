@@ -109,9 +109,11 @@ public partial class IslandWindow
 
     // ═══════════════════════ 扇區 ═══════════════════════
 
-    private IReadOnlyList<RadialItem> RadialItems()
+    /// <summary>所有可以放上法陣盤的扇區（含天幕自己的「隱藏」「設定」），給設定面板挑選。</summary>
+    public IReadOnlyList<RadialAction> RadialCatalog()
     {
-        var actions = _radialActions.OrderBy(a => a.Order).ToList();
+        if (!Dispatcher.CheckAccess()) return Dispatcher.Invoke(RadialCatalog);
+        var actions = _radialActions.ToList();
 
         // 化形爐：有轉檔引擎時收檔案（點它則先選檔案）；沒有時（法器被關閉）提示一下
         if (actions.All(a => a.Label != FurnaceLabel))
@@ -121,8 +123,18 @@ public partial class IslandWindow
 
         actions.Add(new RadialAction("tianmu.island", "隱藏", "天幕", () => App.Current.ToggleIsland(), 90));
         actions.Add(new RadialAction("tianmu.island", "設定", "洞府", () => App.Current.ShowSettings(), 100));
+        return actions.OrderBy(a => a.Order).ToList();
+    }
 
-        return actions.OrderBy(a => a.Order).Take(10)
+    /// <summary>法陣盤此刻的扇區：照使用者自訂（4~10 格），沒自訂時用預設。</summary>
+    private IReadOnlyList<RadialItem> RadialItems()
+    {
+        var catalog = RadialCatalog();
+        var keys = RadialLayout.Arrange(
+            catalog.Select(a => new RadialLayout.Candidate(a.Label, a.Order, a.DefaultVisible)),
+            _settings.Read(s => s.RadialSlots));
+
+        return keys.Select(k => catalog.First(a => a.Label == k))
             .Select(a => new RadialItem(a.Label, a.Caption, a.Invoke, ToneFor(a.ToneKey), a.OnFiles,
                 IsFurnace: a.Label == FurnaceLabel && _furnace is not null))
             .ToList();
@@ -148,6 +160,8 @@ public partial class IslandWindow
     private void StartDragHover()
     {
         if (_radial is not null) return;
+        // 盤上沒有收檔案的扇區（化形爐、乾坤袋都被拿掉了）就不展開，交給天幕本身處理拖放
+        if (!RadialItems().Any(i => i.IsFurnace || i.OnFiles is not null)) return;
         _dragHover ??= new DispatcherTimer(LongPressDelay, DispatcherPriority.Input, (_, _) =>
         {
             _dragHover!.Stop();

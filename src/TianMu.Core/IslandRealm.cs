@@ -36,5 +36,6 @@ public sealed record QuickAction(string ModuleId, string Label, Action Invoke, i
 /// <param name="Order">排列順序，從正上方開始順時針，小的在前。</param>
 /// <param name="ToneKey">文字顏色（主題色鍵）；null 為月白。</param>
 /// <param name="OnFiles">拖著檔案放到這一格時要做的事（例如乾坤袋收下檔案）；null 表示這一格不收檔案。</param>
+/// <param name="DefaultVisible">使用者還沒自訂法陣盤時，是否預設放在盤上；false 的要到設定裡自己加。</param>
 public sealed record RadialAction(string ModuleId, string Label, string Caption, Action Invoke, int Order = 0, string? ToneKey = null,
-    Action<IReadOnlyList<string>>? OnFiles = null);
+    Action<IReadOnlyList<string>>? OnFiles = null, bool DefaultVisible = true);

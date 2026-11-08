@@ -80,6 +80,9 @@ public partial class App : Application
 
     public IReadOnlyList<QuickAction> QuickActions => _island?.QuickActions ?? [];
 
+    /// <summary>可以放上法陣盤的所有扇區。</summary>
+    public IReadOnlyList<RadialAction> RadialCatalog => _island?.RadialCatalog() ?? [];
+
     public void ToggleIsland()
     {
         if (_island is null) return;

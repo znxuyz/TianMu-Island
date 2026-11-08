@@ -69,6 +69,11 @@ public sealed class TodoModule : IIslandModule, IDescribedModule
 
         host.AddQuickAction(new QuickAction(Id, "記一筆", () => host.InvokeAsync(OpenEditor), Order: 30));
         host.AddRadialAction(new RadialAction(Id, "記一筆", "待辦", OpenEditor, Order: 30));
+        host.AddRadialAction(new RadialAction(Id, "天機簿", "待辦清單", () =>
+        {
+            if (!host.ShowPage(Id))
+                host.Post(new IslandActivity(Id, "天機簿空空如也", "長按天幕 → 記一筆", ActivityPriority.Normal, TimeSpan.FromSeconds(3)));
+        }, Order: 32, DefaultVisible: false));
     }
 
     // ═══════════════════════ 新增 ═══════════════════════

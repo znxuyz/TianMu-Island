@@ -93,6 +93,10 @@ public sealed class MusicModule : IIslandModule, IDescribedModule
             };
         });
 
+        // 法陣盤的候選扇區（預設不在盤上，到設定 → 法陣盤加入）
+        host.AddRadialAction(new RadialAction(Id, "琴音", "播放／暫停", () => _ = _watcher.TogglePlayPauseAsync(), Order: 24, DefaultVisible: false));
+        host.AddRadialAction(new RadialAction(Id, "換曲", "下一首", () => _ = _watcher.NextAsync(), Order: 26, DefaultVisible: false));
+
         _watcher.Changed += snapshot => _ = host.InvokeAsync(() => OnSnapshot(snapshot));
         await _watcher.StartAsync();
     }
