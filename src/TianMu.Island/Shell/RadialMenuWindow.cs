@@ -57,6 +57,7 @@ internal sealed class RadialMenuWindow : Window
     private readonly Canvas _root;
     private readonly Canvas _ringLayer = new() { Width = Side, Height = Side };
     private readonly Path _outline;
+    private readonly Ellipse _plate;
     private readonly Ellipse _tip;
     private readonly Grid _hub;
     private readonly Ellipse _hubRing;
@@ -136,6 +137,22 @@ internal sealed class RadialMenuWindow : Window
         Canvas.SetLeft(shadow, _c.X - shadowR);
         Canvas.SetTop(shadow, _c.Y - shadowR);
         _root.Children.Add(shadow);
+
+        // 淺色底盤（宣紙色，像裱畫的襯紙）：扇區之間的縫露出淺色，盤面與後面的畫面一眼分開
+        double plateR = RadialGeometry.OuterRadius + 14;
+        _plate = new Ellipse
+        {
+            Width = plateR * 2, Height = plateR * 2, IsHitTestVisible = false,
+            Fill = Frozen(new RadialGradientBrush(Color.FromRgb(0xF1, 0xEB, 0xDD), Color.FromRgb(0xDD, 0xD3, 0xBE))
+            {
+                GradientOrigin = new Point(0.5, 0.35),
+            }),
+            Stroke = Frozen(Color.FromArgb(0xB3, 0xC8, 0xA8, 0x69)),
+            StrokeThickness = 1.5,
+        };
+        Canvas.SetLeft(_plate, _c.X - plateR);
+        Canvas.SetTop(_plate, _c.Y - plateR);
+        _root.Children.Add(_plate);
 
         // 幾乎透明的底盤：扇區之間的縫也接得到滑鼠與拖放
         var catcher = new Ellipse { Width = (RadialGeometry.OuterRadius + 34) * 2, Height = (RadialGeometry.OuterRadius + 34) * 2, Fill = Frozen(Color.FromArgb(1, 0, 0, 0)) };
@@ -653,6 +670,7 @@ internal sealed class RadialMenuWindow : Window
         Canvas.SetTop(_tip, _c.Y + ringR * Math.Sin(sweep) - _tip.Height / 2);
         _tip.Opacity = f is > 0 and < 1 ? 1 : 0;
         _hub.Opacity = RadialGeometry.HubOpacity(ms);
+        _plate.Opacity = RadialGeometry.HubOpacity(ms);
 
         double r1 = RadialGeometry.HubRadius + 6;
         for (int i = 0; i < n; i++)

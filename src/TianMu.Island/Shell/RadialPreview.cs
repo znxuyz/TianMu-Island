@@ -22,6 +22,9 @@ public sealed class RadialPreview : FrameworkElement
     private static readonly Brush HubFill = Frozen(new RadialGradientBrush(Color.FromRgb(0x2B, 0x21, 0x17), Color.FromRgb(0x0E, 0x0C, 0x0A)) { GradientOrigin = new Point(0.5, 0.4) });
     private static readonly Pen HubRing = Frozen(new Pen(Frozen(new SolidColorBrush(Color.FromArgb(0x8C, Gold.R, Gold.G, Gold.B))), 1));
 
+    private static readonly Brush Plate = Frozen(new RadialGradientBrush(Color.FromRgb(0xF1, 0xEB, 0xDD), Color.FromRgb(0xDD, 0xD3, 0xBE)) { GradientOrigin = new Point(0.5, 0.35) });
+    private static readonly Pen PlateEdge = Frozen(new Pen(Frozen(new SolidColorBrush(Color.FromArgb(0xB3, Gold.R, Gold.G, Gold.B))), 1.5));
+
     private readonly bool _animate = SystemParameters.ClientAreaAnimation;
     private TimeSpan? _start;
     private double _ms = RadialGeometry.SweepMs + 1000;
@@ -86,9 +89,15 @@ public sealed class RadialPreview : FrameworkElement
         double ms = _ms;
 
         double ringR = RadialGeometry.OuterRadius + 6;
-        double k = Math.Min(ActualWidth, ActualHeight) / (2 * (ringR + 6));
+        double k = Math.Min(ActualWidth, ActualHeight) / (2 * (RadialGeometry.OuterRadius + 16));
         var c = new Point(ActualWidth / 2 / k, ActualHeight / 2 / k);
         dc.PushTransform(new ScaleTransform(k, k));
+
+        // 淺色底盤（與真正的法陣盤相同）
+        double plateR = RadialGeometry.OuterRadius + 14;
+        dc.PushOpacity(RadialGeometry.HubOpacity(ms));
+        dc.DrawEllipse(Plate, PlateEdge, c, plateR, plateR);
+        dc.Pop();
 
         // 扇區：只畫到金線已經掃過的角度，從陣眼往外長
         double r1 = RadialGeometry.HubRadius + 6;
