@@ -3,6 +3,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using TianMu.Core;
 using TianMu.Island.Interop;
+using TianMu.Island.Settings;
 using TianMu.Island.Shell;
 using Forms = System.Windows.Forms;
 

@@ -145,7 +145,6 @@ internal sealed class RadialMenuWindow : Window
         Canvas.SetTop(catcher, _c.Y - catcher.Height / 2);
         _root.Children.Add(catcher);
 
-        double ringR = RadialGeometry.OuterRadius + 6;
         _outline = new Path
         {
             Stroke = new SolidColorBrush(Gold),
