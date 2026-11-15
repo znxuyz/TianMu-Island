@@ -49,9 +49,10 @@ public sealed class SettingsViewModel : Observable
         _showParticles = s.ShowParticles;
         _autoCheckUpdates = s.AutoCheckUpdates;
 
+        int index = 0;
         foreach (var d in catalog)
         {
-            var module = new ModuleRowViewModel(d, s, OnModuleChanged);
+            var module = new ModuleRowViewModel(d, s, OnModuleChanged) { Index = index++ };
             Modules.Add(module);
         }
 
@@ -257,6 +258,27 @@ public sealed class SettingsViewModel : Observable
 }
 
 /// <summary>設定面板中的一件法器。</summary>
+/// <summary>法器在設定裡的分類（左側「法器」底下的子分類）。</summary>
+public static class ModuleGroups
+{
+    public const string Media = "影音與通知";
+    public const string Focus = "專注與作息";
+    public const string Tools = "效率工具";
+    public const string SystemTools = "系統與磁碟";
+    public const string Other = "其他";
+
+    public static readonly IReadOnlyList<string> Order = [Media, Focus, Tools, SystemTools, Other];
+
+    public static string Of(string moduleId) => moduleId switch
+    {
+        "tianmu.music" or "tianmu.notify" => Media,
+        "tianmu.focus" or "tianmu.hydration" or "tianmu.todo" => Focus,
+        "tianmu.clipboard" or "tianmu.ocr" or "tianmu.shelf" or "tianmu.convert" => Tools,
+        "tianmu.system" or "tianmu.progress" or "tianmu.cleanse" or "tianmu.sense" or "tianmu.ai-quota" => SystemTools,
+        _ => Other,   // 開幕問候，以及外掛法器
+    };
+}
+
 public sealed class ModuleRowViewModel : Observable
 {
     private readonly Action _changed;
@@ -293,6 +315,14 @@ public sealed class ModuleRowViewModel : Observable
     public string Id { get; }
     public string Title { get; }
     public string Description { get; }
+
+    /// <summary>所屬分類（影音與通知、專注與作息……）與分類的排序、在原清單中的順序。</summary>
+    public string Group => ModuleGroups.Of(Id);
+    public int GroupOrder => Math.Max(0, ModuleGroups.Order.ToList().IndexOf(Group));
+    public int Index { get; init; }
+
+    /// <summary>搜尋用：名稱、說明與所有選項的文字。</summary>
+    public string SearchText => string.Join(" ", new[] { Title, Description, Group }.Concat(Options.SelectMany(o => new[] { o.Title, o.Description })));
     public bool EnabledAtStartup { get; }
     public ObservableCollection<OptionRowBase> Options { get; } = [];
 

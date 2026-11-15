@@ -125,7 +125,7 @@
         <Style x:Key="NavItem" TargetType="RadioButton">
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-            <Setter Property="Margin" Value="0,0,6,4" />
+            <Setter Property="Margin" Value="0,6,0,2" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
@@ -147,6 +147,42 @@
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="Bg" Property="Background" Value="{StaticResource GoldFillBrush}" />
                                 <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Label" Property="Foreground" Value="{StaticResource MiaoJinBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!-- 小標題：分類底下的子分類（例如「顯示與隱藏」） -->
+        <Style x:Key="SectionHeading" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource SerifFont}" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{StaticResource MiaoJinBrush}" />
+            <Setter Property="Opacity" Value="0.85" />
+            <Setter Property="Margin" Value="0,22,0,2" />
+        </Style>
+
+        <!-- 左側子分類：縮排、字小一號 -->
+        <Style x:Key="NavSubItem" TargetType="RadioButton">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Margin" Value="14,0,0,2" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bg" CornerRadius="8" Padding="12,6" Background="Transparent">
+                            <TextBlock x:Name="Label" Text="{TemplateBinding Content}" FontSize="13"
+                                       Foreground="{StaticResource TextTertiaryBrush}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{StaticResource HoverFillBrush}" />
+                                <Setter TargetName="Label" Property="Foreground" Value="{StaticResource YueBaiBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{StaticResource GoldFillBrush}" />
                                 <Setter TargetName="Label" Property="Foreground" Value="{StaticResource MiaoJinBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -202,36 +238,69 @@
             </StackPanel>
         </Grid>
 
-        <!-- ═══ 內容：左邊分類、右邊該類設定（視窗窄時分類改排在上方，見 ApplyLayout） ═══ -->
+        <!-- ═══ 內容：左側一列兩層分類（最上面是搜尋），右側只顯示選中的那一類 ═══ -->
         <Grid x:Name="Body" Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="NavColumn" Width="200" />
+                <ColumnDefinition x:Name="NavColumn" Width="220" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
 
-            <WrapPanel x:Name="NavPanel" Grid.RowSpan="2" Margin="20,12,8,20" Orientation="Vertical">
-                <RadioButton x:Name="NavGeneral" Style="{StaticResource NavItem}" GroupName="SettingsNav" Tag="一般"
-                             Content="一般" IsChecked="True" Checked="Nav_Checked" AutomationProperties.Name="一般" />
-                <RadioButton x:Name="NavLook" Style="{StaticResource NavItem}" GroupName="SettingsNav" Tag="外觀與手感"
-                             Content="外觀與手感" IsChecked="False" Checked="Nav_Checked" AutomationProperties.Name="外觀與手感" />
-                <RadioButton x:Name="NavRadial" Style="{StaticResource NavItem}" GroupName="SettingsNav" Tag="法陣盤"
-                             Content="法陣盤" IsChecked="False" Checked="Nav_Checked" AutomationProperties.Name="法陣盤" />
-                <RadioButton x:Name="NavModules" Style="{StaticResource NavItem}" GroupName="SettingsNav" Tag="法器"
-                             Content="法器" IsChecked="False" Checked="Nav_Checked" AutomationProperties.Name="法器" />
-                <RadioButton x:Name="NavUpdate" Style="{StaticResource NavItem}" GroupName="SettingsNav" Tag="更新"
-                             Content="更新" IsChecked="False" Checked="Nav_Checked" AutomationProperties.Name="更新" />
-                <RadioButton x:Name="NavAbout" Style="{StaticResource NavItem}" GroupName="SettingsNav" Tag="關於"
-                             Content="關於" IsChecked="False" Checked="Nav_Checked" AutomationProperties.Name="關於" />
-            </WrapPanel>
+            <Border BorderThickness="0,0,1,0" BorderBrush="{StaticResource HairlineBrush}">
+                <DockPanel Margin="16,8,12,16">
+                    <!-- 搜尋：打幾個字就列出所有相關設定 -->
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
+                        <TextBox x:Name="SearchBox" Style="{StaticResource Field}" TextChanged="Search_TextChanged"
+                                 AutomationProperties.Name="搜尋設定" Padding="34,7,10,7" />
+                        <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                                   FontFamily="{StaticResource IconFont}" FontSize="13" Text="&#xE721;"
+                                   Foreground="{StaticResource TextTertiaryBrush}" />
+                        <TextBlock x:Name="SearchHint" Margin="34,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                                   FontSize="13" Text="搜尋設定" Foreground="{StaticResource TextTertiaryBrush}" />
+                    </Grid>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+                        <StackPanel x:Name="NavPanel">
+                    <RadioButton x:Name="NavGeneral" Style="{StaticResource NavItem}" GroupName="SettingsNav" Tag="general"
+                                 Content="一般" IsChecked="True" Checked="Nav_Checked" AutomationProperties.Name="一般" />
+                    <RadioButton x:Name="NavGeneralStartup" Style="{StaticResource NavSubItem}" GroupName="SettingsNav" Tag="general/startup"
+                                 Content="啟動" Checked="Nav_Checked" AutomationProperties.Name="啟動" />
+                    <RadioButton x:Name="NavGeneralHide" Style="{StaticResource NavSubItem}" GroupName="SettingsNav" Tag="general/hide"
+                                 Content="顯示與隱藏" Checked="Nav_Checked" AutomationProperties.Name="顯示與隱藏" />
+                    <RadioButton x:Name="NavGeneralScreens" Style="{StaticResource NavSubItem}" GroupName="SettingsNav" Tag="general/screens"
+                                 Content="多螢幕" Checked="Nav_Checked" AutomationProperties.Name="多螢幕" />
+                    <RadioButton x:Name="NavLook" Style="{StaticResource NavItem}" GroupName="SettingsNav" Tag="look"
+                                 Content="外觀與手感" Checked="Nav_Checked" AutomationProperties.Name="外觀與手感" />
+                    <RadioButton x:Name="NavLookFont" Style="{StaticResource NavSubItem}" GroupName="SettingsNav" Tag="look/font"
+                                 Content="字體大小" Checked="Nav_Checked" AutomationProperties.Name="字體大小" />
+                    <RadioButton x:Name="NavLookLight" Style="{StaticResource NavSubItem}" GroupName="SettingsNav" Tag="look/light"
+                                 Content="光影" Checked="Nav_Checked" AutomationProperties.Name="光影" />
+                    <RadioButton x:Name="NavLookFeel" Style="{StaticResource NavSubItem}" GroupName="SettingsNav" Tag="look/feel"
+                                 Content="手感" Checked="Nav_Checked" AutomationProperties.Name="手感" />
+                    <RadioButton x:Name="NavRadial" Style="{StaticResource NavItem}" GroupName="SettingsNav" Tag="radial"
+                                 Content="法陣盤" Checked="Nav_Checked" AutomationProperties.Name="法陣盤" />
+                    <RadioButton x:Name="NavModules" Style="{StaticResource NavItem}" GroupName="SettingsNav" Tag="modules"
+                                 Content="法器" Checked="Nav_Checked" AutomationProperties.Name="法器" />
+                    <RadioButton x:Name="NavModMedia" Style="{StaticResource NavSubItem}" GroupName="SettingsNav" Tag="modules/影音與通知"
+                                 Content="影音與通知" Checked="Nav_Checked" AutomationProperties.Name="影音與通知" />
+                    <RadioButton x:Name="NavModFocus" Style="{StaticResource NavSubItem}" GroupName="SettingsNav" Tag="modules/專注與作息"
+                                 Content="專注與作息" Checked="Nav_Checked" AutomationProperties.Name="專注與作息" />
+                    <RadioButton x:Name="NavModTools" Style="{StaticResource NavSubItem}" GroupName="SettingsNav" Tag="modules/效率工具"
+                                 Content="效率工具" Checked="Nav_Checked" AutomationProperties.Name="效率工具" />
+                    <RadioButton x:Name="NavModSystem" Style="{StaticResource NavSubItem}" GroupName="SettingsNav" Tag="modules/系統與磁碟"
+                                 Content="系統與磁碟" Checked="Nav_Checked" AutomationProperties.Name="系統與磁碟" />
+                    <RadioButton x:Name="NavModOther" Style="{StaticResource NavSubItem}" GroupName="SettingsNav" Tag="modules/其他"
+                                 Content="其他" Checked="Nav_Checked" AutomationProperties.Name="其他" />
+                    <RadioButton x:Name="NavUpdate" Style="{StaticResource NavItem}" GroupName="SettingsNav" Tag="update"
+                                 Content="更新" Checked="Nav_Checked" AutomationProperties.Name="更新" />
+                    <RadioButton x:Name="NavAbout" Style="{StaticResource NavItem}" GroupName="SettingsNav" Tag="about"
+                                 Content="關於" Checked="Nav_Checked" AutomationProperties.Name="關於" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
 
-            <ScrollViewer x:Name="ContentScroll" Grid.Column="1" Grid.RowSpan="2" VerticalScrollBarVisibility="Auto"
+            <ScrollViewer x:Name="ContentScroll" Grid.Column="1" VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled" Focusable="False">
-                <StackPanel x:Name="ContentPanel" Margin="16,0,32,32" MaxWidth="900">
-
+                <StackPanel x:Name="ContentPanel" Margin="28,0,32,32" MaxWidth="900">
                 <!-- 需要重新啟動的提示 -->
                 <Border x:Name="RestartBanner" Visibility="Collapsed" Margin="0,16,0,0" Padding="16,12"
                         CornerRadius="14" Background="{StaticResource GoldFillBrush}"
@@ -248,10 +317,16 @@
                     </Grid>
                 </Border>
 
+                <!-- 搜尋時的提示 -->
+                <TextBlock x:Name="SearchEmpty" Visibility="Collapsed" Margin="0,24,0,0" FontSize="14"
+                           Foreground="{StaticResource TextSecondaryBrush}" Text="找不到相關的設定，換個說法試試看。" />
+
                 <!-- ═══ 一般 ═══ -->
                 <StackPanel x:Name="PageGeneral">
                     <TextBlock Style="{StaticResource PageTitle}" theme:Typo.SpacedText="一般" />
                     <TextBlock Style="{StaticResource PageDescription}" Text="開機、隱藏與多螢幕。" />
+                    <StackPanel Tag="startup">
+                        <TextBlock Style="{StaticResource SectionHeading}" Text="啟動" />
                 <Border Style="{StaticResource Row}">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -267,6 +342,9 @@
                                   IsChecked="{Binding StartWithWindows, Mode=TwoWay}" />
                     </Grid>
                 </Border>
+                    </StackPanel>
+                    <StackPanel Tag="hide">
+                        <TextBlock Style="{StaticResource SectionHeading}" Text="顯示與隱藏" />
                 <Border Style="{StaticResource Row}">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -289,21 +367,6 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Style="{StaticResource RowTitle}" Text="跟隨滑鼠所在的螢幕" />
-                            <TextBlock Style="{StaticResource RowDescription}" Text="接多個螢幕時，滑鼠在另一個螢幕停留一秒，天幕就跟過去。" />
-                        </StackPanel>
-                        <CheckBox Grid.Column="1" Style="{StaticResource TianMu.Toggle}" VerticalAlignment="Center"
-                                  Margin="16,0,0,0" AutomationProperties.Name="跟隨滑鼠所在的螢幕"
-                                  IsChecked="{Binding FollowCursorScreen, Mode=TwoWay}" />
-                    </Grid>
-                </Border>
-                <Border Style="{StaticResource Row}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel>
                             <TextBlock Style="{StaticResource RowTitle}" Text="智慧隱藏" />
                             <TextBlock Style="{StaticResource RowDescription}" Text="閒置時天幕縮成一條細線，幾乎不擋畫面；滑鼠碰到螢幕邊緣或移到它上面就變回來。" />
                         </StackPanel>
@@ -312,11 +375,32 @@
                                   IsChecked="{Binding SmartHide, Mode=TwoWay}" />
                     </Grid>
                 </Border>
+                    </StackPanel>
+                    <StackPanel Tag="screens">
+                        <TextBlock Style="{StaticResource SectionHeading}" Text="多螢幕" />
+                <Border Style="{StaticResource Row}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource RowTitle}" Text="跟隨滑鼠所在的螢幕" />
+                            <TextBlock Style="{StaticResource RowDescription}" Text="接多個螢幕時，滑鼠在另一個螢幕停留一秒，天幕就跟過去。" />
+                        </StackPanel>
+                        <CheckBox Grid.Column="1" Style="{StaticResource TianMu.Toggle}" VerticalAlignment="Center"
+                                  Margin="16,0,0,0" AutomationProperties.Name="跟隨滑鼠所在的螢幕"
+                                  IsChecked="{Binding FollowCursorScreen, Mode=TwoWay}" />
+                    </Grid>
+                </Border>
+                    </StackPanel>
                 </StackPanel>
                 <!-- ═══ 外觀與手感 ═══ -->
                 <StackPanel x:Name="PageLook" Visibility="Collapsed">
                     <TextBlock Style="{StaticResource PageTitle}" theme:Typo.SpacedText="外觀與手感" />
-                    <TextBlock Style="{StaticResource PageDescription}" Text="天幕的光影、粒子與伸縮的彈性，以及這個設定畫面的字體大小。" />
+                    <TextBlock Style="{StaticResource PageDescription}" Text="字體大小、天幕的光影與伸縮的手感。" />
+                    <StackPanel Tag="font">
+                        <TextBlock Style="{StaticResource SectionHeading}" Text="字體大小" />
                 <Border Style="{StaticResource Row}">
                     <StackPanel>
                         <TextBlock Style="{StaticResource RowTitle}" Text="設定畫面字體大小" />
@@ -333,21 +417,9 @@
                         </WrapPanel>
                     </StackPanel>
                 </Border>
-                <Border Style="{StaticResource Row}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel>
-                            <TextBlock Style="{StaticResource RowTitle}" Text="磁吸" />
-                            <TextBlock Style="{StaticResource RowDescription}" Text="滑鼠靠近時，天幕微微朝游標偏移，像被吸過去。" />
-                        </StackPanel>
-                        <CheckBox Grid.Column="1" Style="{StaticResource TianMu.Toggle}" VerticalAlignment="Center"
-                                  Margin="16,0,0,0" AutomationProperties.Name="磁吸"
-                                  IsChecked="{Binding Magnetic, Mode=TwoWay}" />
-                    </Grid>
-                </Border>
+                    </StackPanel>
+                    <StackPanel Tag="light">
+                        <TextBlock Style="{StaticResource SectionHeading}" Text="光影" />
                 <Border Style="{StaticResource Row}">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -379,18 +451,6 @@
                     </Grid>
                 </Border>
                 <Border Style="{StaticResource Row}">
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource RowTitle}" Text="彈簧手感" />
-                        <TextBlock Style="{StaticResource RowDescription}" Text="天幕伸縮時的彈性：靈動會像果凍般多晃一下，俐落則乾脆停下。" />
-                        <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
-                            <RadioButton Style="{StaticResource ChoiceChip}" GroupName="SpringFeel" Content="靈動"
-                                         IsChecked="{Binding SpringLively, Mode=TwoWay}" />
-                            <RadioButton Style="{StaticResource ChoiceChip}" GroupName="SpringFeel" Content="俐落"
-                                         IsChecked="{Binding SpringCrisp, Mode=TwoWay}" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-                <Border Style="{StaticResource Row}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -405,6 +465,37 @@
                                   IsChecked="{Binding FocusBarrier, Mode=TwoWay}" />
                     </Grid>
                 </Border>
+                    </StackPanel>
+                    <StackPanel Tag="feel">
+                        <TextBlock Style="{StaticResource SectionHeading}" Text="手感" />
+                <Border Style="{StaticResource Row}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource RowTitle}" Text="磁吸" />
+                            <TextBlock Style="{StaticResource RowDescription}" Text="滑鼠靠近時，天幕微微朝游標偏移，像被吸過去。" />
+                        </StackPanel>
+                        <CheckBox Grid.Column="1" Style="{StaticResource TianMu.Toggle}" VerticalAlignment="Center"
+                                  Margin="16,0,0,0" AutomationProperties.Name="磁吸"
+                                  IsChecked="{Binding Magnetic, Mode=TwoWay}" />
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource Row}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource RowTitle}" Text="彈簧手感" />
+                        <TextBlock Style="{StaticResource RowDescription}" Text="天幕伸縮時的彈性：靈動會像果凍般多晃一下，俐落則乾脆停下。" />
+                        <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
+                            <RadioButton Style="{StaticResource ChoiceChip}" GroupName="SpringFeel" Content="靈動"
+                                         IsChecked="{Binding SpringLively, Mode=TwoWay}" />
+                            <RadioButton Style="{StaticResource ChoiceChip}" GroupName="SpringFeel" Content="俐落"
+                                         IsChecked="{Binding SpringCrisp, Mode=TwoWay}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+                    </StackPanel>
                 </StackPanel>
                 <!-- ═══ 法陣盤 ═══ -->
                 <StackPanel x:Name="PageRadial" Visibility="Collapsed">
@@ -515,8 +606,17 @@
                 <StackPanel x:Name="PageModules" Visibility="Collapsed">
                     <TextBlock Style="{StaticResource PageTitle}" theme:Typo.SpacedText="法器" />
                     <TextBlock Style="{StaticResource PageDescription}" Text="每個法器都可以單獨關掉；關掉的功能不會載入。" />
-
-                <ItemsControl ItemsSource="{Binding Modules}" Focusable="False">
+                <ItemsControl x:Name="ModuleList" ItemsSource="{Binding Modules}" Focusable="False">
+                    <!-- 依類別分組（影音與通知、專注與作息……），類別名稱是小標題 -->
+                    <ItemsControl.GroupStyle>
+                        <GroupStyle>
+                            <GroupStyle.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Style="{StaticResource SectionHeading}" Text="{Binding Name}" />
+                                </DataTemplate>
+                            </GroupStyle.HeaderTemplate>
+                        </GroupStyle>
+                    </ItemsControl.GroupStyle>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Style="{StaticResource Row}">
@@ -625,7 +725,6 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
                 </StackPanel>
-                <!-- ═══ 更新 ═══ -->
                 <StackPanel x:Name="PageUpdate" Visibility="Collapsed">
                     <TextBlock Style="{StaticResource PageTitle}" theme:Typo.SpacedText="更新" />
                     <TextBlock Style="{StaticResource PageDescription}" Text="天幕島會從 GitHub 檢查新版。" />
@@ -683,7 +782,6 @@
                     </Grid>
                 </Border>
                 </StackPanel>
-                <!-- ═══ 關於 ═══ -->
                 <StackPanel x:Name="PageAbout" Visibility="Collapsed">
                     <TextBlock Style="{StaticResource PageTitle}" theme:Typo.SpacedText="關於" />
                     <TextBlock Style="{StaticResource PageDescription}" Text="原始碼、設定檔與這個小島的來歷。" />

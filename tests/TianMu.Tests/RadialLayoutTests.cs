@@ -152,3 +152,21 @@ public class RadialLayoutTests
         Assert.Equal(a0 - RadialGeometry.Gap, RadialGeometry.StartAngle(n), 9);
     }
 }
+
+public class SettingsGroupTests
+{
+    [Theory]
+    [InlineData("tianmu.music", "影音與通知")]
+    [InlineData("tianmu.notify", "影音與通知")]
+    [InlineData("tianmu.todo", "專注與作息")]
+    [InlineData("tianmu.convert", "效率工具")]
+    [InlineData("tianmu.cleanse", "系統與磁碟")]
+    [InlineData("tianmu.welcome", "其他")]
+    [InlineData("someone.plugin", "其他")]
+    public void Modules_land_in_their_group(string id, string group) =>
+        Assert.Equal(group, TianMu.Island.Shell.ModuleGroups.Of(id));
+
+    [Fact]
+    public void Every_group_is_in_the_sidebar_order() =>
+        Assert.Equal(5, TianMu.Island.Shell.ModuleGroups.Order.Distinct().Count());
+}

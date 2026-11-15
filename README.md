@@ -9,7 +9,13 @@
 ![platform](https://img.shields.io/badge/平台-Windows%2010%2F11-0a0a0f?style=flat-square)
 ![dotnet](https://img.shields.io/badge/.NET-10-E8C872?style=flat-square)
 ![ui](https://img.shields.io/badge/UI-WPF-0a0a0f?style=flat-square)
-![stage](https://img.shields.io/badge/版本-v0.15-C8A869?style=flat-square)
+![stage](https://img.shields.io/badge/版本-v0.18-C8A869?style=flat-square)
+
+### ▶ 三分鐘導覽
+
+[![天幕島導覽影片：點擊觀看](docs/media/tour-poster.jpg)](docs/media/tianmu-island-tour.mp4)
+
+<sub>點圖片觀看（3 分 21 秒，配樂＋字幕）· [字幕檔](docs/media/tianmu-island-tour.srt) · [下載最新版](https://github.com/znxuyz/TianMu-Island/releases/latest)</sub>
 
 </div>
 
