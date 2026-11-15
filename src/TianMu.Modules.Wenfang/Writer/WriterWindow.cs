@@ -70,7 +70,7 @@ internal sealed class WriterWindow : EditorWindow
         _findBox.KeyDown += (_, e) => { if (e.Key == Key.Enter) FindNext(); if (e.Key == Key.Escape) HideFind(); };
         _replaceBox.KeyDown += (_, e) => { if (e.Key == Key.Escape) HideFind(); };
         var findRow = Ui.Row(new TextBlock { Text = "尋找", Width = 40, VerticalAlignment = VerticalAlignment.Center, FontSize = 12 }, _findBox,
-            TextButton("下一個", FindNext), TextButton("關閉", HideFind));
+            TextButton("下一個", () => FindNext()), TextButton("關閉", HideFind));
         _replaceRow = Ui.Row(new TextBlock { Text = "取代為", Width = 40, VerticalAlignment = VerticalAlignment.Center, FontSize = 12 }, _replaceBox,
             TextButton("取代", ReplaceOne), TextButton("全部取代", ReplaceAll));
         _replaceRow.Margin = new Thickness(0, 4, 0, 0);
