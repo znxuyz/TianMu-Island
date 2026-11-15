@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    文房：天幕島內建的辦公三件套，不需要另外安裝。
+      · 墨書：文件（.docx／.rtf／.txt）
+      · 算籌：試算表（.xlsx／.csv），公式由 ClosedXML 計算
+      · 畫卷：簡報（.pptx），可全螢幕放映
+    檔案讀寫用 Microsoft 的 Open XML SDK（MIT）與 ClosedXML（MIT）；介面為天幕島自行撰寫。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>TianMu.Modules.Wenfang</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TianMu.Core\TianMu.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1" />
+    <PackageReference Include="ClosedXML" Version="0.105.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TianMu.Tests" />
+  </ItemGroup>
+
+</Project>

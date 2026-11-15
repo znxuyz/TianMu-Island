@@ -28,15 +28,19 @@ BASE = "0123456789:：·・、，。！？「」『』（）()…—-+/ v.%年�
 
 # 這些檔案裡的字串是比對規則（正規表示式、簡體關鍵字），不會顯示在畫面上
 NOT_UI = {"TrackTitleCleaner.cs", "ToastParsing.cs", "TodoTime.cs"}
+# 文房的編輯畫面用系統字型（微軟正黑體），只有印章與標題用宋體；那些字列在這裡，不必把整個專案的字都煉進來。
+# 專案根目錄的檔案（模組名稱、法陣盤標籤）仍照常收集。
+NOT_UI_DIRS = {"TianMu.Modules.Wenfang"}
+WENFANG_SERIF = "文房墨書算籌畫卷最近的檔案內文標題一二三新文件試算表簡報"
 
 CS_STRING = re.compile(r'"(?:[^"\\\n]|\\.)*"')
 XML_COMMENT = re.compile(r"<!--.*?-->", re.S)
 
 
 def collect() -> str:
-    chars = set(BASE)
+    chars = set(BASE) | set(WENFANG_SERIF)
     for path in SRC.rglob("*"):
-        if "obj" in path.parts or "bin" in path.parts:
+        if "obj" in path.parts or "bin" in path.parts or (NOT_UI_DIRS.intersection(path.parts) and path.parent.name not in NOT_UI_DIRS):
             continue
         if path.suffix == ".xaml":
             text = XML_COMMENT.sub("", path.read_text(encoding="utf-8"))

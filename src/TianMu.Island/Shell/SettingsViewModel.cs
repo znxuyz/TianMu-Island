@@ -273,7 +273,7 @@ public static class ModuleGroups
     {
         "tianmu.music" or "tianmu.notify" => Media,
         "tianmu.focus" or "tianmu.hydration" or "tianmu.todo" => Focus,
-        "tianmu.clipboard" or "tianmu.ocr" or "tianmu.shelf" or "tianmu.convert" => Tools,
+        "tianmu.clipboard" or "tianmu.ocr" or "tianmu.shelf" or "tianmu.convert" or "tianmu.wenfang" => Tools,
         "tianmu.system" or "tianmu.progress" or "tianmu.cleanse" or "tianmu.sense" or "tianmu.ai-quota" => SystemTools,
         _ => Other,   // 開幕問候，以及外掛法器
     };

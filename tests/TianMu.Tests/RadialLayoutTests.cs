@@ -161,6 +161,7 @@ public class SettingsGroupTests
     [InlineData("tianmu.todo", "專注與作息")]
     [InlineData("tianmu.convert", "效率工具")]
     [InlineData("tianmu.cleanse", "系統與磁碟")]
+    [InlineData("tianmu.wenfang", "效率工具")]
     [InlineData("tianmu.welcome", "其他")]
     [InlineData("someone.plugin", "其他")]
     public void Modules_land_in_their_group(string id, string group) =>
