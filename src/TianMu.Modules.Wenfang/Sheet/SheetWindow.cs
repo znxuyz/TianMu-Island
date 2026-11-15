@@ -9,6 +9,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using ClosedXML.Excel;
 
+using TianMu.Modules.Wenfang.Shared;
+
 namespace TianMu.Modules.Wenfang.Sheet;
 
 /// <summary>

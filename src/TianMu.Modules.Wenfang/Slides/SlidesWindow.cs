@@ -9,6 +9,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
+using TianMu.Modules.Wenfang.Shared;
+
 namespace TianMu.Modules.Wenfang.Slides;
 
 /// <summary>

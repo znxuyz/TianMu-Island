@@ -268,7 +268,7 @@ public static class DocxReader
         return run;
     }
 
-    private static bool On(OnOffType? v) => v is not null && (v.Val is null || v.Val.Value);
+    private static bool On(W.OnOffType? v) => v is not null && (v.Val is null || v.Val.Value);
 
     private static Color? HighlightColor(W.HighlightColorValues v)
     {

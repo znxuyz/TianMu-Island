@@ -7,6 +7,8 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
+using TianMu.Modules.Wenfang.Shared;
+
 namespace TianMu.Modules.Wenfang.Slides;
 
 /// <summary>把一張投影片畫成 WPF 元素（編輯畫面、縮圖、放映共用同一套畫法，看到的就是放映的樣子）。</summary>
