@@ -5,6 +5,7 @@ name: 出爐（Release）
 #   2. 推送 v 開頭的標籤（例如 v0.3.0）
 #   3. 在 Actions 頁面手動執行，輸入版本號（例如 0.3.0）
 # 會自動編譯、測試、打包 x64 與 ARM64 單檔 exe（附 .sha256 校驗檔）、建立標籤與 GitHub Release。
+# Release 頁面的說明取自 CHANGELOG.md 裡這一版的段落（出新版前先在 CHANGELOG.md 最上面寫好）。
 # 天幕島內建的自動更新就是讀取這裡發佈的檔案。
 on:
   push:
@@ -77,11 +78,15 @@ jobs:
           }
           Get-ChildItem release
 
+      - name: 更新說明（從 CHANGELOG.md 取這一版）
+        if: steps.ver.outputs.skip != 'true'
+        run: python scripts/release-notes.py ${{ steps.ver.outputs.tag }} release-notes.md
+
       - uses: softprops/action-gh-release@v2
         if: steps.ver.outputs.skip != 'true'
         with:
           tag_name: ${{ steps.ver.outputs.tag }}
           target_commitish: ${{ github.sha }}
           name: 天幕島 ${{ steps.ver.outputs.tag }}
-          generate_release_notes: true
+          body_path: release-notes.md
           files: release/*

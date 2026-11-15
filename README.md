@@ -15,7 +15,7 @@
 
 [![天幕島導覽影片：點擊觀看](docs/media/tour-poster.jpg)](https://cdn.jsdelivr.net/gh/znxuyz/TianMu-Island@main/docs/media/tianmu-island-tour-720p.mp4)
 
-<sub>點圖片就能在瀏覽器裡播放（3 分 21 秒，配樂＋字幕）· [高畫質 1080p 下載](https://github.com/znxuyz/TianMu-Island/raw/main/docs/media/tianmu-island-tour.mp4) · [字幕檔](docs/media/tianmu-island-tour.srt) · [下載天幕島](https://github.com/znxuyz/TianMu-Island/releases/latest)</sub>
+<sub>點圖片就能在瀏覽器裡播放（3 分 21 秒，配樂＋字幕）· [更新紀錄](CHANGELOG.md) · [高畫質 1080p 下載](https://github.com/znxuyz/TianMu-Island/raw/main/docs/media/tianmu-island-tour.mp4) · [字幕檔](docs/media/tianmu-island-tour.srt) · [下載天幕島](https://github.com/znxuyz/TianMu-Island/releases/latest)</sub>
 
 </div>
 

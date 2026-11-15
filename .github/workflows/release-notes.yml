@@ -1,0 +1,31 @@
+name: 補寫更新說明（Release Notes）
+
+# 手動執行：把 CHANGELOG.md 裡每個版本的段落，寫進對應的 GitHub Release 頁面。
+# 只改 Release 的說明文字，不動檔案、標籤或版本。之後的新版本由「出爐」流程自動寫入，不需要再跑這個。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  notes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 依 CHANGELOG.md 產生各版本說明
+        run: python3 scripts/release-notes.py --all notes
+
+      - name: 寫進 Release 頁面
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for f in notes/*.md; do
+            tag="$(basename "$f" .md)"
+            if gh release view "$tag" >/dev/null 2>&1; then
+              gh release edit "$tag" --notes-file "$f" && echo "已更新 $tag"
+            else
+              echo "略過 $tag（沒有這個 Release）"
+            fi
+          done
