@@ -67,3 +67,49 @@ public class AppNameTests
     public void Guess_names(string aumid, string expected) =>
         Assert.Equal(expected, aumid.Length == 0 ? AppNames.Resolve(aumid) : AppNames.Guess(aumid));
 }
+
+public class NoticeFormatTests
+{
+    [Fact]
+    public void Full_shows_title_and_body()
+    {
+        var (t, b) = NoticeFormat.Format(NoticeDisplay.Full, "阿哲", "晚上七點吃飯？", "LINE");
+        Assert.Equal("阿哲", t);
+        Assert.Equal("晚上七點吃飯？", b);
+    }
+
+    [Fact]
+    public void Sender_names_who_sent_it_but_hides_the_message()
+    {
+        var (t, b) = NoticeFormat.Format(NoticeDisplay.Sender, "阿哲", "晚上七點吃飯？", "LINE");
+        Assert.Equal("阿哲 傳來一則訊息", t);
+        Assert.DoesNotContain("吃飯", b);
+    }
+
+    [Fact]
+    public void Sender_mode_never_leaks_titles_of_non_chat_apps()
+    {
+        // 下載完成這類通知的標題本身就是內容，只說是哪個 App
+        var (t, b) = NoticeFormat.Format(NoticeDisplay.Sender, "下載完成：報價單.pdf", "", "Edge");
+        Assert.Equal("Edge 有一則新通知", t);
+        Assert.DoesNotContain("報價單", t + b);
+    }
+
+    [Fact]
+    public void App_mode_hides_the_sender_too()
+    {
+        var (t, b) = NoticeFormat.Format(NoticeDisplay.App, "阿哲", "晚上七點吃飯？", "LINE");
+        Assert.Equal("LINE 有一則新訊息", t);
+        Assert.DoesNotContain("阿哲", t + b);
+    }
+
+    [Theory]
+    [InlineData("full", NoticeDisplay.Full)]
+    [InlineData("sender", NoticeDisplay.Sender)]
+    [InlineData("app", NoticeDisplay.App)]
+    [InlineData("whatever", NoticeDisplay.Full)]
+    public void Parses_setting_values(string value, NoticeDisplay expected) => Assert.Equal(expected, NoticeFormat.Parse(value));
+
+    [Fact]
+    public void Browser_chats_count_as_messaging() => Assert.True(NoticeFormat.IsMessaging("web.whatsapp.com"));
+}

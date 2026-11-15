@@ -21,6 +21,7 @@ public sealed class NotifyModule : IIslandModule, IDescribedModule
     public const string OtpOption = "otp";
     public const string FocusQuietOption = "focusQuiet";
     public const string TakeOverOption = "takeOver";
+    public const string DisplayChoice = "display";
 
     private const int InboxSize = 3;
     private static readonly TimeSpan NoticeDuration = TimeSpan.FromSeconds(5);
@@ -56,7 +57,15 @@ public sealed class NotifyModule : IIslandModule, IDescribedModule
         new(ShowAllOption, "顯示所有通知", "每則新通知都從天幕滑出（關閉後只記在「傳音」頁）。", true),
         new(OtpOption, "驗證碼一鍵複製", "辨識通知裡的驗證碼，大字顯示並可一鍵複製。", true),
         new(FocusQuietOption, "專注時只顯示驗證碼", "番茄鐘進行時，一般通知不打擾，驗證碼照常顯示。", true),
-        new(TakeOverOption, "接管系統通知", "天幕顯示後，從 Windows 通知中心移除那一則，避免出現兩次（需要允許通知存取）。", false),
+        new(TakeOverOption, "接管系統通知", "天幕顯示後，從 Windows 通知中心移除那一則，避免出現兩次（需要允許通知存取）。搭配在 Windows 設定裡關掉各 App 的「通知橫幅」，通知就只會出現在天幕。", false),
+    ];
+
+    public IReadOnlyList<ModuleChoice> Choices { get; } =
+    [
+        new(DisplayChoice, "跳出時顯示多少",
+            "完整：標題與內容。只顯示誰：「阿哲 傳來一則訊息」。只顯示 App：「LINE 有一則新訊息」。分享螢幕或旁邊有人時比較安心；點開「傳音」頁仍可看完整內容。",
+            [new(NoticeFormat.FullValue, "完整內容"), new(NoticeFormat.SenderValue, "只顯示誰"), new(NoticeFormat.AppValue, "只顯示 App")],
+            NoticeFormat.FullValue),
     ];
 
     public async Task InitializeAsync(IIslandHost host, CancellationToken cancellationToken)
@@ -146,10 +155,12 @@ public sealed class NotifyModule : IIslandModule, IDescribedModule
         if (!settings.GetBool(ShowAllOption, true)) return;
         if (_host.IsFocusMode && settings.GetBool(FocusQuietOption, true)) return;
 
-        _noticeVm.Title = notice.Title;
-        _noticeVm.Body = notice.Body;
+        var mode = NoticeFormat.Parse(settings.GetString(DisplayChoice, NoticeFormat.FullValue));
+        var (title, body) = NoticeFormat.Format(mode, notice.Title, notice.Body, source);
+        _noticeVm.Title = title;
+        _noticeVm.Body = body;
         _noticeVm.Source = $"{source} · 剛剛";
-        _host.Post(new IslandActivity(Id, notice.Title, notice.Body, ActivityPriority.Normal, NoticeDuration)
+        _host.Post(new IslandActivity(Id, title, body, ActivityPriority.Normal, NoticeDuration)
         {
             ExpandedView = _noticeView,
         });
