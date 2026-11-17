@@ -72,16 +72,21 @@ public partial class IslandWindow
 
     /// <summary>
     /// 收合內容依方向切換：橫式顯示呼吸點＋時鐘；直式顯示上下排列的呼吸點與時鐘。
-    /// 法器的收合畫面（例如音樂）在直式時轉 90 度，像側邊的書籤一樣直讀。
+    /// 法器的收合畫面（例如音樂）在直式時整排轉 90 度，排進直條；裡面的文字再轉回正立、改成直書，由上往下讀。
     /// </summary>
     private void UpdateCompactOrientation(bool hasModuleView)
     {
         bool vertical = IsVertical;
         DefaultCompact.Visibility = !hasModuleView && !vertical ? Visibility.Visible : Visibility.Collapsed;
         VerticalCompact.Visibility = !hasModuleView && vertical ? Visibility.Visible : Visibility.Collapsed;
-        CompactHost.LayoutTransform = vertical
-            ? new RotateTransform(_dock == DockPosition.Right ? 90 : -90)
-            : Transform.Identity;
+        double angle = _dock == DockPosition.Right ? 90 : -90;
+        CompactHost.LayoutTransform = vertical ? new RotateTransform(angle) : Transform.Identity;
+
+        if (CompactHost.Content is DependencyObject view)
+        {
+            if (vertical) UprightText.Apply(view, angle);
+            else UprightText.Restore(view);
+        }
     }
 
     private void MoveWindow(Point origin, bool animate)
