@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    問道：天幕島自己的 AI 轉接。直接連到各家的免費 API（Gemini、Groq、OpenRouter 免費模型、Mistral、本機 Ollama），
+    不經過任何中間平台；可以手動選模型，也可以依問題性質自動挑選，額度用完自動換下一家。
+    金鑰存在 Windows 認證管理員；對話紀錄只存在本機。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>TianMu.Modules.Wendao</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TianMu.Core\TianMu.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TianMu.Tests" />
+  </ItemGroup>
+
+</Project>

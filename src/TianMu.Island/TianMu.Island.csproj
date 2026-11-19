@@ -52,6 +52,7 @@
     <ProjectReference Include="..\TianMu.Modules.Office\TianMu.Modules.Office.csproj" />
     <ProjectReference Include="..\TianMu.Modules.Cleanse\TianMu.Modules.Cleanse.csproj" />
     <ProjectReference Include="..\TianMu.Modules.Wenfang\TianMu.Modules.Wenfang.csproj" />
+    <ProjectReference Include="..\TianMu.Modules.Wendao\TianMu.Modules.Wendao.csproj" />
   </ItemGroup>
 
 </Project>

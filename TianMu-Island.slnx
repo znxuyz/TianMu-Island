@@ -13,6 +13,7 @@
     <Project Path="src/TianMu.Modules.Office/TianMu.Modules.Office.csproj" />
     <Project Path="src/TianMu.Modules.Cleanse/TianMu.Modules.Cleanse.csproj" />
     <Project Path="src/TianMu.Modules.Wenfang/TianMu.Modules.Wenfang.csproj" />
+    <Project Path="src/TianMu.Modules.Wendao/TianMu.Modules.Wendao.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/TianMu.Tests/TianMu.Tests.csproj" />
