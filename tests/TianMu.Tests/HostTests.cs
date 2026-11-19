@@ -19,6 +19,7 @@ public sealed class SettingsStoreTests : IDisposable
 
         Assert.False(s.StartWithWindows);
         Assert.True(s.AutoCheckUpdates);
+        Assert.False(s.AutoInstallUpdates);      // 自動安裝要使用者自己打開
         Assert.True(s.IsModuleEnabled("anything"));
     }
 
@@ -75,6 +76,16 @@ public sealed class SettingsStoreTests : IDisposable
 
 public class UpdateServiceTests
 {
+    [Fact]
+    public void Daily_check_is_due_after_a_day_or_when_the_clock_went_backwards()
+    {
+        var now = new DateTimeOffset(2026, 11, 19, 12, 0, 0, TimeSpan.FromHours(8));
+        Assert.True(UpdateCoordinator.IsDue(null, now));
+        Assert.False(UpdateCoordinator.IsDue(now.AddHours(-3), now));
+        Assert.True(UpdateCoordinator.IsDue(now.AddHours(-21), now));
+        Assert.True(UpdateCoordinator.IsDue(now.AddDays(2), now));
+    }
+
     private const string Prefix = "https://github.com/znxuyz/TianMu-Island/releases/download/";
 
     [Theory]

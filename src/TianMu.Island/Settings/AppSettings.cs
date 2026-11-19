@@ -49,6 +49,9 @@ public sealed class AppSettings
     /// <summary>自動檢查新版本（每天最多一次）。</summary>
     public bool AutoCheckUpdates { get; set; } = true;
 
+    /// <summary>自動更新：每天檢查，有新版就自動下載、驗證並安裝（等你沒在用編輯視窗時才重新啟動）。</summary>
+    public bool AutoInstallUpdates { get; set; }
+
     /// <summary>上次檢查更新的時間。</summary>
     public DateTimeOffset? LastUpdateCheck { get; set; }
 

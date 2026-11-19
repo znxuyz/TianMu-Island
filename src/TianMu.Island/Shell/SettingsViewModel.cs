@@ -34,6 +34,7 @@ public sealed class SettingsViewModel : Observable
     private bool _startWithWindows;
     private bool _showParticles;
     private bool _autoCheckUpdates;
+    private bool _autoInstallUpdates;
     private bool _needsRestart;
     private string? _notice;
 
@@ -48,6 +49,7 @@ public sealed class SettingsViewModel : Observable
         _startWithWindows = s.StartWithWindows;
         _showParticles = s.ShowParticles;
         _autoCheckUpdates = s.AutoCheckUpdates;
+        _autoInstallUpdates = s.AutoInstallUpdates;
 
         int index = 0;
         foreach (var d in catalog)
@@ -217,6 +219,16 @@ public sealed class SettingsViewModel : Observable
         {
             if (!Set(ref _autoCheckUpdates, value)) return;
             _store.Update(s => s.AutoCheckUpdates = value);
+        }
+    }
+
+    public bool AutoInstallUpdates
+    {
+        get => _autoInstallUpdates;
+        set
+        {
+            if (!Set(ref _autoInstallUpdates, value)) return;
+            _store.Update(s => s.AutoInstallUpdates = value);
         }
     }
 

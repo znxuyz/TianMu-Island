@@ -25,6 +25,8 @@ public sealed class UpdateCoordinator(SettingsStore settings, IIslandHost island
 {
     private static readonly TimeSpan AutoCheckInterval = TimeSpan.FromHours(20);
     private static readonly TimeSpan StartupDelay = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan Tick = TimeSpan.FromHours(1);
+    private static readonly TimeSpan InstallNotice = TimeSpan.FromSeconds(8);
 
     private readonly UpdateService _service = new();
     private CancellationTokenSource? _cts;
@@ -50,29 +52,77 @@ public sealed class UpdateCoordinator(SettingsStore settings, IIslandHost island
         _ => UpdateService.CanSelfUpdate ? "尚未檢查" : "開發版不自動更新",
     };
 
-    /// <summary>啟動後延遲一段時間，若到了檢查週期就安靜地查一次。</summary>
+    /// <summary>
+    /// 背景巡查：啟動 30 秒後開始，之後每小時看一次。距離上次查詢滿一天就向 GitHub 查新版；
+    /// 開了「自動更新」時直接下載安裝，否則只在天幕上提醒。天幕島連開好幾天也照樣每天查。
+    /// </summary>
     public async Task AutoCheckAsync()
     {
-        try
+        try { await Task.Delay(StartupDelay); }
+        catch (Exception) { return; }
+        bool notified = false;
+        while (true)
         {
-            await Task.Delay(StartupDelay);
-            var s = settings.Snapshot();
-            if (!s.AutoCheckUpdates || !UpdateService.CanSelfUpdate) return;
-            if (s.LastUpdateCheck is { } last && DateTimeOffset.Now - last < AutoCheckInterval) return;
-
-            await CheckAsync(manual: false);
-
-            if (Stage == UpdateStage.Available && Available is { } release &&
-                settings.Snapshot().SkippedVersion != release.Tag)
+            try
             {
-                island.Post(new IslandActivity("tianmu.update", $"新版本 {release.Tag}",
-                    "右鍵系統匣圖示，或開啟設定即可更新", ActivityPriority.Normal, TimeSpan.FromSeconds(6)));
+                var s = settings.Snapshot();
+                if ((s.AutoCheckUpdates || s.AutoInstallUpdates) && UpdateService.CanSelfUpdate)
+                {
+                    if (IsDue(s.LastUpdateCheck, DateTimeOffset.Now) && Stage is UpdateStage.Idle or UpdateStage.UpToDate or UpdateStage.Failed)
+                    {
+                        await CheckAsync(manual: false);
+                        notified = false;
+                    }
+
+                    if (Stage == UpdateStage.Available && Available is { } release && settings.Snapshot().SkippedVersion != release.Tag)
+                    {
+                        if (settings.Snapshot().AutoInstallUpdates) await TryAutoInstallAsync(release);
+                        else if (!notified)
+                        {
+                            island.Post(new IslandActivity("tianmu.update", $"新版本 {release.Tag}",
+                                "右鍵系統匣圖示，或開啟設定即可更新", ActivityPriority.Normal, TimeSpan.FromSeconds(6)));
+                            notified = true;
+                        }
+                    }
+                }
             }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[天幕] 自動檢查更新失敗：{ex.Message}");
+            }
+            await Task.Delay(Tick);
         }
-        catch (Exception ex)
+    }
+
+    /// <summary>距離上次查詢是否已滿一個週期（純邏輯，方便測試）。</summary>
+    public static bool IsDue(DateTimeOffset? last, DateTimeOffset now) =>
+        last is not { } l || now - l >= AutoCheckInterval || l > now;   // 時鐘被調回去也重新查
+
+    /// <summary>
+    /// 自動安裝：重新啟動會關掉所有視窗，所以只在你沒開著文房、問道、設定這類視窗，
+    /// 也不在專注中時才進行；否則等下一個小時再看。
+    /// </summary>
+    private async Task TryAutoInstallAsync(ReleaseInfo release)
+    {
+        if (!IsSafeToRestart()) return;
+        island.Post(new IslandActivity("tianmu.update", $"自動更新到 {release.Tag}",
+            "下載並驗證後，天幕會自動重新啟動", ActivityPriority.Normal, InstallNotice));
+        await Task.Delay(InstallNotice);
+        if (!IsSafeToRestart() || Stage != UpdateStage.Available) return;
+        await InstallAsync();
+    }
+
+    /// <summary>有沒有你正在用的視窗（出現在工作列上的都算），或正在專注。</summary>
+    private static bool IsSafeToRestart()
+    {
+        if (Application.Current is not { } app) return false;
+        foreach (Window w in app.Windows)
         {
-            Debug.WriteLine($"[天幕] 自動檢查更新失敗：{ex.Message}");
+            if (!w.IsVisible) continue;
+            if (w.ShowInTaskbar) return false;                           // 文房、問道、設定、洗髓⋯
+            if (w is TianMu.Island.Shell.FocusBarrierWindow) return false;   // 專注結界亮著
         }
+        return true;
     }
 
     /// <summary>查詢新版本。手動查詢時失敗會顯示原因；自動查詢失敗則保持安靜。</summary>

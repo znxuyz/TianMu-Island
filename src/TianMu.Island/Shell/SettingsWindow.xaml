@@ -774,11 +774,26 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel>
                             <TextBlock Style="{StaticResource RowTitle}" Text="自動檢查更新" />
-                            <TextBlock Style="{StaticResource RowDescription}" Text="每天最多向 GitHub 查詢一次；有新版時天幕會提醒你，不會自動安裝。" />
+                            <TextBlock Style="{StaticResource RowDescription}" Text="每天向 GitHub 查詢一次；有新版時天幕會提醒你，要不要裝由你決定。" />
                         </StackPanel>
                         <CheckBox Grid.Column="1" Style="{StaticResource TianMu.Toggle}" VerticalAlignment="Center"
                                   Margin="16,0,0,0" AutomationProperties.Name="自動檢查更新"
                                   IsChecked="{Binding AutoCheckUpdates, Mode=TwoWay}" />
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource Row}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource RowTitle}" Text="自動更新" />
+                            <TextBlock Style="{StaticResource RowDescription}" Text="開啟後每天自動檢查，有新版就自動下載、比對 SHA-256 校驗碼後安裝並重新啟動。為了不打斷你，開著文房、問道、設定等視窗或正在專注時會先等，閒下來才更新；略過的版本不會裝。" />
+                        </StackPanel>
+                        <CheckBox Grid.Column="1" Style="{StaticResource TianMu.Toggle}" VerticalAlignment="Center"
+                                  Margin="16,0,0,0" AutomationProperties.Name="自動更新"
+                                  IsChecked="{Binding AutoInstallUpdates, Mode=TwoWay}" />
                     </Grid>
                 </Border>
                 </StackPanel>
