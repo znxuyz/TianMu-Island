@@ -49,26 +49,39 @@ public class IslandShapeTests
     [Theory]
     [InlineData(DockPosition.TopLeft)]
     [InlineData(DockPosition.TopRight)]
-    public void Corner_shape_fills_the_screen_corner_and_rounds_the_inner_corner(DockPosition dock)
+    [InlineData(DockPosition.BottomLeft)]
+    [InlineData(DockPosition.BottomRight)]
+    public void Corner_square_fills_the_screen_corner_and_rounds_the_inner_corner(DockPosition dock)
     {
-        double w = 212, h = 44, r = 22;
+        double w = 88, h = 88, r = 34;
         double inner = IslandShape.CornerInnerRadius(w, h);
-        Assert.True(inner > r);
-
         var shape = IslandShape.Build(w, h, r, Flare, DockLayout.Edges(dock), inner);
-        bool left = dock == DockPosition.TopLeft;
-        double cornerX = left ? 0.5 : w - 0.5, innerX = left ? w - 3 : 3;
+        bool left = dock is DockPosition.TopLeft or DockPosition.BottomLeft;
+        bool top = dock is DockPosition.TopLeft or DockPosition.TopRight;
+        double cx = left ? 0.5 : w - 0.5, cy = top ? 0.5 : h - 0.5;
+        double ix = left ? w - 2 : 2, iy = top ? h - 2 : 2;
 
-        Assert.True(shape.FillContains(new Point(cornerX, 0.5)));      // 螢幕角落是滿的
-        Assert.False(shape.FillContains(new Point(innerX, h - 3)));    // 朝內的角是大圓弧
-        Assert.True(shape.FillContains(new Point(cornerX, h + 4)));    // 沿側邊往下延伸
-        Assert.True(shape.FillContains(new Point(left ? w + 4 : -4, 0.5))); // 沿上緣往外延伸
+        Assert.True(shape.FillContains(new Point(cx, cy)));                       // 螢幕角落是滿的
+        Assert.False(shape.FillContains(new Point(ix, iy)));                      // 朝內的角是圓弧
+        Assert.True(shape.FillContains(new Point(cx, top ? h + 4 : -4)));         // 沿側邊延伸
+        Assert.True(shape.FillContains(new Point(left ? w + 4 : -4, cy)));        // 沿上／下緣延伸
+    }
+
+    [Fact]
+    public void Bottom_edge_flares_along_the_bottom()
+    {
+        var shape = IslandShape.Build(W, H, R, Flare, DockEdges.Bottom);
+        Assert.Equal(-Flare, shape.Bounds.Left, 3);
+        Assert.Equal(W + Flare, shape.Bounds.Right, 3);
+        Assert.True(shape.FillContains(new Point(-Flare / 2, H - 0.5)));
+        Assert.False(shape.FillContains(new Point(-Flare / 2, 0.5)));
     }
 
     [Fact]
     public void Corner_inner_radius_is_large_when_compact_and_restrained_when_expanded()
     {
         Assert.InRange(IslandShape.CornerInnerRadius(212, 44), 28, 34);
+        Assert.InRange(IslandShape.CornerInnerRadius(88, 88), 20, 34);    // 正方形留空間給文字
         Assert.InRange(IslandShape.CornerInnerRadius(500, 200), 40, 56);
     }
 

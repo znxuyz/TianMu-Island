@@ -83,7 +83,7 @@ public partial class IslandWindow
             direction = new Vector(0, 1);
             endCenter = new Point(w / 2, h - r1);
         }
-        else if (_dock == DockPosition.TopRight)
+        else if (DockLayout.IsRightCorner(_dock))
         {
             direction = new Vector(-1, 0);
             endCenter = new Point(r1, h / 2);

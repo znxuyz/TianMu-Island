@@ -19,6 +19,9 @@ public sealed class AppSettings
     [JsonConverter(typeof(JsonStringEnumConverter<DockPosition>))]
     public DockPosition Dock { get; set; } = DockPosition.TopCenter;
 
+    /// <summary>停在某條邊時，沿著那條邊的位置（0 = 左／上端，1 = 右／下端；預設正中）。</summary>
+    public double DockOffset { get; set; } = 0.5;
+
     /// <summary>停靠在哪一個螢幕（裝置名稱，例如 \\.\DISPLAY2）；找不到時用主螢幕。</summary>
     public string? DockScreen { get; set; }
 

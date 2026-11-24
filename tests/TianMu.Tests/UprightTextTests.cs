@@ -35,6 +35,45 @@ public class UprightTextTests
         });
     }
 
+    [Fact]
+    public void Corner_square_stacks_the_row_and_wraps_text_then_restores()
+    {
+        RunOnSta(() =>
+        {
+            var row = new Grid { Margin = new Thickness(6, 0, 13, 0) };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            var icon = new Border { Width = 24, Height = 24 };
+            var title = new TextBlock { Text = "早安台股", FontSize = 12, TextTrimming = TextTrimming.CharacterEllipsis };
+            var bars = new Border { Width = 30, Height = 16 };
+            Grid.SetColumn(title, 1);
+            Grid.SetColumn(bars, 2);
+            row.Children.Add(icon);
+            row.Children.Add(title);
+            row.Children.Add(bars);
+            var root = new Grid();
+            root.Children.Add(row);
+
+            SquareLayout.Apply(root);
+            Assert.Empty(row.ColumnDefinitions);
+            Assert.Equal(3, row.RowDefinitions.Count);
+            Assert.Equal(1, Grid.GetRow(title));
+            Assert.Equal(2, Grid.GetRow(bars));
+            Assert.Equal(TextWrapping.Wrap, title.TextWrapping);
+            Assert.Equal(TextAlignment.Center, title.TextAlignment);
+
+            SquareLayout.Apply(root);                       // 重複套用不影響還原
+            SquareLayout.Restore(root);
+            Assert.Equal(3, row.ColumnDefinitions.Count);
+            Assert.Empty(row.RowDefinitions);
+            Assert.Equal(1, Grid.GetColumn(title));
+            Assert.Equal(0, Grid.GetRow(title));
+            Assert.Equal(new Thickness(6, 0, 13, 0), row.Margin);
+            Assert.Equal(TextWrapping.NoWrap, title.TextWrapping);
+        });
+    }
+
     private static void RunOnSta(Action action)
     {
         ExceptionDispatchInfo? error = null;

@@ -9,51 +9,69 @@ public class DockLayoutTests
     private static readonly Rect Screen = new(0, 0, 1920, 1080);
 
     [Theory]
-    [InlineData(100, 50, DockPosition.TopLeft)]
+    [InlineData(60, 40, DockPosition.TopLeft)]
+    [InlineData(1880, 60, DockPosition.TopRight)]
+    [InlineData(50, 1050, DockPosition.BottomLeft)]
+    [InlineData(1900, 1000, DockPosition.BottomRight)]
     [InlineData(960, 10, DockPosition.TopCenter)]
-    [InlineData(1800, 200, DockPosition.TopRight)]
-    [InlineData(100, 600, DockPosition.Left)]
-    [InlineData(1500, 900, DockPosition.Right)]
-    public void Choose_by_drop_area(double x, double y, DockPosition expected) =>
+    [InlineData(500, 30, DockPosition.TopCenter)]
+    [InlineData(700, 1070, DockPosition.Bottom)]
+    [InlineData(10, 600, DockPosition.Left)]
+    [InlineData(1900, 300, DockPosition.Right)]
+    [InlineData(1500, 900, DockPosition.Bottom)]
+    public void Snaps_to_the_nearest_edge_or_corner(double x, double y, DockPosition expected) =>
         Assert.Equal(expected, DockLayout.Choose(new Point(x, y), Screen));
+
+    [Fact]
+    public void Remembers_where_along_the_edge_it_was_dropped()
+    {
+        var (dock, offset) = DockLayout.Place(new Point(480, 5), Screen);
+        Assert.Equal(DockPosition.TopCenter, dock);
+        Assert.Equal(0.25, offset, 3);
+
+        (dock, offset) = DockLayout.Place(new Point(1915, 270), Screen);
+        Assert.Equal(DockPosition.Right, dock);
+        Assert.Equal(0.25, offset, 3);
+    }
 
     [Fact]
     public void Choose_works_on_secondary_monitor()
     {
         var right = new Rect(1920, 0, 2560, 1440);
         Assert.Equal(DockPosition.TopLeft, DockLayout.Choose(new Point(2000, 20), right));
-    }
-
-    [Fact]
-    public void Top_docks_are_flush_with_the_edge()
-    {
-        Assert.True(DockLayout.IsFlushTop(DockPosition.TopCenter));
-        Assert.True(DockLayout.IsFlushTop(DockPosition.TopRight));
-        Assert.False(DockLayout.IsFlushTop(DockPosition.Left));
+        Assert.Equal(DockPosition.Left, DockLayout.Choose(new Point(1930, 700), right));
     }
 
     [Fact]
     public void Corners_touch_two_edges_and_sides_are_vertical()
     {
         Assert.Equal(DockEdges.Top | DockEdges.Left, DockLayout.Edges(DockPosition.TopLeft));
-        Assert.Equal(DockEdges.Top | DockEdges.Right, DockLayout.Edges(DockPosition.TopRight));
+        Assert.Equal(DockEdges.Bottom | DockEdges.Right, DockLayout.Edges(DockPosition.BottomRight));
         Assert.Equal(DockEdges.Top, DockLayout.Edges(DockPosition.TopCenter));
-        Assert.Equal(DockEdges.Left, DockLayout.Edges(DockPosition.Left));
+        Assert.Equal(DockEdges.Bottom, DockLayout.Edges(DockPosition.Bottom));
         Assert.True(DockLayout.IsVertical(DockPosition.Right));
-        Assert.False(DockLayout.IsVertical(DockPosition.TopRight));
+        Assert.False(DockLayout.IsVertical(DockPosition.Bottom));
+        Assert.True(DockLayout.IsCorner(DockPosition.BottomLeft));
+        Assert.False(DockLayout.IsCorner(DockPosition.Bottom));
+        Assert.True(DockLayout.IsFlushTop(DockPosition.TopRight));
+        Assert.False(DockLayout.IsFlushTop(DockPosition.Bottom));
     }
 
     [Fact]
-    public void Window_origin_per_dock()
+    public void Window_origin_follows_the_saved_position_and_stays_on_screen()
     {
         var work = new Rect(0, 0, 1920, 1040);
         var size = new Size(640, 260);
 
         Assert.Equal(new Point(640, 0), DockLayout.WindowOrigin(DockPosition.TopCenter, Screen, work, size));
+        Assert.Equal(new Point(160, 0), DockLayout.WindowOrigin(DockPosition.TopCenter, 0.25, Screen, work, size));
+        Assert.Equal(new Point(0, 0), DockLayout.WindowOrigin(DockPosition.TopCenter, 0.02, Screen, work, size));      // 不跑出螢幕
+        Assert.Equal(new Point(1280, 0), DockLayout.WindowOrigin(DockPosition.TopCenter, 1, Screen, work, size));
         Assert.Equal(new Point(0, 0), DockLayout.WindowOrigin(DockPosition.TopLeft, Screen, work, size));
-        Assert.Equal(new Point(1280, 0), DockLayout.WindowOrigin(DockPosition.TopRight, Screen, work, size));
-        Assert.Equal(new Point(0, 390), DockLayout.WindowOrigin(DockPosition.Left, Screen, work, size));
-        Assert.Equal(new Point(1280, 390), DockLayout.WindowOrigin(DockPosition.Right, Screen, work, size));
+        Assert.Equal(new Point(1280, 780), DockLayout.WindowOrigin(DockPosition.BottomRight, Screen, work, size));
+        Assert.Equal(new Point(640, 780), DockLayout.WindowOrigin(DockPosition.Bottom, Screen, work, size));         // 在工作列上方
+        Assert.Equal(new Point(0, 410), DockLayout.WindowOrigin(DockPosition.Left, Screen, work, size));
+        Assert.Equal(new Point(1280, 780), DockLayout.WindowOrigin(DockPosition.Right, 0.99, Screen, work, size));
     }
 }
 

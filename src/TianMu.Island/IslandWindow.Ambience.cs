@@ -144,7 +144,7 @@ public partial class IslandWindow
 
             // 只沿著貼住的邊滑動，不離開螢幕邊緣（嵌在角落時不動）
             var edges = CurrentEdges;
-            if (edges.HasFlag(DockEdges.Top)) offset.Y = 0;
+            if (edges.HasFlag(DockEdges.Top) || edges.HasFlag(DockEdges.Bottom)) offset.Y = 0;
             if (edges.HasFlag(DockEdges.Left) || edges.HasFlag(DockEdges.Right)) offset.X = 0;
         }
 

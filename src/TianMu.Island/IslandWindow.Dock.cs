@@ -11,10 +11,10 @@ namespace TianMu.Island;
 /// <summary>
 /// 天幕本體的第三部分：停靠位置、貼邊形體、拖曳移動。
 ///
-///   · 正中：貼齊螢幕上緣，兩肩以曲面向兩側延伸，像瀏海一樣長在螢幕上
-///   · 左上、右上：嵌在螢幕角落，同時貼住上緣與側邊，兩道曲面分別沿上緣與側邊延伸
-///   · 左側、右側：直式，貼住側邊，曲面沿側邊上下延伸
-///   · 按住膠囊拖動即可移動，放開後吸附到最近的位置，並記住是哪一個螢幕
+///   · 上緣、下緣：橫式，可停在邊上任何一點，兩肩以曲面沿邊緣延伸，像瀏海一樣長在螢幕上
+///   · 左緣、右緣：直式，可停在任何高度，曲面沿側邊上下延伸
+///   · 四個角落：嵌在角落、收合成正方形，內容改成上下堆疊
+///   · 按住膠囊拖動即可移動，放開後貼到最近的邊（靠近角落就嵌進角落），並記住是哪一個螢幕
 /// </summary>
 public partial class IslandWindow
 {
@@ -41,7 +41,7 @@ public partial class IslandWindow
     /// <summary>依設定把天幕放到對應螢幕的停靠位置。</summary>
     private void ApplyDock(bool animate = false)
     {
-        var (dock, screenName) = _settings.Read(s => (s.Dock, s.DockScreen));
+        var (dock, offset, screenName) = _settings.Read(s => (s.Dock, s.DockOffset, s.DockScreen));
         _dock = dock;
 
         // 多螢幕跟隨時，以滑鼠所在的螢幕為準；否則用使用者拖曳時選定的螢幕
@@ -54,7 +54,7 @@ public partial class IslandWindow
         (Width, Height) = DockLayout.IsVertical(dock) ? (540.0, 420.0) : (640.0, 260.0);
 
         var (bounds, workArea) = (ToDip(screen.Bounds), ToDip(screen.WorkingArea));
-        var origin = DockLayout.WindowOrigin(dock, bounds, workArea, new Size(Width, Height));
+        var origin = DockLayout.WindowOrigin(dock, offset, bounds, workArea, new Size(Width, Height));
 
         var (h, v, margin) = DockLayout.CapsuleAlignment(dock);
         foreach (var element in new FrameworkElement[] { Capsule, EdgeRun })
@@ -73,12 +73,13 @@ public partial class IslandWindow
     /// <summary>
     /// 收合內容依方向切換：橫式顯示呼吸點＋時鐘；直式顯示上下排列的呼吸點與時鐘。
     /// 法器的收合畫面（例如音樂）在直式時整排轉 90 度，排進直條；裡面的文字再轉回正立、改成直書，由上往下讀。
+    /// 嵌在角落時是正方形：內容改成上下堆疊、文字置中換行。
     /// </summary>
     private void UpdateCompactOrientation(bool hasModuleView)
     {
-        bool vertical = IsVertical;
-        DefaultCompact.Visibility = !hasModuleView && !vertical ? Visibility.Visible : Visibility.Collapsed;
-        VerticalCompact.Visibility = !hasModuleView && vertical ? Visibility.Visible : Visibility.Collapsed;
+        bool vertical = IsVertical, square = IsCorner;
+        DefaultCompact.Visibility = !hasModuleView && !vertical && !square ? Visibility.Visible : Visibility.Collapsed;
+        VerticalCompact.Visibility = !hasModuleView && (vertical || square) ? Visibility.Visible : Visibility.Collapsed;
         double angle = _dock == DockPosition.Right ? 90 : -90;
         CompactHost.LayoutTransform = vertical ? new RotateTransform(angle) : Transform.Identity;
 
@@ -86,6 +87,8 @@ public partial class IslandWindow
         {
             if (vertical) UprightText.Apply(view, angle);
             else UprightText.Restore(view);
+            if (square) SquareLayout.Apply(view);
+            else SquareLayout.Restore(view);
         }
     }
 
@@ -177,11 +180,12 @@ public partial class IslandWindow
         var point = new System.Drawing.Point(cursor.X, cursor.Y);
         var screen = Forms.Screen.FromPoint(point);
         var b = screen.Bounds;
-        var dock = DockLayout.Choose(new Point(cursor.X, cursor.Y), new Rect(b.Left, b.Top, b.Width, b.Height));
+        var (dock, offset) = DockLayout.Place(new Point(cursor.X, cursor.Y), new Rect(b.Left, b.Top, b.Width, b.Height));
 
         _settings.Update(s =>
         {
             s.Dock = dock;
+            s.DockOffset = offset;
             s.DockScreen = screen.DeviceName;
         });
         _followScreenName = null; // 使用者親手放的位置優先

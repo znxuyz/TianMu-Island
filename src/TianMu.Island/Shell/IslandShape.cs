@@ -10,7 +10,9 @@ public static class IslandShape
     public static double CornerInnerRadius(double w, double h)
     {
         double s = Math.Min(w, h);
-        // 收合時圓弧幾乎佔滿厚度，像一片扇；展開後收斂一些，免得裁到面板內容
+        // 收合的正方形：朝內的角用適中的圓弧，留空間給文字
+        if (Math.Max(w, h) / Math.Max(1, s) < 1.3 && s <= 120) return s * 0.32;
+        // 細長的收合形體：圓弧幾乎佔滿厚度，像一片扇；展開後收斂一些，免得裁到面板內容
         return s <= 60 ? s * 0.7 : Math.Min(s * 0.45, 56);
     }
 
@@ -34,8 +36,8 @@ public static class IslandShape
 
         r = Math.Max(0, Math.Min(r, Math.Min(w, h) / 2));
         const double k = 0.6; // 控制點位置，越大曲面越柔、延伸得越開
-        bool top = edges.HasFlag(DockEdges.Top), left = edges.HasFlag(DockEdges.Left), right = edges.HasFlag(DockEdges.Right);
-        bool corner = top && (left || right);
+        bool top = edges.HasFlag(DockEdges.Top), left = edges.HasFlag(DockEdges.Left), right = edges.HasFlag(DockEdges.Right), bottom = edges.HasFlag(DockEdges.Bottom);
+        bool corner = (top || bottom) && (left || right);
         double ri = innerRadius < 0 || !corner ? r : Math.Clamp(innerRadius, 0, Math.Max(0, Math.Min(w, h) - 8));
         double rMax = Math.Max(r, ri); // 曲面延伸時要讓出相鄰圓角的空間
 
@@ -44,8 +46,8 @@ public static class IslandShape
         {
             (new Point(0, 0), new Vector(0, -1), new Vector(1, 0), left, top, h, w),
             (new Point(w, 0), new Vector(1, 0), new Vector(0, 1), top, right, w, h),
-            (new Point(w, h), new Vector(0, 1), new Vector(-1, 0), right, false, h, w),
-            (new Point(0, h), new Vector(-1, 0), new Vector(0, -1), false, left, w, h),
+            (new Point(w, h), new Vector(0, 1), new Vector(-1, 0), right, bottom, h, w),
+            (new Point(0, h), new Vector(-1, 0), new Vector(0, -1), bottom, left, w, h),
         };
 
         var geometry = new StreamGeometry();

@@ -30,8 +30,8 @@ public partial class IslandWindow : Window, IIslandHost
     internal static readonly Size SmallSize = new(240, 34);
     internal static readonly Size MediumSize = new(420, 108);
     internal static readonly Size LargeSize = new(500, 200);
-    /// <summary>嵌在角落時的收合形體：較厚，才放得下朝內的大圓弧。</summary>
-    internal static readonly Size CornerSmallSize = new(212, 44);
+    /// <summary>嵌在角落時的收合形體：正方形，內容上下堆疊。</summary>
+    internal static readonly Size CornerSmallSize = new(88, 88);   // 嵌在角落：正方形
     private const double PressScale = 0.94;
     private const double MaxCornerRadius = 34;
     private static readonly TimeSpan AutoCollapseDelay = TimeSpan.FromSeconds(3);
