@@ -14,8 +14,11 @@ public static class SquareLayout
     private sealed record ChildState(int Column, HorizontalAlignment H, VerticalAlignment V, Thickness Margin);
     private sealed record TextState(TextWrapping Wrapping, TextAlignment Alignment, TextTrimming Trimming, double MaxHeight, HorizontalAlignment H, Thickness Margin);
 
+    // 同一個文字框可能同時是格子裡的一格、又是要換行的文字，所以兩種狀態分開存
     private static readonly DependencyProperty StateProperty =
         DependencyProperty.RegisterAttached("State", typeof(object), typeof(SquareLayout));
+    private static readonly DependencyProperty TextStateProperty =
+        DependencyProperty.RegisterAttached("TextState", typeof(object), typeof(SquareLayout));
 
     public static void Apply(DependencyObject root)
     {
@@ -41,8 +44,8 @@ public static class SquareLayout
 
         foreach (var tb in TextBlocks(root))
         {
-            if (tb.GetValue(StateProperty) is TextState) continue;
-            tb.SetValue(StateProperty, new TextState(tb.TextWrapping, tb.TextAlignment, tb.TextTrimming, tb.MaxHeight, tb.HorizontalAlignment, tb.Margin));
+            if (tb.GetValue(TextStateProperty) is TextState) continue;
+            tb.SetValue(TextStateProperty, new TextState(tb.TextWrapping, tb.TextAlignment, tb.TextTrimming, tb.MaxHeight, tb.HorizontalAlignment, tb.Margin));
             tb.TextWrapping = TextWrapping.Wrap;
             tb.TextAlignment = TextAlignment.Center;
             tb.TextTrimming = TextTrimming.CharacterEllipsis;
@@ -74,14 +77,13 @@ public static class SquareLayout
 
         foreach (var tb in TextBlocks(root))
         {
-            if (tb.GetValue(StateProperty) is not TextState t) continue;
+            if (tb.GetValue(TextStateProperty) is not TextState t) continue;
             tb.TextWrapping = t.Wrapping;
             tb.TextAlignment = t.Alignment;
             tb.TextTrimming = t.Trimming;
             tb.MaxHeight = t.MaxHeight;
             tb.HorizontalAlignment = t.H;
-            tb.Margin = t.Margin;
-            tb.ClearValue(StateProperty);
+            tb.ClearValue(TextStateProperty);
         }
     }
 
