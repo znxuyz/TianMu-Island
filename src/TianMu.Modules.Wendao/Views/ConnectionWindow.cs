@@ -105,9 +105,9 @@ internal sealed class ConnectionWindow : Window
             if (id == ImageGenerator.CloudflareId)
             {
                 string key = row.Box.Password;
-                bool ok = ImageGenerator.SplitCloudflareKey(key) is not null;
-                row.Status.Text = key.Length == 0 ? "未設定（可不設）" : ok ? "✓ 已儲存，畫圖時使用" : "格式要是「帳戶ID:權杖」";
-                row.Status.Foreground = key.Length == 0 ? Look.Tertiary : ok ? Look.Gold : Look.Cinnabar;
+                bool valid = ImageGenerator.SplitCloudflareKey(key) is not null;
+                row.Status.Text = key.Length == 0 ? "未設定（可不設）" : valid ? "✓ 已儲存，畫圖時使用" : "格式要是「帳戶ID:權杖」";
+                row.Status.Foreground = key.Length == 0 ? Look.Tertiary : valid ? Look.Gold : Look.Cinnabar;
                 continue;
             }
             string text = report.TryGetValue(id, out var r) ? r : "";
