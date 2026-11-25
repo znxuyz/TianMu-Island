@@ -3,6 +3,7 @@ using System.Text.Json;
 using TianMu.Modules.Wendao.Ai;
 using TianMu.Modules.Wendao.Store;
 using TianMu.Modules.Wendao.Views;
+using TianMu.Modules.Wendao.Web;
 
 namespace TianMu.Tests;
 
@@ -168,5 +169,27 @@ public class WendaoTests
         Assert.Null(ctx[1].Image);
         Assert.Equal("新的對話", Conversation.TitleFrom("  \n "));
         Assert.Equal(25, Conversation.TitleFrom(new string('字', 40)).Length);
+    }
+
+    [Fact]
+    public void Web_mode_picks_a_site_by_task()
+    {
+        Assert.Equal("claude", WebSites.For(TaskKind.Code).Id);
+        Assert.Equal("gemini", WebSites.For(TaskKind.Vision).Id);
+        Assert.Equal("gemini", WebSites.For(TaskKind.LongText).Id);
+        Assert.Equal("chatgpt", WebSites.For(TaskKind.Quick).Id);
+        Assert.All(WebSites.All, s => Assert.StartsWith("https://", s.Url));
+        Assert.Equal(WebSites.All.Count, WebSites.All.Select(s => s.Id).Distinct().Count());
+    }
+
+    [Fact]
+    public void Fill_script_embeds_the_question_safely()
+    {
+        const string question = "他說\"好\"</script>\n第二行";
+        string js = WebSites.FillScript(question);
+        string arg = js[(js.LastIndexOf("})(", StringComparison.Ordinal) + 3)..].Trim().TrimEnd(';').TrimEnd(')');
+        Assert.Equal(question, JsonSerializer.Deserialize<string>(arg));   // 原封不動地傳進網頁
+        Assert.DoesNotContain("</script>", js);                            // 不會原樣出現在腳本裡
+        Assert.DoesNotContain(".click()", js);                             // 只填字，不按送出
     }
 }

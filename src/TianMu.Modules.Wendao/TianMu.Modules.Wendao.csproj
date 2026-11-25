@@ -2,7 +2,7 @@
 
   <!--
     問道：天幕島自己的 AI 轉接。直接連到各家的免費 API（Gemini、Groq、OpenRouter 免費模型、Mistral、本機 Ollama），
-    不經過任何中間平台；可以手動選模型，也可以依問題性質自動挑選，額度用完自動換下一家。
+    不經過任何中間平台；也有「網頁模式」直接開各家官網、用自己的帳號登入。可以手動選模型，也可以依問題性質自動挑選，額度用完自動換下一家。
     金鑰存在 Windows 認證管理員；對話紀錄只存在本機。
   -->
   <PropertyGroup>
@@ -14,6 +14,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TianMu.Core\TianMu.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 網頁模式：內嵌 Edge WebView2 開各家 AI 的官方網站（Windows 10/11 已內建執行環境） -->
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
   </ItemGroup>
 
   <ItemGroup>

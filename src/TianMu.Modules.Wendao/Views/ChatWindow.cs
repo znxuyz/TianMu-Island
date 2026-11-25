@@ -1,11 +1,13 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using TianMu.Modules.Wendao.Ai;
 using TianMu.Modules.Wendao.Store;
+using TianMu.Modules.Wendao.Web;
 
 namespace TianMu.Modules.Wendao.Views;
 
@@ -37,9 +39,18 @@ internal sealed class ChatWindow : Window
     private string _attachmentMime = "image/png";
     private CancellationTokenSource? _cts;
 
+    // 兩種模式：API（各家免費金鑰，天幕島自己轉接）／網頁（嵌入各家官網，用自己的帳號）
+    private readonly string? _dataDir;
+    private readonly DockPanel _apiPane = new();
+    private readonly List<UIElement> _apiOnly = [];
+    private readonly Button _modeApi, _modeWeb;
+    private WebPane? _web;
+    private readonly Grid _rightHost = new();
+
     public ChatWindow(Conductor conductor, string? dataDir)
     {
         _conductor = conductor;
+        _dataDir = dataDir;
         _history = new History(dataDir);
         _conversations = _history.LoadAll();
         Title = "問道";
@@ -62,6 +73,15 @@ internal sealed class ChatWindow : Window
         brand.Children.Add(new TextBlock { Text = "問道", FontFamily = Look.Serif, FontSize = 20, FontWeight = FontWeights.Bold, Foreground = Look.Gold, Margin = new Thickness(10, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center });
         DockPanel.SetDock(brand, Dock.Top);
         left.Children.Add(brand);
+        var modes = new UniformGrid { Columns = 2, Margin = new Thickness(14, 0, 14, 12) };
+        _modeApi = Look.Button("API 模式", () => SetMode(web: false), tip: "用各家的免費金鑰，天幕島自動挑模型、額度用完換下一家");
+        _modeWeb = Look.Button("網頁模式", () => SetMode(web: true), tip: "直接開各家 AI 的官方網站，用你自己的帳號登入，不需要金鑰");
+        _modeApi.Margin = new Thickness(0, 0, 3, 0);
+        _modeWeb.Margin = new Thickness(3, 0, 0, 0);
+        modes.Children.Add(_modeApi);
+        modes.Children.Add(_modeWeb);
+        DockPanel.SetDock(modes, Dock.Top);
+        left.Children.Add(modes);
         var newChat = Look.Button("＋ 新的對話", NewConversation, primary: true);
         newChat.Margin = new Thickness(14, 0, 14, 10);
         DockPanel.SetDock(newChat, Dock.Top);
@@ -72,11 +92,13 @@ internal sealed class ChatWindow : Window
         left.Children.Add(connect);
         _list.SelectionChanged += (_, _) => { if (_list.SelectedItem is ListBoxItem { Tag: Conversation c } && c != _current) Show(c); };
         left.Children.Add(_list);
+        _apiOnly.AddRange([newChat, connect, _list]);
         root.Children.Add(left);
 
         // ── 右：模型列＋訊息＋輸入 ──
-        var right = new DockPanel();
-        Grid.SetColumn(right, 1);
+        var right = _apiPane;
+        Grid.SetColumn(_rightHost, 1);
+        _rightHost.Children.Add(right);
         var top = new DockPanel { Margin = new Thickness(20, 12, 20, 10) };
         top.Children.Add(new TextBlock { Text = "模型", Foreground = Look.Secondary, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) });
         top.Children.Add(_model);
@@ -113,13 +135,55 @@ internal sealed class ChatWindow : Window
 
         _scroll.Content = _messages;
         right.Children.Add(_scroll);
-        root.Children.Add(right);
+        root.Children.Add(_rightHost);
         Content = root;
 
         AllowDrop = true;
         Drop += OnDrop;
-        Loaded += async (_, _) => { RefreshList(); ShowEmpty(); _input.Focus(); await ReloadModelsAsync(); };
+        Loaded += async (_, _) =>
+        {
+            RefreshList();
+            ShowEmpty();
+            SetMode(web: ReadMode() == "web");
+            _input.Focus();
+            await ReloadModelsAsync();
+        };
         Closed += (_, _) => _cts?.Cancel();
+    }
+
+    // ═══════════════════════ 模式 ═══════════════════════
+
+    private void SetMode(bool web)
+    {
+        if (web && _web is null)
+        {
+            _web = new WebPane(_dataDir);
+            _rightHost.Children.Add(_web);
+        }
+        if (web && _web is not null && _input.Text.Trim().Length > 0 && _web.Draft.Trim().Length == 0) _web.Draft = _input.Text;   // 打到一半的問題帶過去
+        _apiPane.Visibility = web ? Visibility.Collapsed : Visibility.Visible;
+        if (_web is not null) _web.Visibility = web ? Visibility.Visible : Visibility.Collapsed;
+        foreach (var e in _apiOnly) e.Visibility = web ? Visibility.Collapsed : Visibility.Visible;
+        _modeApi.Background = web ? Brushes.Transparent : Look.Gold;
+        _modeApi.Foreground = web ? Look.Moon : Look.Lacquer;
+        _modeWeb.Background = web ? Look.Gold : Brushes.Transparent;
+        _modeWeb.Foreground = web ? Look.Lacquer : Look.Moon;
+        SaveMode(web ? "web" : "api");
+    }
+
+    private string ModeFile => Path.Combine(_dataDir ?? Path.GetTempPath(), "mode.txt");
+
+    private string ReadMode()
+    {
+        try { return _dataDir is not null && File.Exists(ModeFile) ? File.ReadAllText(ModeFile).Trim() : "api"; }
+        catch (IOException) { return "api"; }
+    }
+
+    private void SaveMode(string mode)
+    {
+        if (_dataDir is null) return;
+        try { Directory.CreateDirectory(_dataDir); File.WriteAllText(ModeFile, mode); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
     }
 
     // ═══════════════════════ 模型 ═══════════════════════
