@@ -40,6 +40,8 @@ internal sealed class ChatWindow : Window
     ];
 
     private readonly Conductor _conductor;
+    private readonly ImageGenerator _painter;
+    private readonly ComboBox _aspect = new() { Width = 120, FontSize = 12.5, Height = 28, VerticalContentAlignment = VerticalAlignment.Center, ToolTip = "生成圖片的比例" };
     private readonly History _history;
     private readonly List<Conversation> _conversations;
     private Conversation _current = new();
@@ -65,9 +67,10 @@ internal sealed class ChatWindow : Window
     private WebPane? _web;
     private readonly Grid _rightHost = new();
 
-    public ChatWindow(Conductor conductor, string? dataDir)
+    public ChatWindow(Conductor conductor, ImageGenerator painter, string? dataDir)
     {
         _conductor = conductor;
+        _painter = painter;
         _dataDir = dataDir;
         _history = new History(dataDir);
         _conversations = _history.LoadAll();
@@ -122,6 +125,12 @@ internal sealed class ChatWindow : Window
         export.Padding = new Thickness(10, 3, 10, 3);
         DockPanel.SetDock(export, Dock.Right);
         top.Children.Add(export);
+        foreach (var (label, tag) in new[] { ("圖片 方形 1:1", "1:1"), ("圖片 橫式 16:9", "16:9"), ("圖片 直式 9:16", "9:16"), ("圖片 4:3", "4:3") })
+            _aspect.Items.Add(new ComboBoxItem { Content = label, Tag = tag });
+        _aspect.SelectedIndex = 0;
+        _aspect.Margin = new Thickness(0, 0, 8, 0);
+        DockPanel.SetDock(_aspect, Dock.Right);
+        top.Children.Add(_aspect);
         top.Children.Add(new TextBlock { Text = "模型", Foreground = Look.Secondary, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) });
         top.Children.Add(_model);
         top.Children.Add(_route);
@@ -137,6 +146,8 @@ internal sealed class ChatWindow : Window
         actions.Children.Add(Look.Button("附件", PickFiles, tip: "附圖片或檔案：PDF、Word、Excel、PowerPoint、文字、程式碼（也可以直接拖進來或貼上圖片）"));
         actions.Children.Add(new Border { Height = 6 });
         actions.Children.Add(Look.Button("語音", Dictate, tip: "用說的輸入（Windows 語音輸入，Win+H）"));
+        actions.Children.Add(new Border { Height = 6 });
+        actions.Children.Add(Look.Button("畫圖", () => _ = DrawAsync(), tip: "把輸入框的描述畫成圖片（免費：Pollinations → Cloudflare → Gemini；比例在右上角選）"));
         actions.Children.Add(new Border { Height = 6 });
         actions.Children.Add(_send);
         actions.Children.Add(_stop);
@@ -319,8 +330,11 @@ internal sealed class ChatWindow : Window
         _messages.Children.Clear();
         foreach (var m in c.Messages)
         {
-            var view = new MessageView(m.Role, m.Text, m.Role == Role.Assistant ? m.Model : null, _images.GetValueOrDefault(m), m.HadImage, m.Files);
-            if (m.Role == Role.Assistant) AttachActions(view, m);
+            byte[]? picture = _images.GetValueOrDefault(m);
+            if (picture is null && m.ImagePath is { } path && File.Exists(path)) { try { picture = File.ReadAllBytes(path); } catch (IOException) { } }
+            var view = new MessageView(m.Role, m.Text, m.Role == Role.Assistant ? m.Model : null, picture, m.HadImage, m.Files, largeImage: m.ImagePath is not null);
+            if (m.Role == Role.Assistant && m.ImagePath is not null && picture is not null) AttachImageActions(view, m, picture);
+            else if (m.Role == Role.Assistant && !m.ImageOnly) AttachActions(view, m);
             _messages.Children.Add(view);
         }
         _scroll.ScrollToEnd();
@@ -522,7 +536,7 @@ internal sealed class ChatWindow : Window
         for (int i = history.Count - 1; i >= 0; i--)
         {
             var m = history[i];
-            if (m.Alternate) continue;                         // 比較時的其他答案不放進上下文
+            if (m.Alternate || m.ImageOnly) continue;          // 比較時的其他答案、畫圖不放進上下文
             string text = m.Prompt;
             if (text.Length > budget && list.Count > 0) break;
             budget -= text.Length;
@@ -530,6 +544,124 @@ internal sealed class ChatWindow : Window
         }
         list.Insert(0, new ChatMessage(Role.System, SystemPrompt));
         return list;
+    }
+
+    // ═══════════════════════ 畫圖 ═══════════════════════
+
+    private const string PromptWriter =
+        "你是 AI 繪圖提示詞專家。把使用者的畫面描述翻譯並擴寫成一段適合 FLUX／Stable Diffusion 的英文提示詞：" +
+        "主體、場景、構圖、光線、風格、細節，用逗號分隔。只輸出提示詞本身，不要任何說明或引號。";
+
+    /// <summary>把輸入框的描述畫成圖：能用聊天模型時先改寫成英文提示詞（畫得比較準），再交給生圖服務。</summary>
+    private async Task DrawAsync()
+    {
+        string idea = _input.Text.Trim();
+        if (idea.Length == 0) { _route.Text = "先在輸入框描述想畫什麼，再按「畫圖」"; _input.Focus(); return; }
+        if (_cts is not null) return;
+        string aspect = (_aspect.SelectedItem as ComboBoxItem)?.Tag as string ?? "1:1";
+        var (w, h) = ImageGenerator.SizeOf(aspect);
+
+        if (_current.Messages.Count == 0)
+        {
+            _messages.Children.Clear();
+            _current.Title = Conversation.TitleFrom("畫：" + idea);
+            _conversations.Insert(0, _current);
+        }
+        var ask = new SavedMessage { Role = Role.User, Text = "畫：" + idea, ImageOnly = true };
+        _current.Messages.Add(ask);
+        _messages.Children.Add(new MessageView(Role.User, ask.Text, null));
+        _input.Clear();
+        var reply = new MessageView(Role.Assistant, "", "準備中…");
+        _messages.Children.Add(reply);
+        _scroll.ScrollToEnd();
+
+        _cts = new CancellationTokenSource();
+        _send.Visibility = Visibility.Collapsed;
+        _stop.Visibility = Visibility.Visible;
+        try
+        {
+            string prompt = await WritePromptAsync(idea, reply, _cts.Token);
+            var image = await _painter.GenerateAsync(prompt, w, h, s => Dispatcher.Invoke(() => reply.SetHeader(s)), _cts.Token);
+            string? path = _history.SaveImage(image.Bytes, image.Mime);
+            var answer = new SavedMessage { Role = Role.Assistant, ImageOnly = true, ImagePath = path, Model = image.Source, Text = "提示詞：" + prompt };
+            _current.Messages.Add(answer);
+            int index = _messages.Children.IndexOf(reply);
+            var view = new MessageView(Role.Assistant, answer.Text, $"{image.Source} · {aspect}", image.Bytes, largeImage: true);
+            _messages.Children[index] = view;
+            AttachImageActions(view, answer, image.Bytes);
+        }
+        catch (OperationCanceledException) { reply.SetHeader("已停止", warn: true); }
+        catch (Exception e)
+        {
+            reply.SetHeader("沒有畫出來", warn: true);
+            reply.SetText(e.Message);
+            if (_input.Text.Length == 0) _input.Text = idea;
+        }
+        finally
+        {
+            _cts.Dispose();
+            _cts = null;
+            _send.Visibility = Visibility.Visible;
+            _stop.Visibility = Visibility.Collapsed;
+        }
+        _current.Updated = DateTime.Now;
+        _history.Save(_current);
+        RefreshList();
+        _scroll.ScrollToEnd();
+    }
+
+    /// <summary>請最快的聊天模型把描述改寫成英文提示詞；沒有可用模型或失敗時就用原文。</summary>
+    private async Task<string> WritePromptAsync(string idea, MessageView reply, CancellationToken ct)
+    {
+        var candidates = _conductor.Candidates(Conductor.Auto, TaskKind.Quick).Take(3).ToList();
+        if (candidates.Count == 0) return idea;
+        reply.SetHeader("把描述整理成繪圖提示詞…");
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeout.CancelAfter(TimeSpan.FromSeconds(25));
+        var sb = new StringBuilder();
+        try
+        {
+            await _conductor.AskAsync([new ChatMessage(Role.System, PromptWriter), new ChatMessage(Role.User, idea)], candidates,
+                (_, _) => { }, piece => { lock (sb) sb.Append(piece); }, timeout.Token);
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested) { return idea; }
+        catch (ProviderException) { return idea; }
+        string prompt = sb.ToString().Trim().Trim('"', '「', '」');
+        return prompt.Length is > 0 and < 1500 ? prompt : idea;
+    }
+
+    /// <summary>生成圖片下方的按鈕。</summary>
+    private void AttachImageActions(MessageView view, SavedMessage message, byte[] bytes)
+    {
+        view.SetActions(
+            ("存檔", "另存這張圖", () => SaveImageAs(bytes, message)),
+            ("複製圖片", "複製到剪貼簿，可以直接貼到其他程式", () => { try { Clipboard.SetImage(Decode(bytes)); _route.Text = "已複製圖片"; } catch (Exception) { } }),
+            ("拿去問 AI", "把這張圖附到輸入框，請 AI 描述或給修改建議", () =>
+            {
+                _attachments.RemoveAll(x => x.Kind == AttachmentKind.Image);
+                _attachments.Add(new Attachment("生成的圖片", AttachmentKind.Image, Bytes: bytes, Mime: bytes.Length > 3 && bytes[0] == 0x89 ? "image/png" : "image/jpeg"));
+                RefreshChips();
+            }),
+            ("再畫一次", "用同樣的描述再畫一張", () =>
+            {
+                int i = _current.Messages.IndexOf(message);
+                if (i > 0 && _current.Messages[i - 1].Text.StartsWith("畫：", StringComparison.Ordinal)) _input.Text = _current.Messages[i - 1].Text[2..];
+                _ = DrawAsync();
+            }));
+    }
+
+    private void SaveImageAs(byte[] bytes, SavedMessage message)
+    {
+        bool png = bytes.Length > 3 && bytes[0] == 0x89;
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = png ? "PNG 圖片|*.png" : "JPEG 圖片|*.jpg", DefaultExt = png ? ".png" : ".jpg", AddExtension = true, Title = "儲存圖片",
+            FileName = message.ImagePath is { } p ? Path.GetFileNameWithoutExtension(p) : "問道生成",
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+        };
+        if (dlg.ShowDialog(this) != true) return;
+        try { File.WriteAllBytes(dlg.FileName, bytes); _route.Text = "已儲存：" + Path.GetFileName(dlg.FileName); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { _route.Text = "存不起來：" + e.Message; }
     }
 
     // ═══════════════════════ 語音 ═══════════════════════
@@ -613,7 +745,12 @@ internal sealed class ChatWindow : Window
                 sb.Append("## 問\n\n").Append(m.Text).Append("\n\n");
                 if (m.Files is { Count: > 0 }) sb.Append("附件：").Append(string.Join("、", m.Files)).Append("\n\n");
             }
-            else sb.Append("## 答（").Append(m.Model ?? "AI").Append("）\n\n").Append(m.Text).Append("\n\n");
+            else
+            {
+                sb.Append("## 答（").Append(m.Model ?? "AI").Append("）\n\n");
+                if (m.ImagePath is { } path) sb.Append("![生成的圖片](").Append(new Uri(path).AbsoluteUri).Append(")\n\n");
+                sb.Append(m.Text).Append("\n\n");
+            }
         }
         return sb.ToString();
     }

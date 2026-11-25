@@ -4,7 +4,7 @@ using TianMu.Modules.Wendao.Ai;
 namespace TianMu.Modules.Wendao.Web;
 
 /// <summary>網頁模式的一家 AI：直接開官方網站，用你自己的帳號登入（免費方案或訂閱都照用）。</summary>
-public sealed record WebSite(string Id, string Name, string Url, string Strength);
+public sealed record WebSite(string Id, string Name, string Url, string Strength, bool Video = false);
 
 /// <summary>網頁模式的站台清單、自動挑選規則與「填入問題」的腳本（純邏輯，方便測試）。</summary>
 public static class WebSites
@@ -17,7 +17,12 @@ public static class WebSites
     public static readonly WebSite Grok = new("grok", "Grok", "https://grok.com/", "即時話題");
     public static readonly WebSite Perplexity = new("perplexity", "Perplexity", "https://www.perplexity.ai/", "查資料、附來源");
 
-    public static readonly IReadOnlyList<WebSite> All = [ChatGpt, Gemini, Claude, Copilot, DeepSeek, Grok, Perplexity];
+    // 生成影片：免費的 API 幾乎沒有，用各家網站每天送的免費點數最實際
+    public static readonly WebSite Kling = new("kling", "可靈", "https://klingai.com/", "文字或圖片生成短影片；每天送免費點數", Video: true);
+    public static readonly WebSite Hailuo = new("hailuo", "海螺", "https://hailuoai.video/", "文字或圖片生成短影片；有免費額度", Video: true);
+    public static readonly WebSite Pika = new("pika", "Pika", "https://pika.art/", "短影片、特效；每月送免費點數", Video: true);
+
+    public static readonly IReadOnlyList<WebSite> All = [ChatGpt, Gemini, Claude, Copilot, DeepSeek, Grok, Perplexity, Kling, Hailuo, Pika];
 
     public static WebSite? Find(string id) => All.FirstOrDefault(s => s.Id == id);
 

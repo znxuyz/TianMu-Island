@@ -21,6 +21,12 @@ public sealed class SavedMessage
     /// <summary>「同時比較」時，第一家以外的答案：只顯示，不放進後續對話的上下文。</summary>
     public bool Alternate { get; set; }
 
+    /// <summary>生成圖片的請求與結果：只顯示，不放進對話的上下文。</summary>
+    public bool ImageOnly { get; set; }
+
+    /// <summary>生成的圖片存在本機的哪裡。</summary>
+    public string? ImagePath { get; set; }
+
     /// <summary>實際送給模型的內容。</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public string Prompt => string.IsNullOrEmpty(FileText) ? Text : Text + FileText;
@@ -71,6 +77,21 @@ internal sealed class History(string? directory)
             File.Move(path + ".tmp", path, overwrite: true);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+    }
+
+    /// <summary>生成的圖片存到「問道/images」，對話紀錄只記路徑。</summary>
+    public string? SaveImage(byte[] bytes, string mime)
+    {
+        if (_dir is null) return null;
+        try
+        {
+            string folder = Path.Combine(Path.GetDirectoryName(_dir)!, "images");
+            Directory.CreateDirectory(folder);
+            string path = Path.Combine(folder, $"{DateTime.Now:yyyyMMdd-HHmmss}-{Guid.NewGuid().ToString("N")[..6]}{(mime == "image/png" ? ".png" : ".jpg")}");
+            File.WriteAllBytes(path, bytes);
+            return path;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return null; }
     }
 
     public void Delete(Conversation c)

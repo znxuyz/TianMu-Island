@@ -33,6 +33,13 @@ internal sealed class ConnectionWindow : Window
             TextWrapping = TextWrapping.Wrap, Foreground = Look.Secondary, FontSize = 13, Margin = new Thickness(0, 6, 0, 14),
         });
         foreach (var p in Provider.All) stack.Children.Add(Card(p));
+        stack.Children.Add(new TextBlock { Text = "生成圖片", FontFamily = Look.Serif, FontSize = 17, FontWeight = FontWeights.Bold, Foreground = Look.Gold, Margin = new Thickness(0, 10, 0, 4) });
+        stack.Children.Add(new TextBlock
+        {
+            Text = "按「畫圖」時先用 Pollinations（免金鑰、免註冊）；它忙不過來時改用 Cloudflare，再來是 Gemini（用上面的 Gemini 金鑰）。",
+            TextWrapping = TextWrapping.Wrap, Foreground = Look.Secondary, FontSize = 12.5, Margin = new Thickness(0, 0, 0, 10),
+        });
+        stack.Children.Add(Card(ImageGenerator.Cloudflare));
 
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 6, 0, 0) };
         buttons.Children.Add(Look.Button("儲存並測試", SaveAndTest, primary: true));
@@ -83,7 +90,7 @@ internal sealed class ConnectionWindow : Window
 
     private async void SaveAndTest()
     {
-        foreach (var p in Provider.All.Where(p => p.NeedsKey)) KeyStore.Set(p.Id, _rows[p.Id].Box.Password);
+        foreach (var p in Provider.All.Append(ImageGenerator.Cloudflare).Where(p => p.NeedsKey)) KeyStore.Set(p.Id, _rows[p.Id].Box.Password);
         await TestAsync();
     }
 
@@ -95,6 +102,14 @@ internal sealed class ConnectionWindow : Window
         catch (Exception e) { foreach (var (_, row) in _rows) row.Status.Text = e.Message; return; }
         foreach (var (id, row) in _rows)
         {
+            if (id == ImageGenerator.CloudflareId)
+            {
+                string key = row.Box.Password;
+                bool ok = ImageGenerator.SplitCloudflareKey(key) is not null;
+                row.Status.Text = key.Length == 0 ? "未設定（可不設）" : ok ? "✓ 已儲存，畫圖時使用" : "格式要是「帳戶ID:權杖」";
+                row.Status.Foreground = key.Length == 0 ? Look.Tertiary : ok ? Look.Gold : Look.Cinnabar;
+                continue;
+            }
             string text = report.TryGetValue(id, out var r) ? r : "";
             bool ok = text.EndsWith("個模型", StringComparison.Ordinal);
             row.Status.Text = ok ? "✓ " + text : text;

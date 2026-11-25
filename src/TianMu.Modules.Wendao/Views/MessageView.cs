@@ -17,7 +17,7 @@ internal sealed class MessageView : Border
 
     private readonly StackPanel _actions = new() { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0), Visibility = Visibility.Collapsed };
 
-    public MessageView(Role role, string text, string? header, byte[]? image = null, bool hadImage = false, IReadOnlyList<string>? files = null)
+    public MessageView(Role role, string text, string? header, byte[]? image = null, bool hadImage = false, IReadOnlyList<string>? files = null, bool largeImage = false)
     {
         _role = role;
         bool user = role == Role.User;
@@ -34,7 +34,7 @@ internal sealed class MessageView : Border
         _header = new TextBlock { Text = header ?? "", FontSize = 11.5, Foreground = Look.Gold, Margin = new Thickness(0, 0, 0, 6), FontFamily = Look.Sans, Visibility = string.IsNullOrEmpty(header) ? Visibility.Collapsed : Visibility.Visible };
         outer.Children.Add(_header);
         if (image is { Length: > 0 } && Bitmap(image) is { } bmp)
-            outer.Children.Add(new Image { Source = bmp, MaxHeight = 220, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 8) });
+            outer.Children.Add(new Image { Source = bmp, MaxHeight = largeImage ? 480 : 220, MaxWidth = largeImage ? 640 : double.PositiveInfinity, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 8) });
         else if (hadImage)
             outer.Children.Add(new TextBlock { Text = "（附了一張圖）", Foreground = Look.Tertiary, FontSize = 12, Margin = new Thickness(0, 0, 0, 6) });
         if (files is { Count: > 0 })

@@ -35,6 +35,8 @@ internal sealed class WebPane : DockPanel
         var tabs = new WrapPanel { Margin = new Thickness(16, 10, 16, 8) };
         foreach (var site in WebSites.All)
         {
+            if (site == WebSites.All.First(x => x.Video))
+                tabs.Children.Add(new TextBlock { Text = "影片：", Foreground = Look.Tertiary, FontSize = 12, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 4, 4) });
             var b = Look.Button(site.Name, () => _ = ShowAsync(site), tip: site.Strength);
             b.Margin = new Thickness(0, 0, 6, 4);
             _tabs[site.Id] = b;
@@ -153,7 +155,7 @@ internal sealed class WebPane : DockPanel
     private async Task FillAllAsync()
     {
         if (_input.Text.Trim().Length == 0) return;
-        var opened = _views.Keys.Select(WebSites.Find).OfType<WebSite>().ToList();
+        var opened = _views.Keys.Select(WebSites.Find).OfType<WebSite>().Where(s => !s.Video).ToList();   // 影片網站不一起填
         if (opened.Count <= 1) { _status.Text = "先點上面幾家網站開起來，再按「全部填入」。"; return; }
         foreach (var site in opened) await FillAsync(site, show: false);
         _status.Text = $"已填入 {string.Join("、", opened.Select(s => s.Name))}，切換分頁到各家按送出即可比較。";

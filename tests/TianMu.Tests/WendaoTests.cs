@@ -254,6 +254,45 @@ public class WendaoTests
         Assert.Contains("附件：a.pdf", md);
         Assert.Contains("## 答（gemini-2.5-flash · Google Gemini）\n\n嗨", md);
     }
+
+    [Fact]
+    public void Image_requests_are_built_and_parsed()
+    {
+        string url = ImageGenerator.PollinationsUrl("一隻貓 & 月亮", 1024, 768, 42);
+        Assert.StartsWith("https://image.pollinations.ai/prompt/", url);
+        Assert.DoesNotContain(" ", url);
+        Assert.Contains("%26", url);                       // & 被編碼，不會截斷提示詞
+        Assert.Contains("width=1024&height=768&seed=42", url);
+
+        Assert.Equal(("acc123", "tok:en"), ImageGenerator.SplitCloudflareKey(" acc123 : tok:en "));
+        Assert.Null(ImageGenerator.SplitCloudflareKey("沒有冒號"));
+        Assert.Null(ImageGenerator.SplitCloudflareKey(null));
+
+        Assert.Equal(new byte[] { 1, 2, 3 }, ImageGenerator.ParseCloudflare("""{"result":{"image":"AQID"},"success":true}"""));
+        var (bytes, mime) = ImageGenerator.ParseGemini("""{"candidates":[{"content":{"parts":[{"text":"好"},{"inlineData":{"mimeType":"image/png","data":"AQID"}}]}}]}""");
+        Assert.Equal(new byte[] { 1, 2, 3 }, bytes);
+        Assert.Equal("image/png", mime);
+        Assert.ThrowsAny<Exception>(() => ImageGenerator.ParseGemini("""{"candidates":[]}"""));
+
+        Assert.Equal((1344, 768), ImageGenerator.SizeOf("16:9"));
+        Assert.Equal("9:16", ImageGenerator.AspectName(768, 1344));
+        Assert.Equal("1:1", ImageGenerator.AspectName(1024, 1024));
+    }
+
+    [Fact]
+    public void Drawing_stays_out_of_the_chat_context_and_video_sites_are_listed()
+    {
+        var history = new List<SavedMessage>
+        {
+            new() { Role = Role.User, Text = "畫：一隻貓", ImageOnly = true },
+            new() { Role = Role.Assistant, Text = "提示詞：a cat", ImageOnly = true, ImagePath = "x.png" },
+            new() { Role = Role.User, Text = "你好" },
+        };
+        var ctx = ChatWindow.BuildContext(history, null, "image/png");
+        Assert.Equal(2, ctx.Count);                       // 系統提示＋「你好」
+        Assert.Contains(WebSites.All, s => s.Video && s.Id == "kling");
+        Assert.All(WebSites.All.Where(s => s.Video), s => Assert.StartsWith("https://", s.Url));
+    }
 }
 
 internal static class TestFluent

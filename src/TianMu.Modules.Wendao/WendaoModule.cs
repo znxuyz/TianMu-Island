@@ -15,6 +15,7 @@ public sealed class WendaoModule : IIslandModule, IDescribedModule
     private IIslandHost? _host;
     private ChatClient? _client;
     private Conductor? _conductor;
+    private ImageGenerator? _painter;
     private ChatWindow? _window;
 
     public string Id => "tianmu.wendao";
@@ -27,6 +28,7 @@ public sealed class WendaoModule : IIslandModule, IDescribedModule
         _host = host;
         _client = new ChatClient();
         _conductor = new Conductor(_client, KeyStore.Get);
+        _painter = new ImageGenerator(KeyStore.Get);
         host.AddRadialAction(new RadialAction(Id, "問道", "問各家 AI", () => Open(null), Order: 57, ToneKey: "MiaoJinBrush",
             OnFiles: files => host.InvokeAsync(() => Open(files.FirstOrDefault())), DefaultVisible: false));
         host.AddQuickAction(new QuickAction(Id, "問道", () => host.InvokeAsync(() => Open(null)), Order: 57));
@@ -37,7 +39,7 @@ public sealed class WendaoModule : IIslandModule, IDescribedModule
     {
         if (_window is null)
         {
-            _window = new ChatWindow(_conductor!, _host?.GetDataDirectory(Id));
+            _window = new ChatWindow(_conductor!, _painter!, _host?.GetDataDirectory(Id));
             _window.Closed += (_, _) => _window = null;
         }
         _window.BringToFront();   // 一定跳到最前面，第一次用也看得到
@@ -47,6 +49,7 @@ public sealed class WendaoModule : IIslandModule, IDescribedModule
     public ValueTask DisposeAsync()
     {
         _client?.Dispose();
+        _painter?.Dispose();
         return ValueTask.CompletedTask;
     }
 }
