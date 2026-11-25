@@ -19,7 +19,7 @@ public sealed class WendaoModule : IIslandModule, IDescribedModule
 
     public string Id => "tianmu.wendao";
     public string DisplayName => "問道";
-    public string Description => "一個視窗問各家免費 AI（Gemini、Groq、OpenRouter 免費模型、Mistral、本機 Ollama）；可手動選模型或依問題自動挑選，額度用完自動換下一家。";
+    public string Description => "一個視窗問各家 AI：API 模式用免費金鑰自動挑模型、額度用完換下一家；網頁模式直接開 ChatGPT、Gemini、Claude 等官網。可附 PDF、Word、Excel、圖片。";
     public IReadOnlyList<ModuleOption> Options => [];
 
     public Task InitializeAsync(IIslandHost host, CancellationToken cancellationToken)
@@ -39,13 +39,8 @@ public sealed class WendaoModule : IIslandModule, IDescribedModule
         {
             _window = new ChatWindow(_conductor!, _host?.GetDataDirectory(Id));
             _window.Closed += (_, _) => _window = null;
-            _window.Show();
         }
-        else
-        {
-            if (_window.WindowState == System.Windows.WindowState.Minimized) _window.WindowState = System.Windows.WindowState.Normal;
-            _window.Activate();
-        }
+        _window.BringToFront();   // 一定跳到最前面，第一次用也看得到
         if (file is not null) _window.AttachFile(file);
     }
 

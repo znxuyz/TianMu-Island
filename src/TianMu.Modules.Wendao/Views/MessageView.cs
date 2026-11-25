@@ -15,7 +15,9 @@ internal sealed class MessageView : Border
     private string _text = "";
     private TextBox? _streaming;
 
-    public MessageView(Role role, string text, string? header, byte[]? image = null, bool hadImage = false)
+    private readonly StackPanel _actions = new() { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0), Visibility = Visibility.Collapsed };
+
+    public MessageView(Role role, string text, string? header, byte[]? image = null, bool hadImage = false, IReadOnlyList<string>? files = null)
     {
         _role = role;
         bool user = role == Role.User;
@@ -35,7 +37,16 @@ internal sealed class MessageView : Border
             outer.Children.Add(new Image { Source = bmp, MaxHeight = 220, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 8) });
         else if (hadImage)
             outer.Children.Add(new TextBlock { Text = "（附了一張圖）", Foreground = Look.Tertiary, FontSize = 12, Margin = new Thickness(0, 0, 0, 6) });
+        if (files is { Count: > 0 })
+        {
+            var chips = new WrapPanel { Margin = new Thickness(0, 0, 0, 6) };
+            foreach (var f in files)
+                chips.Children.Add(new Border { Background = Look.CodeBg, CornerRadius = new CornerRadius(4), Padding = new Thickness(8, 3, 8, 3), Margin = new Thickness(0, 0, 6, 4),
+                    Child = new TextBlock { Text = "📎 " + f, FontSize = 12, Foreground = Look.Secondary } });
+            outer.Children.Add(chips);
+        }
         outer.Children.Add(_body);
+        outer.Children.Add(_actions);
         Child = outer;
         SetText(text);
     }
@@ -71,7 +82,9 @@ internal sealed class MessageView : Border
         {
             if (!isCode)
             {
-                if (content.Trim().Length > 0) _body.Children.Add(Look.ReadOnlyText(content.Trim('\n'), size: 14, fg: _role == Role.User ? Look.Moon : Look.Moon));
+                if (content.Trim().Length == 0) continue;
+                // 你的問題照原樣顯示；AI 的回答排版標題、條列、粗體
+                _body.Children.Add(_role == Role.User ? Look.ReadOnlyText(content.Trim('\n')) : Markdown.Render(content, Look.Moon));
                 continue;
             }
             var code = Look.ReadOnlyText(content.TrimEnd('\n'), Look.Mono, 13, Look.Moon);
@@ -90,6 +103,21 @@ internal sealed class MessageView : Border
             stack.Children.Add(code);
             _body.Children.Add(new Border { Background = Look.CodeBg, CornerRadius = new CornerRadius(6), Padding = new Thickness(10, 8, 10, 10), Margin = new Thickness(0, 6, 0, 6), Child = stack });
         }
+    }
+
+    /// <summary>回答下方的小按鈕（複製、朗讀、重新回答⋯）。</summary>
+    public void SetActions(params (string Label, string Tip, Action Click)[] actions)
+    {
+        _actions.Children.Clear();
+        foreach (var (label, tip, click) in actions)
+        {
+            var b = Look.Button(label, click, tip: tip);
+            b.Padding = new Thickness(9, 2, 9, 2);
+            b.FontSize = 11.5;
+            b.Margin = new Thickness(0, 0, 6, 0);
+            _actions.Children.Add(b);
+        }
+        _actions.Visibility = actions.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     /// <summary>依 ``` 把文字切成一般段落與程式碼區塊（純邏輯）。</summary>

@@ -11,6 +11,19 @@ public sealed class SavedMessage
     public string Text { get; set; } = "";
     public string? Model { get; set; }
     public bool HadImage { get; set; }
+
+    /// <summary>附件的檔名（顯示用）。</summary>
+    public List<string>? Files { get; set; }
+
+    /// <summary>附件轉成的文字（接在問題後面送給模型；存起來讓後續追問也看得到）。</summary>
+    public string? FileText { get; set; }
+
+    /// <summary>「同時比較」時，第一家以外的答案：只顯示，不放進後續對話的上下文。</summary>
+    public bool Alternate { get; set; }
+
+    /// <summary>實際送給模型的內容。</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string Prompt => string.IsNullOrEmpty(FileText) ? Text : Text + FileText;
 }
 
 public sealed class Conversation

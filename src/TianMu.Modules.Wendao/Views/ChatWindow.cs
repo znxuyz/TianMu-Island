@@ -1,10 +1,13 @@
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using TianMu.Modules.Wendao.Ai;
 using TianMu.Modules.Wendao.Store;
 using TianMu.Modules.Wendao.Web;
@@ -12,14 +15,29 @@ using TianMu.Modules.Wendao.Web;
 namespace TianMu.Modules.Wendao.Views;
 
 /// <summary>
-/// 問道的對話視窗：左邊是對話紀錄，上面選模型（預設「自動」），下面輸入問題；
-/// 可以附圖片（貼上、拖進來或按迴紋針）。Enter 送出，Shift+Enter 換行。
+/// 問道的對話視窗。
+///   · API 模式：用各家免費金鑰，天幕島自己轉接；可附圖片與檔案（PDF、Word、Excel、PowerPoint、文字與程式碼）、
+///     快捷指令、語音輸入、朗讀、重新回答、同時比較三家、匯出對話
+///   · 網頁模式：直接嵌入各家官網，用你自己的帳號
 /// </summary>
 internal sealed class ChatWindow : Window
 {
     private const int MaxContextChars = 60_000;
+    private const string Compare = "compare";
     private const string SystemPrompt =
-        "你是天幕島裡的助理「問道」。預設用繁體中文（台灣用語）回答；如果使用者用其他語言發問，就用那個語言。回答要清楚、直接，必要時用條列或程式碼區塊。";
+        "你是天幕島裡的助理「問道」。預設用繁體中文（台灣用語）回答；如果使用者用其他語言發問，就用那個語言。回答要清楚、直接，必要時用標題、條列或程式碼區塊。";
+
+    /// <summary>快捷指令：點一下就把指令放在問題前面。</summary>
+    private static readonly (string Label, string Prompt)[] QuickPrompts =
+    [
+        ("翻成英文", "請把下面的內容翻譯成自然的英文："),
+        ("翻成中文", "請把下面的內容翻譯成通順的繁體中文（台灣用語）："),
+        ("摘要重點", "請用條列整理下面內容的重點："),
+        ("潤稿", "請潤飾下面的文字，讓它更通順、專業，並列出你改了哪些地方："),
+        ("寫成 Email", "請把下面的內容寫成一封得體的 Email："),
+        ("解釋程式", "請逐段解釋下面這段程式在做什麼，並指出可能的問題："),
+        ("找錯字", "請找出下面文字的錯字與文法問題，並給出修正後的版本："),
+    ];
 
     private readonly Conductor _conductor;
     private readonly History _history;
@@ -34,10 +52,10 @@ internal sealed class ChatWindow : Window
     private readonly ScrollViewer _scroll = new() { VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
     private readonly TextBox _input = Look.Input(14.5);
     private readonly Button _send, _stop;
-    private readonly Border _attachChip = new() { Visibility = Visibility.Collapsed, Margin = new Thickness(0, 0, 0, 6), HorizontalAlignment = HorizontalAlignment.Left };
-    private byte[]? _attachment;
-    private string _attachmentMime = "image/png";
+    private readonly WrapPanel _attachChips = new() { Margin = new Thickness(0, 0, 0, 6), Visibility = Visibility.Collapsed };
+    private readonly List<Attachment> _attachments = [];
     private CancellationTokenSource? _cts;
+    private System.Media.SoundPlayer? _player;
 
     // 兩種模式：API（各家免費金鑰，天幕島自己轉接）／網頁（嵌入各家官網，用自己的帳號）
     private readonly string? _dataDir;
@@ -54,19 +72,20 @@ internal sealed class ChatWindow : Window
         _history = new History(dataDir);
         _conversations = _history.LoadAll();
         Title = "問道";
-        Width = 1040;
-        Height = 720;
-        MinWidth = 640;
-        MinHeight = 420;
+        Width = 1080;
+        Height = 760;
+        MinWidth = 680;
+        MinHeight = 460;
         Background = Look.Lacquer;
         FontFamily = Look.Sans;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        ShowActivated = true;
 
         var root = new Grid();
         root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(230) });
         root.ColumnDefinitions.Add(new ColumnDefinition());
 
-        // ── 左：對話紀錄 ──
+        // ── 左：模式、對話紀錄 ──
         var left = new DockPanel { Background = Look.Panel };
         var brand = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(16, 16, 16, 10) };
         brand.Children.Add(new Border { Width = 30, Height = 30, CornerRadius = new CornerRadius(5), Background = Look.Cinnabar, Child = new TextBlock { Text = "問", FontFamily = Look.Serif, FontWeight = FontWeights.Bold, FontSize = 16, Foreground = Brushes.White, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center } });
@@ -96,30 +115,46 @@ internal sealed class ChatWindow : Window
         root.Children.Add(left);
 
         // ── 右：模型列＋訊息＋輸入 ──
-        var right = _apiPane;
         Grid.SetColumn(_rightHost, 1);
-        _rightHost.Children.Add(right);
+        _rightHost.Children.Add(_apiPane);
         var top = new DockPanel { Margin = new Thickness(20, 12, 20, 10) };
+        var export = Look.Button("匯出", ExportConversation, tip: "把這段對話存成 Markdown 檔");
+        export.Padding = new Thickness(10, 3, 10, 3);
+        DockPanel.SetDock(export, Dock.Right);
+        top.Children.Add(export);
         top.Children.Add(new TextBlock { Text = "模型", Foreground = Look.Secondary, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) });
         top.Children.Add(_model);
         top.Children.Add(_route);
-        DockPanel.SetDock(top, Dock.Top);
-        right.Children.Add(new Border { Child = top, BorderBrush = Look.Hairline, BorderThickness = new Thickness(0, 0, 0, 1) }.Also(b => DockPanel.SetDock(b, Dock.Top)));
+        var topBorder = new Border { Child = top, BorderBrush = Look.Hairline, BorderThickness = new Thickness(0, 0, 0, 1) };
+        DockPanel.SetDock(topBorder, Dock.Top);
+        _apiPane.Children.Add(topBorder);
 
-        var composer = new DockPanel { Margin = new Thickness(20, 10, 20, 16) };
+        var composer = new DockPanel { Margin = new Thickness(20, 8, 20, 16) };
         _send = Look.Button("送出", Send, primary: true, tip: "送出（Enter）");
         _stop = Look.Button("停止", () => _cts?.Cancel(), tip: "停止回答");
         _stop.Visibility = Visibility.Collapsed;
-        var attach = Look.Button("圖片", PickImage, tip: "附一張圖片（也可以直接貼上或拖進來）");
         var actions = new StackPanel { VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(8, 0, 0, 0) };
-        actions.Children.Add(attach);
+        actions.Children.Add(Look.Button("附件", PickFiles, tip: "附圖片或檔案：PDF、Word、Excel、PowerPoint、文字、程式碼（也可以直接拖進來或貼上圖片）"));
+        actions.Children.Add(new Border { Height = 6 });
+        actions.Children.Add(Look.Button("語音", Dictate, tip: "用說的輸入（Windows 語音輸入，Win+H）"));
         actions.Children.Add(new Border { Height = 6 });
         actions.Children.Add(_send);
         actions.Children.Add(_stop);
         DockPanel.SetDock(actions, Dock.Right);
         composer.Children.Add(actions);
+
         var inputStack = new StackPanel();
-        inputStack.Children.Add(_attachChip);
+        var quick = new WrapPanel { Margin = new Thickness(0, 0, 0, 6) };
+        foreach (var (label, prompt) in QuickPrompts)
+        {
+            var chip = Look.Button(label, () => ApplyQuick(prompt), tip: prompt);
+            chip.Padding = new Thickness(9, 2, 9, 2);
+            chip.FontSize = 12;
+            chip.Margin = new Thickness(0, 0, 6, 4);
+            quick.Children.Add(chip);
+        }
+        inputStack.Children.Add(quick);
+        inputStack.Children.Add(_attachChips);
         _input.AcceptsReturn = true;
         _input.TextWrapping = TextWrapping.Wrap;
         _input.MinHeight = 64;
@@ -131,10 +166,10 @@ internal sealed class ChatWindow : Window
         inputStack.Children.Add(new TextBlock { Text = "Enter 送出 · Shift+Enter 換行 · 免費模型有每日次數限制，用完會自動換下一家", Foreground = Look.Tertiary, FontSize = 11.5, Margin = new Thickness(2, 6, 0, 0) });
         composer.Children.Add(inputStack);
         DockPanel.SetDock(composer, Dock.Bottom);
-        right.Children.Add(composer);
+        _apiPane.Children.Add(composer);
 
         _scroll.Content = _messages;
-        right.Children.Add(_scroll);
+        _apiPane.Children.Add(_scroll);
         root.Children.Add(_rightHost);
         Content = root;
 
@@ -148,7 +183,19 @@ internal sealed class ChatWindow : Window
             _input.Focus();
             await ReloadModelsAsync();
         };
-        Closed += (_, _) => _cts?.Cancel();
+        Closed += (_, _) => { _cts?.Cancel(); _player?.Stop(); };
+    }
+
+    /// <summary>把視窗叫到最前面（從天幕、系統匣開啟時，Windows 常會把新視窗壓在後面只閃工作列）。</summary>
+    public void BringToFront()
+    {
+        if (!IsVisible) Show();
+        if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
+        Activate();
+        Topmost = true;      // 暫時置頂一下，確保真的跳到最前面
+        Topmost = false;
+        Focus();
+        Dispatcher.BeginInvoke(DispatcherPriority.Input, () => { Activate(); _input.Focus(); });
     }
 
     // ═══════════════════════ 模式 ═══════════════════════
@@ -200,6 +247,7 @@ internal sealed class ChatWindow : Window
         string? keep = (_model.SelectedItem as ComboBoxItem)?.Tag as string;
         _model.Items.Clear();
         _model.Items.Add(new ComboBoxItem { Content = "自動（依問題挑選，額度用完自動換）", Tag = Conductor.Auto });
+        _model.Items.Add(new ComboBoxItem { Content = "同時比較三家（各家一起回答）", Tag = Compare });
         foreach (var group in _conductor.Models.GroupBy(m => m.ProviderId))
         {
             var p = Provider.Find(group.Key)!;
@@ -209,7 +257,7 @@ internal sealed class ChatWindow : Window
         }
         _model.SelectedItem = _model.Items.OfType<ComboBoxItem>().FirstOrDefault(i => i.Tag as string == keep) ?? _model.Items[0];
         int count = _conductor.Models.Count;
-        _route.Text = count == 0 ? "還沒有可用的模型 — 按左下角「連線設定」貼上免費金鑰" : $"共 {count} 個免費模型可用";
+        _route.Text = count == 0 ? "還沒有可用的模型 — 按左下角「連線設定」貼上免費金鑰，或改用「網頁模式」" : $"共 {count} 個免費模型可用";
     }
 
     private string Choice => (_model.SelectedItem as ComboBoxItem)?.Tag as string ?? Conductor.Auto;
@@ -220,7 +268,7 @@ internal sealed class ChatWindow : Window
         FillModels();
     }
 
-    // ═══════════════════════ 對話 ═══════════════════════
+    // ═══════════════════════ 對話紀錄 ═══════════════════════
 
     private void RefreshList()
     {
@@ -270,7 +318,11 @@ internal sealed class ChatWindow : Window
         _current = c;
         _messages.Children.Clear();
         foreach (var m in c.Messages)
-            _messages.Children.Add(new MessageView(m.Role, m.Text, m.Role == Role.Assistant ? m.Model : null, _images.GetValueOrDefault(m), m.HadImage));
+        {
+            var view = new MessageView(m.Role, m.Text, m.Role == Role.Assistant ? m.Model : null, _images.GetValueOrDefault(m), m.HadImage, m.Files);
+            if (m.Role == Role.Assistant) AttachActions(view, m);
+            _messages.Children.Add(view);
+        }
         _scroll.ScrollToEnd();
     }
 
@@ -281,7 +333,8 @@ internal sealed class ChatWindow : Window
         hello.Children.Add(new TextBlock { Text = "有什麼想問的？", FontFamily = Look.Serif, FontSize = 26, Foreground = Look.Gold, HorizontalAlignment = HorizontalAlignment.Center });
         hello.Children.Add(new TextBlock
         {
-            Text = "選「自動」時，問道會看問題性質挑模型：\n寫程式、推理分析找大模型；看圖、讀長文件找 Gemini；快問快答找最快的。\n某一家的免費額度用完，就自動換下一家。",
+            Text = "選「自動」時，問道會看問題性質挑模型：\n寫程式、推理分析找大模型；看圖、讀長文件找 Gemini；快問快答找最快的。\n" +
+                   "可以附 PDF、Word、Excel、PowerPoint、圖片；選「同時比較三家」一次看三個答案。",
             Foreground = Look.Secondary, FontSize = 13.5, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 12, 0, 0), LineHeight = 22,
         });
         _messages.Children.Add(hello);
@@ -298,11 +351,21 @@ internal sealed class ChatWindow : Window
         }
     }
 
-    private async void Send()
+    private void ApplyQuick(string prompt)
+    {
+        string body = _input.Text.Trim();
+        _input.Text = prompt + "\n" + body;
+        _input.CaretIndex = _input.Text.Length;
+        _input.Focus();
+    }
+
+    private void Send()
     {
         string question = _input.Text.Trim();
-        if ((question.Length == 0 && _attachment is null) || _cts is not null) return;
-        if (question.Length == 0) question = "請描述這張圖片。";
+        if ((question.Length == 0 && _attachments.Count == 0) || _cts is not null) return;
+        var image = _attachments.FirstOrDefault(a => a.Kind == AttachmentKind.Image);
+        var files = _attachments.ToList();
+        if (question.Length == 0) question = image is not null ? "請描述這張圖片。" : "請整理這份檔案的重點。";
 
         if (_current.Messages.Count == 0)
         {
@@ -310,42 +373,84 @@ internal sealed class ChatWindow : Window
             _current.Title = Conversation.TitleFrom(question);
             _conversations.Insert(0, _current);
         }
-        var userMsg = new SavedMessage { Role = Role.User, Text = question, HadImage = _attachment is not null };
-        if (_attachment is not null) _images[userMsg] = _attachment;
+        string fileText = FileReader.Compose("", files);
+        var userMsg = new SavedMessage
+        {
+            Role = Role.User, Text = question, HadImage = image is not null,
+            Files = files.Count > 0 ? files.Select(f => f.Name).ToList() : null,
+            FileText = fileText.Length > 0 ? fileText : null,
+        };
+        if (image?.Bytes is { } bytes) _images[userMsg] = bytes;
         _current.Messages.Add(userMsg);
-        _messages.Children.Add(new MessageView(Role.User, question, null, _attachment));
-        byte[]? image = _attachment;
-        string mime = _attachmentMime;
-        ClearAttachment();
+        _messages.Children.Add(new MessageView(Role.User, question, null, image?.Bytes, false, userMsg.Files));
+        ClearAttachments();
         _input.Clear();
+        _ = AnswerAsync(image?.Bytes, image?.Mime ?? "image/png", exclude: null);
+    }
 
-        var reply = new MessageView(Role.Assistant, "", "思考中…");
-        _messages.Children.Add(reply);
-        _scroll.ScrollToEnd();
-
-        // 組成上下文：系統提示＋最近的對話（太長就從舊的砍），圖片只附在這一題
+    /// <summary>針對最後一個問題產生回答（送出、重新回答都走這裡）。</summary>
+    private async Task AnswerAsync(byte[]? image, string mime, string? exclude)
+    {
+        var last = _current.Messages.LastOrDefault(m => m.Role == Role.User);
+        if (last is null) return;
         var context = BuildContext(_current.Messages, image, mime);
-        int historyChars = context.Sum(m => m.Text.Length) - question.Length;
-        var kind = Router.Classify(question, image is not null, historyChars);
-        var candidates = _conductor.Candidates(Choice, kind);
+        int historyChars = context.Sum(m => m.Text.Length) - last.Prompt.Length;
+        var kind = Router.Classify(last.Prompt, image is not null, historyChars);
+        bool compare = Choice == Compare;
+        var all = _conductor.Candidates(compare ? Conductor.Auto : Choice, kind).Where(m => m.Key != exclude).ToList();
 
         _cts = new CancellationTokenSource();
         _send.Visibility = Visibility.Collapsed;
         _stop.Visibility = Visibility.Visible;
-        var answer = new SavedMessage { Role = Role.Assistant };
+        try
+        {
+            if (compare)
+            {
+                // 每家挑一個，最多三家同時回答；每一家失敗時在自己的候選裡換
+                var lanes = all.GroupBy(m => m.ProviderId).Take(3).Select(g => g.ToList()).ToList();
+                if (lanes.Count == 0) lanes.Add([]);
+                _route.Text = $"判斷為「{Router.Label(kind)}」→ 同時問 {lanes.Count} 家";
+                var tasks = lanes.Select((lane, i) => AnswerOneAsync(context, lane, kind, alternate: i > 0, _cts.Token)).ToList();
+                await Task.WhenAll(tasks);
+            }
+            else await AnswerOneAsync(context, all, kind, alternate: false, _cts.Token);
+        }
+        finally
+        {
+            _cts.Dispose();
+            _cts = null;
+            _send.Visibility = Visibility.Visible;
+            _stop.Visibility = Visibility.Collapsed;
+        }
+
+        _current.Updated = DateTime.Now;
+        if (_current.Messages.Count == 0) _conversations.Remove(_current);
+        _history.Save(_current);
+        RefreshList();
+        _scroll.ScrollToEnd();
+        _input.Focus();
+    }
+
+    private async Task AnswerOneAsync(List<ChatMessage> context, IReadOnlyList<ModelInfo> candidates, TaskKind kind, bool alternate, CancellationToken ct)
+    {
+        var reply = new MessageView(Role.Assistant, "", "思考中…");
+        _messages.Children.Add(reply);
+        _scroll.ScrollToEnd();
+        var answer = new SavedMessage { Role = Role.Assistant, Alternate = alternate };
+        bool keep = true;
         try
         {
             var used = await _conductor.AskAsync(context, candidates,
                 (m, failed) => Dispatcher.Invoke(() =>
                 {
-                    string label = $"{ModelCatalog.Pretty(m.Id)} · {Provider.Find(m.ProviderId)?.Name}";
+                    string label = Label(m);
                     reply.SetHeader(failed is null ? label : $"{label}（前一個失敗，已改用這個）", warn: failed is not null);
-                    _route.Text = Choice == Conductor.Auto ? $"判斷為「{Router.Label(kind)}」→ {label}" : label;
+                    if (Choice != Compare) _route.Text = Choice == Conductor.Auto ? $"判斷為「{Router.Label(kind)}」→ {label}" : label;
                 }),
                 piece => Dispatcher.InvokeAsync(() => { reply.Append(piece); if (IsNearBottom()) _scroll.ScrollToEnd(); }),
-                _cts.Token);
+                ct);
             await Dispatcher.InvokeAsync(() => { });   // 等最後一段字畫上去
-            answer.Model = $"{ModelCatalog.Pretty(used.Id)} · {Provider.Find(used.ProviderId)?.Name}";
+            answer.Model = Label(used);
             answer.Text = reply.Text;
             reply.SetText(reply.Text);
         }
@@ -359,32 +464,51 @@ internal sealed class ChatWindow : Window
         {
             reply.SetHeader("沒有回答", warn: true);
             reply.SetText(e.Message);
-            answer = null!;
-            _current.Messages.Remove(userMsg);
-            _input.Text = question;   // 問題放回輸入框，修好連線再按一次
+            keep = false;
         }
         catch (Exception e)
         {
             // 網路中斷之類的意外：照實顯示，不讓天幕島整個當掉
             reply.SetHeader("連線中斷", warn: true);
-            if (reply.Text.Length == 0) { reply.SetText(e.Message); answer = null!; _current.Messages.Remove(userMsg); _input.Text = question; }
+            if (reply.Text.Length == 0) { reply.SetText(e.Message); keep = false; }
             else { answer.Text = reply.Text + "\n\n（連線中斷）"; answer.Model = "連線中斷"; reply.SetText(answer.Text); }
         }
-        finally
-        {
-            _cts.Dispose();
-            _cts = null;
-            _send.Visibility = Visibility.Visible;
-            _stop.Visibility = Visibility.Collapsed;
-        }
 
-        if (answer is not null && answer.Text.Length > 0) _current.Messages.Add(answer);
-        _current.Updated = DateTime.Now;
-        if (_current.Messages.Count == 0) _conversations.Remove(_current);
-        _history.Save(_current);
-        RefreshList();
-        _scroll.ScrollToEnd();
-        _input.Focus();
+        if (keep && answer.Text.Length > 0)
+        {
+            _current.Messages.Add(answer);
+            AttachActions(reply, answer);
+        }
+        else if (!alternate && Choice != Compare && _current.Messages.Count > 0 && _current.Messages[^1].Role == Role.User && _input.Text.Length == 0)
+        {
+            // 完全沒有回答：問題放回輸入框，修好連線再按一次
+            _input.Text = _current.Messages[^1].Text;
+            _current.Messages.RemoveAt(_current.Messages.Count - 1);
+        }
+    }
+
+    private static string Label(ModelInfo m) => $"{ModelCatalog.Pretty(m.Id)} · {Provider.Find(m.ProviderId)?.Name}";
+
+    /// <summary>回答下方的按鈕：複製、朗讀、重新回答（只有最後一則）。</summary>
+    private void AttachActions(MessageView view, SavedMessage message)
+    {
+        view.SetActions(
+            ("複製", "複製這則回答", () => { try { Clipboard.SetText(message.Text); } catch (Exception) { } }),
+            ("朗讀", "用 Windows 的語音唸出來（再按一次停止）", () => _ = SpeakAsync(message.Text)),
+            ("重新回答", "換一個模型重新回答最後一個問題", () => Regenerate(message)));
+    }
+
+    private void Regenerate(SavedMessage message)
+    {
+        if (_cts is not null) return;
+        int lastUser = _current.Messages.FindLastIndex(m => m.Role == Role.User);
+        if (_current.Messages.IndexOf(message) < lastUser) { _route.Text = "只能重新回答最後一個問題"; return; }
+        // 拿掉最後一個問題之後的所有回答，換一個模型再答一次
+        string? exclude = _conductor.Models.FirstOrDefault(m => Label(m) == message.Model)?.Key;
+        _current.Messages.RemoveRange(lastUser + 1, _current.Messages.Count - lastUser - 1);
+        Show(_current);
+        var user = _current.Messages[lastUser];
+        _ = AnswerAsync(_images.GetValueOrDefault(user), "image/png", exclude);
     }
 
     private bool IsNearBottom() => _scroll.VerticalOffset >= _scroll.ScrollableHeight - 80;
@@ -393,77 +517,197 @@ internal sealed class ChatWindow : Window
     {
         var list = new List<ChatMessage>();
         int budget = MaxContextChars;
+        int lastUser = -1;
+        for (int i = history.Count - 1; i >= 0; i--) if (history[i].Role == Role.User) { lastUser = i; break; }
         for (int i = history.Count - 1; i >= 0; i--)
         {
             var m = history[i];
-            if (m.Text.Length > budget && list.Count > 0) break;
-            budget -= m.Text.Length;
-            bool last = i == history.Count - 1;
-            list.Insert(0, new ChatMessage(m.Role, m.Text, last ? image : null, mime));
+            if (m.Alternate) continue;                         // 比較時的其他答案不放進上下文
+            string text = m.Prompt;
+            if (text.Length > budget && list.Count > 0) break;
+            budget -= text.Length;
+            list.Insert(0, new ChatMessage(m.Role, text, i == lastUser ? image : null, mime));
         }
         list.Insert(0, new ChatMessage(Role.System, SystemPrompt));
         return list;
     }
 
-    // ═══════════════════════ 圖片 ═══════════════════════
+    // ═══════════════════════ 語音 ═══════════════════════
 
-    private void PickImage()
+    [DllImport("user32.dll")]
+    private static extern void keybd_event(byte vk, byte scan, uint flags, UIntPtr extra);
+
+    /// <summary>叫出 Windows 內建的語音輸入（Win+H），說的話會直接打進輸入框。</summary>
+    private void Dictate()
     {
-        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = "圖片|*.png;*.jpg;*.jpeg;*.webp;*.gif;*.bmp", Title = "附一張圖片" };
-        if (dlg.ShowDialog(this) == true) AttachFile(dlg.FileName);
+        _input.Focus();
+        Dispatcher.BeginInvoke(DispatcherPriority.Input, () =>
+        {
+            const byte win = 0x5B, h = 0x48;
+            const uint up = 0x0002;
+            keybd_event(win, 0, 0, UIntPtr.Zero);
+            keybd_event(h, 0, 0, UIntPtr.Zero);
+            keybd_event(h, 0, up, UIntPtr.Zero);
+            keybd_event(win, 0, up, UIntPtr.Zero);
+        });
+    }
+
+    /// <summary>朗讀回答（Windows 內建語音，優先用中文聲音）；正在唸時再按就停止。</summary>
+    private async Task SpeakAsync(string text)
+    {
+        if (_player is not null) { _player.Stop(); _player = null; return; }
+        try
+        {
+            string plain = Markdown.Plain(string.Join("\n", MessageView.Split(text).Where(p => !p.IsCode).Select(p => p.Text)));
+            if (plain.Length > 4000) plain = plain[..4000];
+            using var synth = new Windows.Media.SpeechSynthesis.SpeechSynthesizer();
+            var voices = Windows.Media.SpeechSynthesis.SpeechSynthesizer.AllVoices;
+            bool chinese = plain.Any(c => c >= 0x4E00 && c <= 0x9FFF);
+            var voice = chinese
+                ? voices.FirstOrDefault(v => v.Language.StartsWith("zh-TW", StringComparison.OrdinalIgnoreCase)) ?? voices.FirstOrDefault(v => v.Language.StartsWith("zh", StringComparison.OrdinalIgnoreCase))
+                : voices.FirstOrDefault(v => v.Language.StartsWith("en", StringComparison.OrdinalIgnoreCase));
+            if (voice is not null) synth.Voice = voice;
+            using var stream = await synth.SynthesizeTextToStreamAsync(plain);
+            var ms = new MemoryStream();
+            await stream.AsStreamForRead().CopyToAsync(ms);
+            ms.Position = 0;
+            var player = new System.Media.SoundPlayer(ms);
+            _player = player;
+            _ = Task.Run(() =>
+            {
+                try { player.PlaySync(); } catch (Exception) { }
+                Dispatcher.InvokeAsync(() => { if (_player == player) _player = null; });   // 唸完了，下次按就是重新唸
+            });
+            _route.Text = chinese && voice is null ? "這台電腦沒有中文語音（設定 → 時間與語言 → 語音 可以新增）" : "朗讀中（再按一次「朗讀」停止）";
+        }
+        catch (Exception e) { _route.Text = "無法朗讀：" + e.Message; _player = null; }
+    }
+
+    // ═══════════════════════ 匯出 ═══════════════════════
+
+    private void ExportConversation()
+    {
+        if (_current.Messages.Count == 0) { _route.Text = "這段對話還是空的"; return; }
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "Markdown|*.md|純文字|*.txt", DefaultExt = ".md", AddExtension = true, Title = "匯出對話",
+            FileName = string.Concat(_current.Title.Where(c => !Path.GetInvalidFileNameChars().Contains(c))).TrimEnd('…'),
+        };
+        if (dlg.ShowDialog(this) != true) return;
+        try
+        {
+            File.WriteAllText(dlg.FileName, ToMarkdown(_current), new UTF8Encoding(false));
+            _route.Text = "已匯出：" + Path.GetFileName(dlg.FileName);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { _route.Text = "匯出失敗：" + e.Message; }
+    }
+
+    internal static string ToMarkdown(Conversation c)
+    {
+        var sb = new StringBuilder();
+        sb.Append("# ").Append(c.Title).Append("\n\n");
+        foreach (var m in c.Messages)
+        {
+            if (m.Role == Role.User)
+            {
+                sb.Append("## 問\n\n").Append(m.Text).Append("\n\n");
+                if (m.Files is { Count: > 0 }) sb.Append("附件：").Append(string.Join("、", m.Files)).Append("\n\n");
+            }
+            else sb.Append("## 答（").Append(m.Model ?? "AI").Append("）\n\n").Append(m.Text).Append("\n\n");
+        }
+        return sb.ToString();
+    }
+
+    // ═══════════════════════ 附件 ═══════════════════════
+
+    private void PickFiles()
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = FileReader.DialogFilter, Title = "附加檔案", Multiselect = true };
+        if (dlg.ShowDialog(this) == true) foreach (var f in dlg.FileNames) AttachFile(f);
     }
 
     public void AttachFile(string path)
     {
-        string ext = Path.GetExtension(path).ToLowerInvariant();
-        if (ext is not (".png" or ".jpg" or ".jpeg" or ".webp" or ".gif" or ".bmp")) { _route.Text = "只能附圖片（PNG、JPG、WebP、GIF、BMP）"; return; }
+        if (!FileReader.CanRead(path)) { _route.Text = $"還不會讀 {Path.GetExtension(path)} 檔（可以附 PDF、Word、Excel、PowerPoint、圖片、文字與程式碼）"; return; }
         try
         {
-            var bytes = File.ReadAllBytes(path);
-            if (ext is ".gif" or ".bmp") { bytes = ToPng(bytes); ext = ".png"; }
-            SetAttachment(bytes, ext is ".jpg" or ".jpeg" ? "image/jpeg" : ext == ".webp" ? "image/webp" : "image/png");
+            var a = FileReader.Read(path);
+            if (a.Kind == AttachmentKind.Image)
+            {
+                if (_attachments.Any(x => x.Kind == AttachmentKind.Image)) _attachments.RemoveAll(x => x.Kind == AttachmentKind.Image);   // 一次一張圖
+                var (bytes, mime) = PrepareImage(a.Bytes!, a.Mime, Path.GetExtension(path).ToLowerInvariant());
+                a = a with { Bytes = bytes, Mime = mime };
+            }
+            _attachments.Add(a);
+            RefreshChips();
+            if (a.Truncated) _route.Text = $"「{a.Name}」很長，只會附上前面 {FileReader.MaxChars / 10000} 萬字";
         }
-        catch (Exception e) { _route.Text = "讀不到這張圖：" + e.Message; }
+        catch (Exception e) { _route.Text = $"讀不到「{Path.GetFileName(path)}」：{e.Message}"; }
+    }
+
+    private void RefreshChips()
+    {
+        _attachChips.Children.Clear();
+        foreach (var a in _attachments)
+        {
+            var row = new StackPanel { Orientation = Orientation.Horizontal };
+            if (a.Kind == AttachmentKind.Image && a.Bytes is { } b)
+            {
+                var img = new Image { Height = 40, Margin = new Thickness(0, 0, 6, 0) };
+                try { img.Source = Decode(b); } catch (Exception) { }
+                row.Children.Add(img);
+            }
+            else row.Children.Add(new TextBlock { Text = "📎 " + a.Name + (a.Truncated ? "（太長，已截斷）" : ""), Foreground = Look.Moon, FontSize = 12.5, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) });
+            var captured = a;
+            var remove = Look.Button("✕", () => { _attachments.Remove(captured); RefreshChips(); }, tip: "移除");
+            remove.Padding = new Thickness(6, 0, 6, 0);
+            remove.FontSize = 11;
+            row.Children.Add(remove);
+            _attachChips.Children.Add(new Border { Child = row, Background = Look.Field, CornerRadius = new CornerRadius(5), Padding = new Thickness(6, 4, 4, 4), Margin = new Thickness(0, 0, 6, 4) });
+        }
+        _attachChips.Visibility = _attachments.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        _input.Focus();
+    }
+
+    private void ClearAttachments()
+    {
+        _attachments.Clear();
+        RefreshChips();
     }
 
     private void OnPaste(object sender, DataObjectPastingEventArgs e)
     {
         if (e.DataObject.GetDataPresent(DataFormats.Bitmap) && Clipboard.GetImage() is { } img)
         {
-            SetAttachment(Encode(img), "image/png");
+            _attachments.RemoveAll(x => x.Kind == AttachmentKind.Image);
+            var (bytes, mime) = PrepareImage(Encode(img), "image/png", ".png");
+            _attachments.Add(new Attachment("貼上的圖片.png", AttachmentKind.Image, Bytes: bytes, Mime: mime));
+            RefreshChips();
             e.CancelCommand();
         }
     }
 
     private void OnDrop(object sender, DragEventArgs e)
     {
-        if (e.Data.GetData(DataFormats.FileDrop) is string[] { Length: > 0 } files) AttachFile(files[0]);
+        if (e.Data.GetData(DataFormats.FileDrop) is string[] files) foreach (var f in files) AttachFile(f);
     }
 
-    private void SetAttachment(byte[] bytes, string mime)
+    /// <summary>GIF、BMP 轉成 PNG；太大的圖縮小（免費模型對圖片大小有限制，也省流量）。</summary>
+    private static (byte[] Bytes, string Mime) PrepareImage(byte[] bytes, string mime, string ext)
     {
-        // 太大的圖先縮小（免費模型對圖片大小有限制，也省流量）
-        if (bytes.Length > 1_500_000) { bytes = Shrink(bytes, 1600); mime = "image/jpeg"; }
-        _attachment = bytes;
-        _attachmentMime = mime;
-        var row = new StackPanel { Orientation = Orientation.Horizontal };
-        var preview = new Image { Height = 48, Margin = new Thickness(0, 0, 8, 0) };
-        try { preview.Source = Decode(bytes); } catch (Exception) { }
-        row.Children.Add(preview);
-        var remove = Look.Button("移除", ClearAttachment);
-        remove.Padding = new Thickness(8, 2, 8, 2);
-        remove.VerticalAlignment = VerticalAlignment.Center;
-        row.Children.Add(remove);
-        _attachChip.Child = row;
-        _attachChip.Visibility = Visibility.Visible;
-        _input.Focus();
-    }
-
-    private void ClearAttachment()
-    {
-        _attachment = null;
-        _attachChip.Child = null;
-        _attachChip.Visibility = Visibility.Collapsed;
+        try
+        {
+            if (ext is ".gif" or ".bmp") { bytes = Encode(Decode(bytes)); mime = "image/png"; }
+            if (bytes.Length > 1_500_000)
+            {
+                var src = Decode(bytes);
+                double k = Math.Min(1, 1600.0 / Math.Max(src.PixelWidth, src.PixelHeight));
+                bytes = Encode(new TransformedBitmap(src, new ScaleTransform(k, k)), jpeg: true);
+                mime = "image/jpeg";
+            }
+        }
+        catch (Exception) { }
+        return (bytes, mime);
     }
 
     private static BitmapSource Decode(byte[] bytes)
@@ -485,23 +729,4 @@ internal sealed class ChatWindow : Window
         enc.Save(ms);
         return ms.ToArray();
     }
-
-    private static byte[] ToPng(byte[] bytes) => Encode(Decode(bytes));
-
-    private static byte[] Shrink(byte[] bytes, int maxSide)
-    {
-        try
-        {
-            var src = Decode(bytes);
-            double k = Math.Min(1, maxSide / (double)Math.Max(src.PixelWidth, src.PixelHeight));
-            var scaled = new TransformedBitmap(src, new ScaleTransform(k, k));
-            return Encode(scaled, jpeg: true);
-        }
-        catch (Exception) { return bytes; }
-    }
-}
-
-internal static class Fluent
-{
-    public static T Also<T>(this T value, Action<T> act) { act(value); return value; }
 }

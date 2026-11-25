@@ -1,3 +1,4 @@
+using System.IO;
 using System.Net;
 using System.Text.Json;
 using TianMu.Modules.Wendao.Ai;
@@ -192,4 +193,70 @@ public class WendaoTests
         Assert.DoesNotContain("</script>", js);                            // 不會原樣出現在腳本裡
         Assert.DoesNotContain(".click()", js);                             // 只填字，不按送出
     }
+
+    [Fact]
+    public void Text_files_are_read_and_attached_after_the_question()
+    {
+        string dir = Path.Combine(Path.GetTempPath(), "wendao-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        try
+        {
+            string txt = Path.Combine(dir, "筆記.md");
+            File.WriteAllText(txt, "# 標題\n內容");
+            var a = FileReader.Read(txt);
+            Assert.Equal(AttachmentKind.Text, a.Kind);
+            Assert.Contains("內容", a.Text);
+            string prompt = FileReader.Compose("幫我摘要", [a]);
+            Assert.StartsWith("幫我摘要", prompt);
+            Assert.Contains("〔附件：筆記.md〕", prompt);
+            Assert.True(FileReader.CanRead("a.PDF"));
+            Assert.True(FileReader.CanRead("報告.docx"));
+            Assert.False(FileReader.CanRead("程式.exe"));
+            Assert.Throws<InvalidDataException>(() => FileReader.Read(Path.Combine(dir, "空.txt").Also(p => File.WriteAllText(p, "  "))));
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
+    [Fact]
+    public void Big5_text_files_are_decoded()
+    {
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        var big5 = System.Text.Encoding.GetEncoding(950).GetBytes("天幕島");
+        Assert.Equal("天幕島", FileReader.ReadText(big5));
+    }
+
+    [Fact]
+    public void Compare_answers_stay_out_of_the_follow_up_context_and_files_go_in()
+    {
+        var history = new List<SavedMessage>
+        {
+            new() { Role = Role.User, Text = "問題", FileText = "\n〔附件：a.txt〕內容" },
+            new() { Role = Role.Assistant, Text = "甲家答案" },
+            new() { Role = Role.Assistant, Text = "乙家答案", Alternate = true },
+            new() { Role = Role.User, Text = "追問" },
+        };
+        var ctx = ChatWindow.BuildContext(history, null, "image/png");
+        Assert.DoesNotContain(ctx, m => m.Text == "乙家答案");
+        Assert.Contains(ctx, m => m.Text.Contains("〔附件：a.txt〕"));
+        Assert.Equal("追問", ctx[^1].Text);
+    }
+
+    [Fact]
+    public void Markdown_marks_are_removed_for_reading_aloud_and_export_has_both_sides()
+    {
+        Assert.Equal("重點\n第一點 很重要", Markdown.Plain("## 重點\n- 第一點 **很重要**"));
+        var c = new Conversation { Title = "測試" };
+        c.Messages.Add(new SavedMessage { Role = Role.User, Text = "你好", Files = ["a.pdf"] });
+        c.Messages.Add(new SavedMessage { Role = Role.Assistant, Text = "嗨", Model = "gemini-2.5-flash · Google Gemini" });
+        string md = ChatWindow.ToMarkdown(c);
+        Assert.Contains("# 測試", md);
+        Assert.Contains("## 問\n\n你好", md);
+        Assert.Contains("附件：a.pdf", md);
+        Assert.Contains("## 答（gemini-2.5-flash · Google Gemini）\n\n嗨", md);
+    }
+}
+
+internal static class TestFluent
+{
+    public static T Also<T>(this T value, Action<T> act) { act(value); return value; }
 }

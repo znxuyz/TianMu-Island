@@ -19,6 +19,9 @@
   <ItemGroup>
     <!-- 網頁模式：內嵌 Edge WebView2 開各家 AI 的官方網站（Windows 10/11 已內建執行環境） -->
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
+    <!-- 附件轉文字：Word／Excel／PowerPoint（Open XML SDK，MIT）、PDF（PdfPig，Apache-2.0） -->
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1" />
+    <PackageReference Include="PdfPig" Version="0.1.16" />
   </ItemGroup>
 
   <ItemGroup>

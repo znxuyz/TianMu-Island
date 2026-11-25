@@ -29,7 +29,15 @@ public sealed class WenfangModule : IIslandModule, IDescribedModule
         return Task.CompletedTask;
     }
 
-    private static void Open() => new StartWindow().Show();
+    private static void Open()
+    {
+        var w = new StartWindow();
+        w.Show();
+        // 從天幕或系統匣開啟時，Windows 常把新視窗壓在後面；暫時置頂一下確保跳到最前面
+        w.Activate();
+        w.Topmost = true;
+        w.Topmost = false;
+    }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }
