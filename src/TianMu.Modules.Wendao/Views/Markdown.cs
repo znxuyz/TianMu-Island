@@ -15,7 +15,7 @@ internal static partial class Markdown
     public static RichTextBox Render(string text, Brush fg, double size = 14)
     {
         var doc = new FlowDocument { PagePadding = new Thickness(0), FontFamily = Look.Sans, FontSize = size, Foreground = fg, LineHeight = size * 1.6 };
-        foreach (var raw in text.Replace("\r\n", "\n").Trim('\n').Split('\n'))
+        foreach (var raw in Tidy(text).Replace("\r\n", "\n").Trim('\n').Split('\n'))
         {
             string line = raw.TrimEnd();
             var p = new Paragraph { Margin = new Thickness(0, 0, 0, 4) };
@@ -84,6 +84,9 @@ internal static partial class Markdown
         }
         if (pos < text.Length) p.Inlines.Add(new Run(text[pos..]));
     }
+
+    /// <summary>「5️⃣」這類數字鍵帽表情在 WPF 會變成「5□」，改成「5.」；也去掉多餘的變體選擇符。</summary>
+    public static string Tidy(string text) => text.Replace("\uFE0F\u20E3", ".").Replace("\u20E3", ".").Replace("\uFE0F", "");
 
     /// <summary>去掉 Markdown 記號（朗讀、匯出純文字用）。</summary>
     public static string Plain(string text)

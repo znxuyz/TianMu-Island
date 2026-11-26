@@ -10,7 +10,7 @@ namespace TianMu.Modules.Wendao.Ai;
 public sealed record ImageResult(byte[] Bytes, string Mime, string Source);
 
 /// <summary>
-/// 生成圖片：依序試 Pollinations（免金鑰）→ Cloudflare Workers AI（要帳號）→ Google Gemini（用 Gemini 金鑰）；
+/// 生成圖片：依序試 Cloudflare Workers AI（每天有免費額度，最可靠）→ Pollinations → Google Gemini；
 /// 一家失敗或額度用完就換下一家。全部直接連各家，不經過中間平台。
 /// </summary>
 public sealed class ImageGenerator(Func<string, string?> keyOf) : IDisposable
@@ -22,16 +22,22 @@ public sealed class ImageGenerator(Func<string, string?> keyOf) : IDisposable
         "https://dash.cloudflare.com/profile/api-tokens",
         "生成圖片用（FLUX 模型），每天有免費額度。請貼成「帳戶 ID:API 權杖」——帳戶 ID 在 Cloudflare 首頁右側；權杖建立時選「Workers AI」範本。不設也可以，問道會先用免金鑰的 Pollinations。", 0.6);
 
+    public const string PollinationsId = "pollinations";
+
+    /// <summary>Pollinations 改版後原則上要金鑰（sk_ 開頭）；沒貼也會試一次。</summary>
+    public static readonly Provider Pollinations = new(PollinationsId, "Pollinations（生成圖片，可不設）", "https://gen.pollinations.ai/", true,
+        "https://enter.pollinations.ai/keys",
+        "另一個生圖來源。改版後需要金鑰（sk_ 開頭，到網站登入後建立）；免費額度依網站規定。沒貼也會先試試看。", 0.5);
+
     private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(120) };
 
     public async Task<ImageResult> GenerateAsync(string prompt, int width, int height, Action<string> status, CancellationToken ct)
     {
         var errors = new List<string>();
-        var attempts = new List<(string Name, Func<Task<ImageResult>> Run)>
-        {
-            ("Pollinations", () => PollinationsAsync(prompt, width, height, ct)),
-        };
+        var attempts = new List<(string Name, Func<Task<ImageResult>> Run)>();
+        bool hasCloudflare = SplitCloudflareKey(keyOf(CloudflareId)) is not null;
         if (SplitCloudflareKey(keyOf(CloudflareId)) is { } cf) attempts.Add(("Cloudflare", () => CloudflareAsync(prompt, cf.Account, cf.Token, ct)));
+        attempts.Add(("Pollinations", () => PollinationsAsync(prompt, width, height, keyOf(PollinationsId), ct)));
         if (keyOf("gemini") is { Length: > 0 } gk) attempts.Add(("Google Gemini", () => GeminiAsync(prompt, width, height, gk, ct)));
 
         foreach (var (name, run) in attempts)
@@ -41,20 +47,32 @@ public sealed class ImageGenerator(Func<string, string?> keyOf) : IDisposable
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
             catch (Exception e) { errors.Add($"{name}：{Short(e.Message)}"); }
         }
-        throw new ProviderException("每一家都沒畫出來：\n• " + string.Join("\n• ", errors), null, false);
+        string hint = hasCloudflare ? "" :
+            "\n\n建議設定 Cloudflare（免費，每天約可畫一兩百張）：左下角「連線設定」→ 最下面「Cloudflare Workers AI」→ 按「取得免費金鑰」，" +
+            "建立權杖時選「Workers AI」範本，再把「帳戶 ID:權杖」貼回來。";
+        throw new ProviderException("每一家都沒畫出來：\n• " + string.Join("\n• ", errors) + hint, null, false);
     }
 
-    // ── Pollinations：不用金鑰，網址就是提示詞 ──
+    // ── Pollinations（新版 gen.pollinations.ai；金鑰放在 Authorization 標頭） ──
 
     public static string PollinationsUrl(string prompt, int width, int height, int seed) =>
-        $"https://image.pollinations.ai/prompt/{Uri.EscapeDataString(prompt)}?width={width}&height={height}&seed={seed}&nologo=true&model=flux";
+        $"https://gen.pollinations.ai/image/{Uri.EscapeDataString(prompt)}?model=black-forest-labs/flux.1-schnell&width={width}&height={height}&seed={seed}";
 
-    private async Task<ImageResult> PollinationsAsync(string prompt, int w, int h, CancellationToken ct)
+    private async Task<ImageResult> PollinationsAsync(string prompt, int w, int h, string? key, CancellationToken ct)
     {
-        using var res = await _http.GetAsync(PollinationsUrl(prompt, w, h, Random.Shared.Next(1, int.MaxValue)), ct);
+        using var req = new HttpRequestMessage(HttpMethod.Get, PollinationsUrl(prompt, w, h, Random.Shared.Next(1, int.MaxValue)));
+        if (!string.IsNullOrWhiteSpace(key)) req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key.Trim());
+        using var res = await _http.SendAsync(req, ct);
         var bytes = await res.Content.ReadAsByteArrayAsync(ct);
         string mime = res.Content.Headers.ContentType?.MediaType ?? "";
-        if (!res.IsSuccessStatusCode) throw new HttpRequestException(res.StatusCode == System.Net.HttpStatusCode.TooManyRequests ? "太頻繁了，稍等一下再畫" : $"回應錯誤（{(int)res.StatusCode}）");
+        if (!res.IsSuccessStatusCode) throw new HttpRequestException((int)res.StatusCode switch
+        {
+            401 => string.IsNullOrWhiteSpace(key) ? "現在需要金鑰（可在連線設定貼上）" : "金鑰無效",
+            402 => "額度不足",
+            429 => "太頻繁了，稍等一下再畫",
+            503 => "暫時無法使用",
+            int c => $"回應錯誤（{c}）",
+        });
         if (!mime.StartsWith("image/", StringComparison.Ordinal) || bytes.Length < 1000) throw new HttpRequestException("沒有回傳圖片");
         return new ImageResult(bytes, mime, "Pollinations");
     }

@@ -36,10 +36,11 @@ internal sealed class ConnectionWindow : Window
         stack.Children.Add(new TextBlock { Text = "生成圖片", FontFamily = Look.Serif, FontSize = 17, FontWeight = FontWeights.Bold, Foreground = Look.Gold, Margin = new Thickness(0, 10, 0, 4) });
         stack.Children.Add(new TextBlock
         {
-            Text = "按「畫圖」時先用 Pollinations（免金鑰、免註冊）；它忙不過來時改用 Cloudflare，再來是 Gemini（用上面的 Gemini 金鑰）。",
+            Text = "按「畫圖」時依序用 Cloudflare（建議設定：免費、每天約可畫一兩百張）→ Pollinations → Gemini（用上面的 Gemini 金鑰，免費方案通常沒有生圖額度）。",
             TextWrapping = TextWrapping.Wrap, Foreground = Look.Secondary, FontSize = 12.5, Margin = new Thickness(0, 0, 0, 10),
         });
         stack.Children.Add(Card(ImageGenerator.Cloudflare));
+        stack.Children.Add(Card(ImageGenerator.Pollinations));
 
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 6, 0, 0) };
         buttons.Children.Add(Look.Button("儲存並測試", SaveAndTest, primary: true));
@@ -90,7 +91,7 @@ internal sealed class ConnectionWindow : Window
 
     private async void SaveAndTest()
     {
-        foreach (var p in Provider.All.Append(ImageGenerator.Cloudflare).Where(p => p.NeedsKey)) KeyStore.Set(p.Id, _rows[p.Id].Box.Password);
+        foreach (var p in Provider.All.Append(ImageGenerator.Cloudflare).Append(ImageGenerator.Pollinations).Where(p => p.NeedsKey)) KeyStore.Set(p.Id, _rows[p.Id].Box.Password);
         await TestAsync();
     }
 
@@ -102,6 +103,13 @@ internal sealed class ConnectionWindow : Window
         catch (Exception e) { foreach (var (_, row) in _rows) row.Status.Text = e.Message; return; }
         foreach (var (id, row) in _rows)
         {
+            if (id == ImageGenerator.PollinationsId)
+            {
+                bool has = row.Box.Password.Length > 0;
+                row.Status.Text = has ? "✓ 已儲存，畫圖時使用" : "未設定（可不設）";
+                row.Status.Foreground = has ? Look.Gold : Look.Tertiary;
+                continue;
+            }
             if (id == ImageGenerator.CloudflareId)
             {
                 string key = row.Box.Password;

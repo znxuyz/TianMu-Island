@@ -259,7 +259,7 @@ public class WendaoTests
     public void Image_requests_are_built_and_parsed()
     {
         string url = ImageGenerator.PollinationsUrl("一隻貓 & 月亮", 1024, 768, 42);
-        Assert.StartsWith("https://image.pollinations.ai/prompt/", url);
+        Assert.StartsWith("https://gen.pollinations.ai/image/", url);
         Assert.DoesNotContain(" ", url);
         Assert.Contains("%26", url);                       // & 被編碼，不會截斷提示詞
         Assert.Contains("width=1024&height=768&seed=42", url);
@@ -293,6 +293,24 @@ public class WendaoTests
         Assert.Contains(WebSites.All, s => s.Video && s.Id == "kling");
         Assert.All(WebSites.All.Where(s => s.Video), s => Assert.StartsWith("https://", s.Url));
     }
+
+    [Theory]
+    [InlineData("幫我生成一張寶箱怪的圖", true)]
+    [InlineData("畫一隻在月光下的貓", true)]
+    [InlineData("幫我畫一張賽博龐克風的台北", true)]
+    [InlineData("來一張可愛的柴犬頭像", true)]
+    [InlineData("Draw a dragon over the sea", true)]
+    [InlineData("generate an image of a castle", true)]
+    [InlineData("幫我畫一個系統架構圖", false)]
+    [InlineData("生成一張 Excel 圖表", false)]
+    [InlineData("如何做一個網站的首頁圖片輪播", false)]
+    [InlineData("這段程式為什麼會出錯", false)]
+    public void Drawing_requests_typed_in_the_chat_box_are_recognised(string text, bool expected) =>
+        Assert.Equal(expected, Router.WantsImage(text));
+
+    [Fact]
+    public void Keycap_emoji_numbers_are_tidied() =>
+        Assert.Equal("5. 下一步", Markdown.Tidy("5\uFE0F\u20E3 下一步"));
 }
 
 internal static class TestFluent

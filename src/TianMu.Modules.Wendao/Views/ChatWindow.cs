@@ -267,8 +267,20 @@ internal sealed class ChatWindow : Window
                 _model.Items.Add(new ComboBoxItem { Content = "　" + m.Name + (m.Vision ? "　🖼" : ""), Tag = m.Key, ToolTip = m.Id });
         }
         _model.SelectedItem = _model.Items.OfType<ComboBoxItem>().FirstOrDefault(i => i.Tag as string == keep) ?? _model.Items[0];
+        // 分組標題不能選：滾輪或方向鍵停到標題時，改選它下面第一個模型
+        _model.SelectionChanged -= SkipHeader;
+        _model.SelectionChanged += SkipHeader;
         int count = _conductor.Models.Count;
         _route.Text = count == 0 ? "還沒有可用的模型 — 按左下角「連線設定」貼上免費金鑰，或改用「網頁模式」" : $"共 {count} 個免費模型可用";
+    }
+
+    private void SkipHeader(object sender, SelectionChangedEventArgs e)
+    {
+        if (_model.SelectedItem is ComboBoxItem { Tag: null })
+        {
+            int i = _model.SelectedIndex;
+            _model.SelectedIndex = i + 1 < _model.Items.Count ? i + 1 : 0;
+        }
     }
 
     private string Choice => (_model.SelectedItem as ComboBoxItem)?.Tag as string ?? Conductor.Auto;
@@ -377,6 +389,8 @@ internal sealed class ChatWindow : Window
     {
         string question = _input.Text.Trim();
         if ((question.Length == 0 && _attachments.Count == 0) || _cts is not null) return;
+        // 「幫我畫…」「生成一張…的圖」：直接畫圖，不當成一般問答
+        if (_attachments.Count == 0 && Router.WantsImage(question)) { _ = DrawAsync(); return; }
         var image = _attachments.FirstOrDefault(a => a.Kind == AttachmentKind.Image);
         var files = _attachments.ToList();
         if (question.Length == 0) question = image is not null ? "請描述這張圖片。" : "請整理這份檔案的重點。";

@@ -43,6 +43,23 @@ public static partial class Router
     [GeneratedRegex(@"為什麼|證明|推導|分析|比較|計算|數學|邏輯|規劃|策略|優缺點|步驟|prove|why|analy[sz]e|compare|reason|plan", RegexOptions.IgnoreCase)]
     private static partial Regex ReasonHint();
 
+    /// <summary>
+    /// 是不是要「畫一張圖」（例如「幫我畫一隻貓」「生成一張寶箱怪的圖」）。
+    /// 流程圖、圖表、架構圖這類其實是要文字或程式的，不算。
+    /// </summary>
+    public static bool WantsImage(string prompt)
+    {
+        string p = prompt.Trim();
+        if (p.Length == 0 || p.Length > 300 || NotPicture().IsMatch(p)) return false;
+        return DrawHint().IsMatch(p);
+    }
+
+    [GeneratedRegex(@"^(請|麻煩)?(幫我|替我|給我|幫忙)?\s*(畫|繪製)|(生成|產生|設計)(一|幾|兩|三)?(張|幅|個)?.{0,40}(圖片|圖像|插畫|插圖|照片|頭像|海報|桌布|壁紙|的圖|張圖)|(做|弄|來)(一|幾|兩|三)(張|幅).{0,40}(圖|插畫|照片|頭像|海報|桌布)|^(draw|paint|sketch)\b|\b(generate|create|make)\b.{0,30}\b(image|picture|illustration|photo|drawing)\b", RegexOptions.IgnoreCase)]
+    private static partial Regex DrawHint();
+
+    [GeneratedRegex(@"流程圖|架構圖|心智圖|圖表|甘特圖|UML|ER ?圖|關係圖|示意圖的程式|mermaid|graphviz|chart|diagram|表格", RegexOptions.IgnoreCase)]
+    private static partial Regex NotPicture();
+
     /// <summary>依問題性質把模型排序，最適合的在前面。</summary>
     public static List<ModelInfo> Rank(IEnumerable<ModelInfo> models, TaskKind kind, Func<string, double>? speedOf = null)
     {
